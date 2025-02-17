@@ -1,0 +1,578 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%			INVERSE SYNTHETIC APERTURE RADAR
+%
+%				  PhD Thesis
+%
+%		Stephen Simmons		simmons@ee.mu.oz.au
+%
+%	    Department of Electrical and Electronic Engineering
+%	    University of Melbourne, Parkville, 3052, Australia
+%
+% Chapter 9:	Conventional Motion Estimators and the ML Solution
+%
+%		started first draft:	Wed 4 Jan 1995
+%		finished first draft:	Fri 6 Jan 1995
+%		submitted:		Fri 6 Jan 1995
+%
+%%%%%%%%%%%%%%%%%%%%% Copyright (C) 1995 Stephen Simmons %%%%%%%%%%%%%%%%%%
+
+
+\chapter[Conventional and ML Motion Estimators]{Conventional 
+Motion Estimators and the Maximum Likelihood Solution}
+\label{do chp}
+
+\bigletter Chapter \ref{sp chp} completed the analysis of the maximum
+likelihood ISAR radial motion estimator which was derived in chapter
+\ref{ml chp} and implemented efficiently in chapter \ref{ee chp}. 
+Therefore, this chapter is an appropriate place to compare the maximum
+likelihood solution with some of the conventional radial motion estimators
+discussed in detail in chapter \ref{mc chp}.
+
+The three motion estimators from chapter \ref{mc chp} reexamined here are
+the cross-correlation methods of range profile alignment from section \ref{mc
+sec:cc}, and the adaptive beamforming and phase gradient autofocus
+algorithms of phase compensation from sections \ref{mc sec:ab} and \ref{mc
+sec:pga} respectively.  The image-quality methods from section \ref{mc
+sec:en} are not considered here because they are not related closely enough to
+the maximum likelihood solution for the comparison to be worthwhile.
+
+Reinterpreting conventional radial motion estimators in the light of the
+maximum likelihood solution is a valuable exercise.  If there is a strong
+connection between the estimator and the maximum likelihood solution, this
+helps to provide a formal justification for what would otherwise be an {\em
+ad hoc\/} or ``intuitively obvious'' approach.  If there is not a strong
+connection between the estimator and the maximum likelihood solution, this
+prompts the questions of whether there is some additional information that
+the estimator uses, and whether this information could possibly be 
+incorporated into the radial motion estimation model to give a better 
+maximum likelihood estimator.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section[The ML Estimator as a Cross-Correlation]{The Maximum Likelihood
+Estimator as a Cross-Correlation}
+\label{do sec:mlcc}
+
+The maximum likelihood estimator $\rML$ from (\ref{ml eqn:J(r) uvp}) 
+can be written in terms of the cross-correlation of the range profiles
+formed from the two frequency responses.
+
+From (\ref{ml eqn:J(r) uvp}), the maximum likelihood estimator is
+\begin{equation}
+\rML=\arg\,\min_{\r}\,\sum_{n=0}^{N-1} \left|a_n-b_n\e{jk_n\r}\right|^2
+\end{equation}
+Following appendix \ref{ee app:min using DFT}, this can be written in the
+equivalent form
+\begin{equation}
+\rML=\arg\,\max_{\r}\,\real{\sum_{n=0}^{N-1}a_n\overline{b_n}\e{-jk_n\r}}
+\end{equation}
+
+The target's range profiles are the continuous-range Fourier series of the
+discrete frequency responses.\footnote{See the footnote on page 
+\pageref{ee ftn:crft}.} Therefore by defining the target's range profiles at
+the two times as
+\begin{equation}
+s_1(r)=\sum_{n=0}^{N-1} a_n\,e^{jk_n r}
+\end{equation}
+and
+\begin{equation}
+s_2(r)=\sum_{n=0}^{N-1} b_n\,e^{jk_n r}
+\end{equation}
+the discrete frequency responses may be written in terms of the range
+profiles using the formula for the discrete Fourier transform
+\begin{equation}
+a_n=\frac{1}{N}\sum_{n'=0}^{N-1}\left[s_1(r_{n'})\,e^{-jk_0r_{n'}}
+\right]\,e^{-j\frac{2\pi}{N}nn'}
+\end{equation}
+\begin{equation}
+b_n=\frac{1}{N}\sum_{n'=0}^{N-1}\left[s_2(r_{n'})\,e^{-jk_0r_{n'}}
+\right]\,e^{-j\frac{2\pi}{N}nn'}
+\end{equation}
+
+Now define the cross-correlation of the two range profiles $s_1(t)$ and
+$s_2(t)$ as
+\begin{equation}
+R_{12}(r)=\int_{-\frac{c}{4\df}}^{\frac{c}{4\df}}
+s_1(r')\overline{s_2(r'+r)}\,dr'
+\label{do eqn:R12(r)}
+\end{equation}
+where the limits of integration have been set to cover a total width of
+$c/2\df$, equal to the extent $W_r$ of the ISAR image's range ambiguity window.  The
+cross-correlation is periodic because the range profiles themselves are
+periodic, so any upper and lower limits differing by $W_r$ could have been used
+in this integral.
+
+Writing the range profiles in (\ref{do eqn:R12(r)}) in terms of the discrete
+frequency responses shows that
+\begin{eqnarray}
+R_{12}(r)
+&=&\int_{-\frac{c}{4\df}}^{\frac{c}{4\df}}
+\sum_{n=0}^{N-1} a_n\,e^{jk_nr'}
+\sum_{n'=0}^{N-1} \overline{b_{n'}}\,e^{-jk_{n'}(r'+r)}\,dr'	\nn\\
+&=&\sum_{n=0}^{N-1} \sum_{n'=0}^{N-1} a_n\overline{b_{n'}}\,e^{-jk_{n'}r}
+\int_{-\frac{c}{4\df}}^{\frac{c}{4\df}}
+e^{-j\dk r'(n'-n)}\,dr'	
+\end{eqnarray}
+where, as usual, each $k_n$ is $k_0+n\dk$. Now the integral can be
+evaluated to give a Kronecker delta
+\begin{eqnarray}
+\int_{-\frac{c}{4\df}}^{\frac{c}{4\df}}e^{-j\dk r'(n'-n)}\,dr'	
+&=&\frac{c}{2\df}\,\sinc(n'-n)\nn\\
+&=&\frac{c}{2\df}\,\delta_{n'n}
+\end{eqnarray}
+because $n$ and $n'$ are always integral.  Then the cross-correlation is
+equal to
+\begin{eqnarray}
+R_{12}(r)
+&=&\frac{c}{2\df}\,\sum_{n=0}^{N-1} \sum_{n'=0}^{N-1} 
+a_n\overline{b_{n'}}\,e^{-jk_{n'}r}\,\delta_{n'n}\nn\\
+&=&\frac{c}{2\df}\,\sum_{n=0}^{N-1} a_n\overline{b_n}\,e^{-jk_nr}
+\end{eqnarray}
+This shows that the maximum likelihood estimator $\rML$ of $\dr$ can be
+written in terms of the cross-correlation of the range profiles in 
+(\ref{do eqn:R12(r)}) as
+\begin{equation}
+\label{do eqn:cc rML}
+\rML=\arg\,\max_{\r}\,\real{R_{12}(r)}
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Range Profile Alignment}
+\label{do sec:rpa}
+
+The cross-correlation method of range profile alignment presented in
+section \ref{mc sec:cc} is similar to algorithms \ref{ee alg:min using DFT}
+and \ref{ee alg:min using CZT} in chapter \ref{ee chp}.  These algorithms
+accomplished the approximate global minimization of the cost function
+$J(\r)$ used to find the maximum likelihood estimate $\rML$ of $\dr$, the
+radial distance moved by the target.
+
+In this section, it is shown that $\rML$ may be expressed as the maximum of
+a cross-correlation.  This cross-correlation is slightly different from the
+cross-correlation used by Chen and Andrews for range profile alignment 
+\cite{Che80a}.  The reasons for this difference are discussed, and it is
+demonstrated that the cross-correlation used by Chen and Andrews sacrifices
+accuracy for robustness to changes in the target's aspect angle.
+
+Equation (\ref{do eqn:cc rML}) is the form of the maximum likelihood
+estimator of $\dr$ capable of estimating the target's radial movement
+unambiguously to a fraction of a wavelength.  An accuracy this good is not
+needed for range profile alignment.  Following the proof of algorithm
+\ref{ee alg:min using CZT}, taking the absolute value of $R_{12}(r)$ rather
+than the real part gives an estimate that is within a wavelength of 
+$\rML$.  Therefore
+\begin{equation}
+\rML\approx\arg\,\max_{\r}\,\left|R_{12}(r)\right|
+\end{equation}
+
+The actual form of the cross-correlation used by Chen and Andrews 
+for range profile alignment is
+\begin{equation}
+R'_{12}(r)=\int_{-\frac{c}{4\df}}^{\frac{c}{4\df}}
+\left|s_1(r')\right|\,\left|s_2(r'+r)\right|\,dr'
+\label{do eqn:R'12(r)}
+\end{equation}
+which is different from the $\left|R_{12}(r)\right|$ derived from the maximum
+likelihood estimator.  The implications of this are discussed next.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Cross-Correlation and Rotating Targets}
+
+At first glance, there would seem to be no reason not to use the complex 
+form of the cross-correlation,\footnote{Indeed Xu {\em et al.\/} did use
+the complex form of the cross-correlation in \protect\cite{Xu89} and
+\protect\cite{Xu90b}.  In \protect\cite{Xu90a}, they switched back to
+cross-correlating the magnitudes of the range profiles.} except perhaps if
+it were not known to be related to the maximum likelihood estimator. 
+However, there is a simple explanation of why Chen and Andrews used the
+particular form of cross-correlation that they did, and it is related to
+the target's rotation and the low resolution of their fast correlation.
+
+When the target's frequency response is measured at two different times, as
+long as the target's rotation is negligible, the responses differ by a
+frequency-dependent phase shift that is directly proportional to the radial
+distance moved by the target.  If the target is moving and rotating at
+approximately constant radial and angular velocities, this suggests two
+possible strategies for measuring the target's radial position.  The first
+is to measure the distance the target moves between successive range 
+profiles.  The second is to choose the target's range profile at the middle
+of the ISAR imaging period as a reference, and then for any other range
+profile, to measure the radial distance the target has moved relative to
+the reference profile.
+
+The first strategy ensures that the target's rotation is negligible because
+the time between consecutive range profiles is very short, but the estimates
+of each radial movement must be made very accurately because the target only
+moves a very short distance in the time between successive profiles, and
+these differences must be summed to give the overall change in the target's
+position.
+The second strategy measures radial movements that are up to $M/2$ times
+greater than the radial movements using the first strategy, so estimates
+of the radial movement need not be so accurate.  The disadvantage is that
+the target rotates through an angle up to $M/2$ times larger so its rotation
+can no longer be considered negligible.
+
+Before discussing which is the optimum strategy to use, the effect of the
+target's rotation must be considered.  When the target does not rotate, the
+effect is simple: the range profile is offset by the distance moved and the
+phase changes by an amount proportional to the distance moved.  Both effects
+are measured by cross-correlating the complex range profiles.
+
+When the target moves radially and rotates, the radial motion produces the
+effects described above but the rotation affects the profile slightly
+differently.  Different scatterers move different radial distances
+depending on their position relative to the target's centre of rotation. 
+These radial distances are small relative to the size of a range bin but
+large relative to the wavelength.  Therefore the phase of each scatterer in
+a range bin changes by a different amount from the phases of other
+scatterers in that range bin.  If the range bin contains many scatterers,
+the sum of the scatterer's reflections produces a significant change in
+the range bin's amplitude as well as its phase.  If, however, the range bin
+contains only a single scatterer, or one scatterer with a much greater
+amplitude than the rest, the amplitude of that range bin will be largely
+unaffected but its phase may be changed significantly.  The overall effect
+of the target's rotation is to change the phases of different range bins in
+different ways but it leaves their magnitudes largely untouched.  Since
+man-made targets tend to have a high dynamic range with a small number of
+strong point scatterers, this suggests that the effect of the target's
+rotation can be mitigated by cross-correlating the magnitudes of the range
+profiles.
+
+The disadvantage of cross-correlating the magnitudes of the profiles is
+that the phase carries much of the information about the target's radial
+movement.  Once the phase information has been destroyed by taking the
+magnitude, the estimates of the cross-correlation are less accurate.  The
+loss of accuracy from neglecting the radial movement's phase changes has to
+be balanced against the increase of accuracy from removing some of the
+deleterious effects of the target's rotation.
+
+The choice of which of the two strategies mentioned above to use depends on how the
+cross-correlation is implemented.  Chen and Andrews used cross-correlation
+implemented as a fast correlation based on the fast Fourier transform.  The
+resolution of the fast correlation is equal to the resolution of the
+discrete range profiles, which in turn is equal to the width of a range bin
+or $\Delta r_r=c/2N\df$.  
+
+As an example, consider a target moving through a third of a range bin 
+between each range profile.  Cross-correlating adjacent range profiles with
+an accuracy of one range bin would conclude that the target has no
+radial motion thoughout the ISAR imaging period.  However, using the centre
+range profile as a reference, cross-correlating each range profile with the
+reference would conclude that the target moves through one range bin for
+every three range profiles across from the reference.  
+
+Therefore, if the FFT-based fast correlation were used, the only viable
+option would be to measure the radial motion relative to one reference range
+profile.  As the target's rotation is not negligible, cross-correlation
+of the magnitudes of the range profiles must be used.
+
+If, however, the chirp-Z transform were used as in algorithm \ref{ee
+alg:min using CZT}, the radial movement could be estimated down to about a
+wavelength.  Now the target's rotation may be considered negligible and the
+model under which the maximum likelihood estimator derived is valid.  These
+are suitable conditions for the complex cross-correlation of adjacent range
+profiles.  
+
+%============================================================================
+\begin{figure}\centering
+\caption[Cross-correlation of range profiles for a target with a small
+rotation]{In this figure, the two range profiles are from consecutive
+frequency responses so the target's rotation is negligible.  The 
+cross-correlation of the complex range profiles is shown in grey and the
+cross-correlation of their magnitudes is in black.}
+\label{do fig:cc I}
+
+\setlength{\unitlength}{1cm}
+\psset{unit=1cm}
+\begin{pspicture}(-1,-1)(11,6)
+
+\psset{xunit=1cm,yunit=1cm}
+\pscustom[linewidth=0.04pt]{\code{
+save
+28.3 dup scale 
+% Make a transformation matrix prior to drawing a graph.  This produces a
+% matrix named txmat.
+% Stack:  xo  yo  dx  dy  N   =>   N
+% txmat = [ dx/(N-1)  0  0  dy/255  xo  yo  ]
+/maketxmat {
+	exch 255 div exch  		% xo yo dx dy/255 N
+	dup 1 sub 4 -1 roll exch div	% xo yo dy/255 N dx/(N-1)
+	[ exch 0 0                      % xo yo dy/255 N [ dx/(N-1) 0 0
+	6 -1 roll 8 -2 roll ]		% N [ dx/(N-1) 0 0 dy/255 xo yo ]
+	/txmat exch def			% N {txmat=[dx/(N-1) 0 0 dy/255 xo yo]}
+} def
+% Plot a segment of a graph.  It is assumed that the data is stored in an
+% array 'dataarray' and the transformation matrix 'txmat' has been defined.
+% Stack: x'(i-1) y'(i-1) i  =>  x'(i) y'(i)  
+/plotsegment { dup dataarray exch get txmat transform 2 copy 6 2 roll
+	newpath moveto lineto %0.2 setlinewidth 
+	stroke } def
+% Plot a graph.  
+% Stack:  xo yo dx dy N  =>  -
+% The graph extends from (x0,yo) to (xo+dx,yo+dy) with N evenly spaced
+% data points.  The points are stored as N hex bytes after the command 
+% 'plotgraph'.  00 is at the bottom of the y axis and FF at the top.
+/plotgraph {
+	gsave %  graphcolor setgray
+	maketxmat dup currentfile exch string readhexstring pop
+	/dataarray exch def
+	0 dataarray 0 get txmat transform
+	1 dup 5 -1 roll 1 sub {plotsegment} for
+	pop pop grestore
+} def
+%n=3;o=1;a=data(:,n);b=data(:,n+o);
+%m=abs(ifft(fft(abs(ifft(a))).*conj(fft(abs(ifft(b))))));
+%p=abs(ifft(a.*conj(b)));plot(fftshift([m/sqrt(m'*m),p/sqrt(p'*p)]))
+%fftshift(m/sqrt(m'*m)),fftshift(p/sqrt(p'*p))
+% Scaled so that FF=0.5, 00=0.0
+% Complex X-C offset by 1 range profile  (109,0.0036) to ( 65,0.4009)
+0.5 setgray 0 0 10 6 128  plotgraph
+080E1A0C0729141F07371D261331111D070D460D291610290E1C1C0C07150E2B
+13280F1208311D16061A140C34263E302C442E222B3330300B2F27322A400C3D
+98CD5C635924631D4130792B3643373843290F0F130E0C0B1B2820221A1C2C1D
+2712050D16191311141B20191401050D09071B3720202316231E2827090D131E
+% Magnitude X-C offset by 1 range profile  (110,0.0661) to ( 65,0.1365)
+0 setgray 0 0 10 6 128  plotgraph
+2527262626272625272623262524242425252625262625252525222421252425
+24292729292827272627262B2A2D2F2F35373439393737343736393741404540
+454540423A3F3D3B373A3A3A37383A34332E302E2F2B2F2D2C2C292A27262528
+2627262727262626262524252423212324262424242525232523252527252527
+restore
+}}
+% Now the axes, tick marks and their labels
+\psline[linecolor=black,linewidth=1.5pt]{->}(-0.5,0)(10.5,0)
+\psline[linecolor=black,linewidth=1.5pt]{->}(5,0)(5,5)
+\uput[r](10.5,0){$r$}
+\uput[u](5,5){$R_{12}(r)$}
+\uput[d](0,0){$-\displaystyle\frac{c}{4\Delta f}$}
+\uput[d](10,0){$\displaystyle\frac{c}{4\Delta f}$}
+\psline[linecolor=black,linewidth=1pt]{-}(0,0)(0,0.15)
+\psline[linecolor=black,linewidth=1pt]{-}(10,0)(10,0.15)
+\end{pspicture}
+\end{figure}
+%============================================================================
+%============================================================================
+\begin{figure}\centering
+\caption[Cross-correlation of range profiles for a target with a large
+rotation]{In this figure, the two range profiles are separated by half the
+ISAR imaging period so the target's rotation is not negligible.  The 
+cross-correlation of the complex range profiles is shown in grey and the
+cross-correlation of their magnitudes is in black.}
+\label{do fig:cc II}
+
+\setlength{\unitlength}{1cm}
+\psset{unit=1cm}
+\begin{pspicture}(-1,-1)(11,6)
+
+\psset{xunit=1cm,yunit=1cm}
+\pscustom[linewidth=0.04pt]{\code{
+save
+28.3 dup scale 
+% Make a transformation matrix prior to drawing a graph.  This produces a
+% matrix named txmat.
+% Stack:  xo  yo  dx  dy  N   =>   N
+% txmat = [ dx/(N-1)  0  0  dy/255  xo  yo  ]
+/maketxmat {
+	exch 255 div exch  		% xo yo dx dy/255 N
+	dup 1 sub 4 -1 roll exch div	% xo yo dy/255 N dx/(N-1)
+	[ exch 0 0                      % xo yo dy/255 N [ dx/(N-1) 0 0
+	6 -1 roll 8 -2 roll ]		% N [ dx/(N-1) 0 0 dy/255 xo yo ]
+	/txmat exch def			% N {txmat=[dx/(N-1) 0 0 dy/255 xo yo]}
+} def
+% Plot a segment of a graph.  It is assumed that the data is stored in an
+% array 'dataarray' and the transformation matrix 'txmat' has been defined.
+% Stack: x'(i-1) y'(i-1) i  =>  x'(i) y'(i)  
+/plotsegment { dup dataarray exch get txmat transform 2 copy 6 2 roll
+	newpath moveto lineto %0.2 setlinewidth 
+	stroke } def
+% Plot a graph.  
+% Stack:  xo yo dx dy N  =>  -
+% The graph extends from (x0,yo) to (xo+dx,yo+dy) with N evenly spaced
+% data points.  The points are stored as N hex bytes after the command 
+% 'plotgraph'.  00 is at the bottom of the y axis and FF at the top.
+/plotgraph {
+	gsave %  graphcolor setgray
+	maketxmat dup currentfile exch string readhexstring pop
+	/dataarray exch def
+	0 dataarray 0 get txmat transform
+	1 dup 5 -1 roll 1 sub {plotsegment} for
+	pop pop grestore
+} def
+%n=3;o=71;a=data(:,n);b=data(:,n+o);
+%m=abs(ifft(fft(abs(ifft(a))).*conj(fft(abs(ifft(b))))));
+%p=abs(ifft(a.*conj(b)));plot(fftshift([m/sqrt(m'*m),p/sqrt(p'*p)]))
+%fftshift(m/sqrt(m'*m)),fftshift(p/sqrt(p'*p))
+% Scaled so that FF=0.5, 00=0.0
+% Complex X-C offset by 71 range profiles  ( 85,0.0036) to (102,0.2643)
+0.5 setgray 0 0 10 9 128  plotgraph
+203D0F3206272E152C231523173015212C1418122C211A2D132D19231C241717
+121E17201F3D0A2E2C151908101B1B150E101E1040080B0D1B2013120C0F1726
+351A0B2D18181A1F131A191A09032321241621571D013807204C204945415148
+3B643151476F871968224B371C580E70371837412316173B4B0F2D2224153C23
+% Magnitude X-C offset by 71 range profiles  ( 68,0.705) to (104,0.1276)
+0 setgray 0 0 10 9 128  plotgraph
+2A2B2B2B2A2A2C28262728282A292B2A292827282728272A282A2829282B2A2A
+2928282728282828282829282525282526272727282524252524252525252525
+262723262426252525242827272829282A27282B28282B292B2F30363138373A
+3B3A3D3739393F38413D403E403B383A3733343B3535313231312E302F2D2D2A
+restore
+}}
+% Now the axes, tick marks and their labels
+\psline[linecolor=black,linewidth=1.5pt]{->}(-0.5,0)(10.5,0)
+\psline[linecolor=black,linewidth=1.5pt]{->}(5,0)(5,5)
+\uput[r](10.5,0){$r$}
+\uput[u](5,5){$R_{12}(r)$}
+\uput[d](0,0){$-\displaystyle\frac{c}{4\Delta f}$}
+\uput[d](10,0){$\displaystyle\frac{c}{4\Delta f}$}
+\psline[linecolor=black,linewidth=1pt]{-}(0,0)(0,0.15)
+\psline[linecolor=black,linewidth=1pt]{-}(10,0)(10,0.15)
+\end{pspicture}
+\end{figure}
+%============================================================================
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Example of Large and Small Rotations}
+
+The difference between the complex and magnitude forms of the
+cross-correlation can be seen in figures \ref{do fig:cc I} and \ref{do
+fig:cc II}.  These are calculated from frequency responses of the same 737
+aircraft used in figure \ref{ml fig:J(r) pictures}.  In figure \ref{do
+fig:cc I}, the two range profiles are from consecutive frequency responses
+so the target's rotation is negligible.  The peak in the cross-correlation 
+is much sharper for the cross-correlation of the complex profiles
+than for the cross-correlation of their magnitudes.
+
+In figure \ref{do fig:cc II}, the two range profiles are separated by half
+the ISAR imaging period, so the target's rotation is now significant.  The
+cross-correlation of the complex profiles still shows a sharp peak, but new
+sharp peaks with amplitudes that are close to that of the maximum
+have appeared.  These new peaks are widely separated so if any of their 
+amplitudes were slightly higher, the estimate of $\dr$ would be very
+inaccurate.  In comparison, the cross-correlation of the magnitudes of the
+range profiles is almost unchanged in shape from that in figure \ref{do
+fig:cc I}, indicating how cross-correlating the magnitudes of the profiles
+has reduced the effect of the target's rotation.
+
+The question of how much the target can rotate before its rotation is no
+longer negligible for the purposes of motion estimation is considered in
+section \ref{rmc sec:me}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Phase Compensation}
+\label{do sec:pc}
+
+Just as range profile alignment using cross-correlation is related to the
+approximate global minimization algorithms of section \ref{ee sec:agm},
+phase compensation using adaptive beamforming and the phase gradient
+autofocus are related to the exact local minimization algorithms of section
+\ref{ee sec:elm}.
+
+As shown in equation (\ref{do eqn:cc rML}), finding the maximum likelihood
+estimator of $\dr$ is equivalent to maximizing the cross-correlation 
+\begin{equation}
+\rML=\arg\,\max_{\r}\,\real{R_{12}(r)}
+\end{equation}
+
+Because this correlation has a very high frequency modulation, the
+maximization can be carried out in two parts.  First the magnitude is
+maximized, as in section \ref{do sec:rpa}.  Then the value of $r$ that
+maximizes $\left|R_{12}(r)\right|$ is adjusted over a range of half a
+wavelength.  The optimum value of $r$ rotates the phase so that $R_{12}(r)$ 
+has no imaginary component and the real component is positive.  This second
+part, to adjust the phase of the cross-correlation, is equivalent to the
+operation of phase compensation algorithms.
+
+However, dividing the maximization into two parts like this pretends that
+the magnitude of the cross-correlation does not change as $r$ varies over
+half a wavelength.  The magnitude does change, not by much if $r$ is close
+to $\rML$, but by significantly more if $r$ is larger than a small fraction
+of a range bin away from $\rML$.  From the derivation of algorithm \ref{ee
+alg:min with cm} in appendix \ref{ee app:min with cm}, the value of $r$
+should be adjusted so that
+\begin{equation}
+\imag{\sum_{n=0}^{N-1} k_na_n\overline{b_n}\e{-jk_nr}}=0
+\end{equation}
+Ignoring the changing magnitude for small variations in $r$ is equivalent
+to solving the slightly different condition
+\begin{equation}\label{do eqn:condit}
+\imag{\sum_{n=0}^{N-1} a_n\overline{b_n}\e{-jk_nr}}=0
+\end{equation}
+These give similar estimates of $\rML$, particularly if the initial
+estimate from maximizing the magnitude is close to $\rML$.  This is because
+the radar has a narrow relative bandwidth so $k_n\approx\overline{k}$ for
+all frequencies in the stepped-frequency waveform.
+
+From (\ref{do eqn:cc rML}), equation (\ref{do eqn:condit}) is equivalent 
+to adjusting $r$ so that
+\begin{equation}
+\imag{\int_{-\frac{c}{4\df}}^{\frac{c}{4\df}}
+s_1(r')\overline{s_2(r'+r)}\,dr'}=0
+\end{equation}
+Now suppose that range profile alignment has been performed so that most of
+the radial motion $\dr$ has been corrected, except for a small amount
+$\delta r$ less than a range bin.  Then the value of $\delta r$ modulo half
+a wavelength is found by solving the above equation for values of $r$
+between $-\lambda/4$ and $\lambda/4$.  Over such a small variation in $r$,
+\begin{equation}
+s_2(r'+r)\approx e^{-j\overline{k}r}\,s_2(r')
+\end{equation}
+so that $\delta r$ is found by solving
+\begin{equation}
+\imag{e^{-j\overline{k}r}\,\int_{-\frac{c}{4\df}}^{\frac{c}{4\df}}
+s_1(r')\overline{s_2(r')}\,dr'}=0
+\end{equation}
+which is equivalent to
+\begin{equation}
+\label{do eqn:nq mle}
+\overline{k}r=
+-\arg\left\{\int_{-\frac{c}{4\df}}^{\frac{c}{4\df}}
+s_1(r')\overline{s_2(r')}\,dr'\right\}
+\end{equation}
+This is very similar to the maximum likelihood estimator of $\delta r$ on which
+the phase gradient autofocus and adaptive beamforming methods of phase
+compensation are based.
+
+
+To see how phase gradient autofocus is related to (\ref{do eqn:nq mle}),
+the phase gradient operator in (\ref{mc eqn:phidot sum}) is just one of
+many phase gradient or phase difference operators that can be used with
+phase gradient autofocus giving images of similar quality.  Another phase
+difference operator suggested by Wahl {\em et al.\/} is \cite[eq. (5)]{Wah94}
+\begin{equation}
+\Delta\phi=
+\arg\left\{\int_{-\frac{c}{4\df}}^{\frac{c}{4\df}}
+s_1(r')\overline{s_2(r')}\,dr'\right\}
+\end{equation}
+which is the same as (\ref{do eqn:nq mle}). 
+
+Therefore, the phase gradient autofocus can use an estimator of the phase
+difference between profiles that is very closely related to the maximum
+likelihood estimator, thus justifying its use.  
+
+This is only a small part of the complete phase gradient autofocus
+algorithm, with the shifting and windowing parts not yet discussed.  When
+expressed in ISAR language instead of the phase gradient autofocus's native SAR language, these
+operations help to reduce the phase noise associated with the target's
+rotation.  It seems likely that the shifting and windowing parts of the
+phase gradient autofocus could be used with the maximum likelihood phase
+estimator to produce estimates of $\dr$ that are more robust to the
+target's rotation.
+
+
+Adaptive beamforming is a more difficult phase estimator to relate to the
+maximum likelihood solution because the dominant scatterer does no
+averaging at all to determine the reference phases in each range profile. 
+The effects of noise are reduced somewhat in Haywood's modification
+\cite{Hay92a} of the dominant scatterer algorithm by ensuring that the
+average amplitude in the reference range bin is above a threshold, but this
+is still not an optimum solution.  
+
+To try and balance the reduction of rotation-related phase noise obtained
+by selecting a reference range bin containing only a single scatterer, it
+is possible that the dominant scatterer algorithm could be improved by
+selecting several range bins to use as references and averaging the phase
+adjustments across these ranges.  These range bins could be chosen as the
+range bins with the least variance and greatest amplitude, or similar such
+criteria.  This is only a tentative idea, and more development is needed to
+determine whether it is worthwhile.

@@ -1,0 +1,1714 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%			INVERSE SYNTHETIC APERTURE RADAR
+%
+%				  PhD Thesis
+%
+%		Stephen Simmons		simmons@ee.mu.oz.au
+%
+%	    Department of Electrical and Electronic Engineering
+%	    University of Melbourne, Parkville, 3052, Australia
+%
+% Chapter 10:	Resolution and Motion Constraints
+%
+%		started first draft:	25 December 1994
+%		finished first draft:	29 December 1994
+%		submitted:		Mon 9 Jan 1995
+%
+%%%%%%%%%%%%%%%%%%%%% Copyright (C) 1994 Stephen Simmons %%%%%%%%%%%%%%%%%%
+
+\chapter{Resolution and Motion Constraints}
+\label{rmc chp}
+
+\bigletter A number of approximations have been made throughout this thesis
+to justify various simplifying assumptions that may be needed for ISAR
+inversion algorithms.  In this chapter, three approximations will be
+analysed in detail.  These are:
+
+\begin{description}
+\item[Range-Doppler Processing] With range-Doppler ISAR, it is assumed that
+$r_{xy}(t)$, the range of a scatterer at $(x,y)$ on the target at time $t$, 
+can be written as a linear function of $x$ and $y$.
+
+\item[Polar Reformatting] Polar reformatting can be avoided if the polar
+grid on which the radar measurements give $G(k_x,k_y)$ is approximately
+rectangular.  
+
+\item[Motion Estimation] For accurate motion estimation, the target's radar 
+reflections, $s(k,0)$ and
+$s(k,\tau)$, at two times $t=0$ and $t=\tau$, are assumed to differ only by a
+phase shift of $e^{-jk\dr}$, where $\dr$ is the radial distance the target
+moves between the two times.  This is justified if the target has neglible
+rotation during $[0,\tau]$.
+\end{description}
+
+The chapter also contains an analysis of the residual motion
+errors remaining after motion estimation and motion compensation. 
+Conceptually, this analysis of motion estimation errors belongs in 
+chapter \ref{mc chp}.  However, because it uses the same techniques that
+have been developed here for analysing the three assumptions
+mentioned above, it has been included in section \ref{rmc sec:ma}.
+
+For each of the three assumptions to be valid, constraints must be imposed on
+the size and motion of the target and the resolution of the ISAR image.
+These constraints can be checked when imaging a target to see whether the
+range-Doppler approximation is justified, and if so, whether polar
+reformatting can be left out without seriously compromising the image's
+quality.
+
+The classical\footnote{i.e. Incorrect.} view of ISAR as imaging by
+velocity-induced Doppler shifts also imposes restrictions on the size of the
+target and the image's resolution.  Breaking the target into range cells
+and cross-range cells, and insisting that no scatterer moves through a
+resolution cell in the range or cross-range directions, leads to constraints
+such as \cite{Aus84}
+\begin{eqnarray}
+\Delta r_c^2&>&\frac{\lambda D_r}{4}\label{rmc eqn:prc I}\\
+\Delta r_r \Delta r_c&>&\frac{\lambda D_c}{4}\label{rmc eqn:prc II}
+\end{eqnarray}
+Here $D_r$ and $D_c$ are the dimensions of the target in range and 
+cross-range, and $\lambda$ is the wavelength at the radar's centre frequency.
+Similar expressions have been obtained by Brown \cite{Bro69}, 
+Walker \cite{Wal80} and Wehner \cite[eq.~(7.31)]{Weh87}, and they are also
+derived in section \ref{ii sec:dop rr} on page \pageref{ii sec:dop rr}.
+
+
+However, constraining the target's motion so that no point moves through
+more than one range cell or one cross-range cell is an artifact of the
+Doppler-shift view of ISAR.  This is dubious reasoning because these are not
+fundamental limits of ISAR or even of range-Doppler ISAR. Rather they are
+constraints on the need for polar reformatting, a fact that is obscured in
+the Doppler-shift description of ISAR.\footnote{To be fair to Wehner, he
+does mention that the existence of the blur radius is due to the lack of
+polar reformatting, although he does not analyse the equivalent constraints
+when polar reformatting is used. However, these conditions on polar
+reformatting are obtained from the Doppler-shift view of ISAR, a model of
+ISAR in which polar reformatting does not exist!  The coincidence that the
+blur radius constraint is the same as that for polar reformatting 
+perpertuates the myth that the blur radius is important.}
+
+This chapter contains a proper analysis of both the constraints due to
+range-Doppler processing and the constraints due to avoiding polar
+reformatting.  These are followed by a derivation of the constraints due to
+the need for motion estimation and motion compensation in ISAR imaging.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Describing the Target's Size}
+
+Since this chapter is concerned with finding some straightforward limits on
+the resolution of an ISAR image and the size of a target, the target will be
+described in a very simple way.  
+
+The target is characterized by its reflectivity function $g(x,y)$, so the 
+support of $g(x,y)$ will be taken to be the extent of the target.  For
+simplicity, assume that the target's $x$ axis is parallel to the
+radar's boresight axis and its $y$ axis is perpendicular to the boresight
+axis.  This corresponds to the orientation of the rotating target at time
+$t=0$ in figure \ref{ii fig:rotating target} on page \pageref{ii fig:rotating target}.  
+Then the target's range extent $D_r$ and cross-range extent $D_c$ are chosen 
+so that
+\begin{eqnarray}
+\left|x\right|&\leq&\frac{D_r}{2}	\label{rmc eqn:dr}\\
+\left|y\right|&\leq&\frac{D_c}{2}	\label{rmc eqn:dc}
+\end{eqnarray}
+for all points $(x,y)$ on the target.
+
+This is not a complete description of the target's size in other directions,
+but the simple model of the target's size as a rectangle $D_r\times D_c$ is
+sufficient.  A degree of flexibility can be used in establishing the
+constraints derived here because the approximations to which they apply 
+gradually become invalid.  This leads to gentle degradations in the ISAR
+image that affect scatterers at the target's extremities more severely than
+those at target's centre.
+
+As an example, the sets of constraints obtained in this chapter are
+derived by assuming a maximum phase variation of $\pi/2$.  This could just
+as easily have been specified as maximum phase variation of $\pi/4$ or
+$\pi$ or any other sensible amount.  Similarly, there is no reason why the
+RMS phase variation could not have been used (except that the mathematics is
+considerably more difficult).  As a consequence of this flexibility, the
+limits on range and cross-range resolution throughout this chapter should be
+interpreted as ``soft'' limits rather than exact limits.
+
+So when a constraint is written in the form
+\begin{equation}
+\alpha>\beta
+\end{equation}
+it does not mean that the ISAR image is prefectly focussed if $\alpha>\beta$ 
+and completely blurred 
+if $\alpha\leq\beta$.  Rather, it means that the particular approximation 
+is valid if $\alpha\gg\beta$, and that as $\alpha$ approaches $\beta$, the
+image's quality starts to degrade.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Range-Doppler ISAR}
+\label{rmc sec:rd}
+
+ISAR using range-Doppler processing, as described in section \ref{ii sec:rdp}, 
+expresses the range of a scatterer at $(x,y)$ on the target at time $t$ as a 
+time-varying linear function of $x$ and $y$.  The error in this linear
+approximation can be used to derive limits on the maximum size of a target
+for a given range and cross-range resolution. 
+
+The analysis in this section applies to stationary targets rotating at
+constant angular velocity.  Similar results have been obtained in different
+ways by Munson and Soumekh.  Munson analysed the curvature in the wavefront 
+for spotlight-mode SAR \cite[eq. (22)--(24)]{Mun83} and Soumekh considerd
+phase errors due to the plane wave approximation, also for spotlight-mode SAR
+\cite[eq. (A16)]{Sou92a}.  The approach taken in this section is slightly
+different from these.  Here, the variation in the phase error across the
+$(k_x,k_y)$ plane is used to obtain the constraints on the target and the
+ISAR image.  The difference between this and Soumekh's approach is more 
+conceptual than mathematical; its advantage is that the same framework can
+be used to analyse any approximations in $r_{xy}(t)$, including polar
+reformatting and motion estimation (which are the subjects of sections 
+\ref{rmc sec:pr} and \ref{rmc sec:me}).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Defining the Phase Variation $\Delta\psi_{xy}$}
+
+From equation (\ref{ii eqn:rxy(t) rot}), the distance between a scatterer at
+$(x,y)$ in the target's local coordinate system and the radar is
+\begin{equation}
+r_{xy}(t)=\sqrt{(r_0+x\cos\omega t-y\sin\omega t)^2
++(x\sin\omega t+y\cos\omega t)^2}
+\end{equation}
+at time $t$.  The range-Doppler approximation assumes that $r_{xy}(t)$ can
+be written as a linear function of $x$ and $y$, as in equation (\ref{ii
+eqn:rot approx}).  The error inherent in this approximation is found by
+taking the first order Taylor series of $r_{xy}$ while including the
+remainder.  This gives
+\begin{equation}
+r_{xy}(t)=r_0+x\cos\omega t-y\sin\omega t+\epsilon_{xy}(t)
+\end{equation}
+where $\epsilon_{xy}(t)$ is the Taylor series' remainder.
+
+From the model (\ref{ii eqn:s(k,t) II}) of the radar measurements at 
+frequency $k$ and time $t$, 
+\begin{equation}
+s(k,t)=\int\!\!\int g(x,y)\,e^{-jkr_{xy}(t)}\,dx\,dy
+\end{equation}
+the range-Doppler approximation is equivalent to using a modified model
+\begin{equation}
+s(k,t)=e^{-jkr_0}
+\int\!\!\int g'(x,y,k,t)\,e^{-jk(x\cos\omega t-y\sin\omega t)}\,dx\,dy
+\end{equation}
+where the target's reflectivity $g(x,y)$ has been replaced by an apparent
+reflectivity $g'(x,y,k,t)$.  This includes the frequency-varying
+and time-varying phase errors due to the linear approximation of 
+$r_{xy}(t)$
+\begin{equation}
+g'(x,y,k,t)=g(x,y)\,e^{-jk\epsilon_{xy}(t)}=g(x,y)\,e^{-j\psi_{xy}(k,t)}
+\end{equation}
+where the phase error in $g(x,y)$ at time $t$ and frequency $k$ has been
+written $\psi_{xy}(k,t)$.  
+
+Most ISAR inversion algorithms assume that $g(x,y)$ is independent of time
+and frequency,\footnote{One that does not is described by Synder {\em et
+al.}, who consider target reflectivity functions to be random processes 
+\protect\cite{Sny89}.  Their approach is too demanding for the 
+current state of the art in computer technology.} 
+so any change in $\psi_{xy}(k,t)$ for the $N$ values of
+$k$ from $k_0$ to $k_{N-1}$ or for the $M$ values of $t$ from $t_0=-T/2$ to
+$t_{M-1}=T/2$ causes blurring in the final ISAR image.  Note that for any
+particular point on the target, $(x,y)$, the average value of 
+$\psi_{xy}(k,t)$ is unimportant because this can be absorbed into the
+phase of $g(x,y)$.  What matters is the variation over all $k_n$ and $t_m$
+of $\psi_{xy}(k,t)$ for the single point $(x,y)$ on the target.  
+Define the total variation in $\psi_{xy}(k,t)$ for the scatterer at $(x,y)$
+as $\Delta\psi_{xy}$ where
+\begin{equation}
+\label{rmc eqn:Dpsi}
+\Delta\psi_{xy}=\max_{k,t,k',t'}\left|\psi_{xy}(k,t)-\psi_{xy}(k',t')\right|
+\end{equation}
+Then $\Delta\psi_{xy}$ can be directly related to the blurring in the ISAR
+image in the neighbourhood of $(x,y)$ due to the linear range-Doppler
+approximation.  Setting an upper limit on the variation in phase error
+across the target imposes restrictions on the size of the target and the
+resolution of the ISAR image.
+
+Define $\Delta\psi$ as the maximum phase variation over the whole of the 
+target,
+\begin{equation}\label{rmc eqn:dphi def}
+\Delta\psi=\sup_{(x,y)} \Delta\psi_{xy}
+\end{equation}
+where the supremum is taken for $(x,y)$ ranging over the whole of the
+target.\footnote{$\Delta\psi$ is a {\em supremum\/} over $x$ and $y$ because
+$x$ and $y$ are continuous variables.  $\Delta\psi_{xy}$ is a {\em
+maximum\/} of $k$, $t$, $k'$ and $t'$ because these are discrete variables,
+taking on one of the $M$ time steps or one of the $N$ frequency steps.}
+The upper limit used in \cite{Aus84} is a quarter of a wavelength, which
+corresponds to a maximum phase variation of $\pi/2$.  Munson used $\pi/4$
+\cite{Mun83}.  Using a maximum of $\pi/2$ here, the maximum phase variation
+must satisfy 
+\begin{equation}\label{rmc eqn:dphi lim}
+\Delta\psi<\frac{\pi}{2}
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Evaluating the Phase Variation}
+
+The range error $\epsilon_{xy}(t)$ is given by the remainder for a first
+order Taylor series in two variables
+\begin{equation}
+\epsilon_{xy}(t)=\frac{1}{2}
+\left(x\frac{\del}{\del x'}+y\frac{\del}{\del y'}\right)^2 r_{x'y'}(t)
+\end{equation}
+for some $x'$ between $0$ and $x$ and some $y'$ between $0$ and $y$.  
+$x'$ and $y'$ depend on $(x,y)$, the point at which the Taylor series is 
+evaluated, and on $t$ because the Taylor series has time-varying coefficients.  
+They can be written
+\begin{eqnarray}
+x'&=&\alpha(t)\,x\\
+y'&=&\alpha(t)\,y
+\end{eqnarray}
+for some $\alpha(t)$ satisfying $0<\alpha(t)<1$.  Strictly speaking,
+$\alpha(t)$ should be written $\alpha(t,x,y)$, but the extra parameters will
+be omitted because at the moment, the variation in $\epsilon_{xy}(t)$ with
+time is being analysed for one particular point on the target.  
+
+Evaluating the second order partial derivatives in the Taylor series'
+remainder shows that
+\begin{equation}
+\epsilon_{xy}(t)=\frac{x^2+y^2}{2r_{x'y'}(t)}-\frac{1}{2r_{x'y'}^3(t)}
+\left[x(x'+r_0\cos\omega t)+y(y'+r_0\sin\omega t)\right]^2
+\end{equation}
+Under the standard ISAR assumption that the size of the target is small in 
+comparison to its range (an assumption that is consistent with the
+constraints at the conclusion of this analysis), $r_{x'y'}(t)$ may be
+replaced by $r_0$ to give a simpler expression for the range error
+\begin{equation}
+\label{rmc eqn:e(t)}
+\epsilon_{xy}(t)=\frac{r_0}{2}\left[
+\frac{x^2}{r_0^2}+\frac{y^2}{r_0^2}-
+\left(
+	\frac{x}{r_0}\left(\frac{x'}{r_0}+\cos\omega t\right)
+       +\frac{y}{r_0}\left(\frac{y'}{r_0}+\sin\omega t\right)
+\right)^2\right]
+\end{equation}
+
+Write $(x,y)$ in polar coordinates
+\begin{eqnarray}
+x&=&d\cos\phi\\
+y&=&d\sin\phi
+\end{eqnarray}
+so that $(x',y')=(\alpha(t)\,d\cos\phi,\alpha(t)\,d\sin\phi)$.  Using this
+in (\ref{rmc eqn:e(t)}) shows that the range error is
+\begin{equation}
+\epsilon_{xy}(t)=\frac{d^2}{2r_0}\left[1-\left(\frac{\alpha(t)\,d}{r_0}
++\cos(\phi-\omega t)\right)^{\!2}\right]
+\end{equation}
+so that
+\begin{equation}
+\psi_{xy}(k,t)=k\frac{d^2}{2r_0}\left[1-\left(\frac{\alpha(t)\,d}{r_0}
++\cos(\phi-\omega t)\right)^{\!2}\right]
+\end{equation}
+
+Therefore from the definition of the phase variation in (\ref{rmc
+eqn:Dpsi}),
+\begin{eqnarray}
+\Delta\psi_{xy}
+&=&\max_{k,t,k',t'}\left|\psi_{xy}(k,t)-\psi_{xy}(k',t')\right|\nn\\
+&=&\max_{k,t,k',t'}\frac{d^2}{2r_0}\left|
+(k-k')-k\left(\frac{\alpha(t)\,d}{r_0}+\cos(\phi-\omega t)\right)^{\!2}
+\right.\nn\\
+&&{}\left.\qquad+k'\left(\frac{\alpha(t)\,d}{r_0}+\cos(\phi-\omega t')
+\right)^{\!2}
+\right|
+\end{eqnarray}
+The $\alpha(t)\,d/r_0$ inside the modulus may be neglected, giving a simpler
+approximate form of the phase variation.  With the approximation written as
+equality, this is
+\begin{equation}
+\Delta\psi_{xy}=\max_{k,t,k',t'}\frac{d^2}{2r_0} 
+\left|k\sin^2\left(\phi-\omega t\right)
+-k'\sin^2\left(\phi-\omega t'\right)\right|
+\end{equation}
+
+From lemma \ref{rmc thm:lemma} in appendix~\ref{rmc app:lemma}, the maximum
+is attained when $k$ and $k'$ are the upper and lower limits of the stepped-frequency 
+waveform
+\begin{eqnarray}
+k&=&k_{N-1}\\
+k'&=&k_0
+\end{eqnarray}
+and $t$ and $t'$ are respectively the maximum and minimum values of 
+$\sin^2(\phi-\omega\tau)$ for $\tau\in[-T/2,T/2]$
+\begin{eqnarray}
+t&=&\max_{\tau}\sin^2(\phi-\omega\tau)\\
+t'&=&\min_{\tau}\sin^2(\phi-\omega\tau)
+\end{eqnarray}
+Therefore
+\begin{equation}
+\Delta\psi_{xy}=\frac{d^2}{2r_0}\left[
+k_{N-1}\max_{\tau}\sin^2(\phi-\omega\tau)
+-k_0\min_{\tau}\sin^2(\phi-\omega\tau)
+\right]
+\end{equation}
+
+Because of this dependence on $\phi$, the angle of the point $(x,y)$ from
+the $x$ axis, $\Delta\psi$ in (\ref{rmc eqn:dphi def}) is best expressed as
+the supremum over $d$ and $\phi$ rather than the supremum over $x$ and $y$
+\begin{equation}
+\Delta\psi=\sup_{d,\phi}\frac{d^2}{2r_0}\left[
+k_{N-1}\max_{\tau}\sin^2(\phi-\omega\tau)
+-k_0\min_{\tau}\sin^2(\phi-\omega\tau)
+\right]
+\end{equation}
+The maximum and minimum over $\tau\in[-T/2,T/2]$ in the square brackets 
+can be written as one of the following six algebraic expressions depending 
+on the value of $\phi$ at which the supremum is attained:
+\begin{description}
+\item[Interval 1:]
+If $\phi\in[0,\frac{\omega T}{2}]\cup[\pi,\pi+\frac{\omega T}{2}]$,
+\begin{equation}
+\Delta\psi=\sup_{d,\phi}\frac{d^2}{2r_0}
+\,k_{N-1}\sin^2\left(\phi+\frac{\omega T}{2}\right)
+\end{equation}
+
+\item[Interval 2:]
+If $\phi\in[\frac{\omega T}{2},\frac{\pi}{2}-\frac{\omega T}{2}]
+\cup[\pi+\frac{\omega T}{2},\frac{3\pi}{2}-\frac{\omega T}{2}]$,
+\begin{equation}
+\Delta\psi=\sup_{d,\phi}\frac{d^2}{2r_0}\left[
+k_{N-1}\sin^2\left(\phi+\frac{\omega T}{2}\right)
+-k_0\sin^2\left(\phi-\frac{\omega T}{2}\right)
+\right]
+\end{equation}
+
+\item[Interval 3:]
+If $\phi\in[\frac{\pi}{2}-\frac{\omega T}{2},\frac{\pi}{2}]
+\cup[\frac{3\pi}{2}-\frac{\omega T}{2},\frac{3\pi}{2}]$,
+\begin{equation}
+\Delta\psi=\sup_{d,\phi}\frac{d^2}{2r_0}\left[
+k_{N-1}-k_0\sin^2\left(\phi-\frac{\omega T}{2}\right)
+\right]
+\end{equation}
+
+\item[Interval 4:]
+If $\phi\in[\frac{\pi}{2},\frac{\pi}{2}+\frac{\omega T}{2}]
+\cup[\frac{3\pi}{2},\frac{3\pi}{2}+\frac{\omega T}{2}]$,
+\begin{equation}
+\Delta\psi=\sup_{d,\phi}\frac{d^2}{2r_0}\left[
+k_{N-1}-k_0\sin^2\left(\phi+\frac{\omega T}{2}\right)
+\right]
+\end{equation}
+
+\item[Interval 5:]
+If $\phi\in[\frac{\pi}{2}+\frac{\omega T}{2},\pi-\frac{\omega T}{2}]
+\cup[\frac{3\pi}{2}+\frac{\omega T}{2},2\pi-\frac{\omega T}{2}]$,
+\begin{equation}
+\Delta\psi=\sup_{d,\phi}\frac{d^2}{2r_0}\left[
+k_{N-1}\sin^2\left(\phi-\frac{\omega T}{2}\right)
+-k_0\sin^2\left(\phi+\frac{\omega T}{2}\right)
+\right]
+\end{equation}
+
+\item[Interval 6:]
+Finally, if $\phi\in[\pi-\frac{\omega T}{2},\pi]\cup
+[2\pi-\frac{\omega T}{2},2\pi]$,
+\begin{equation}
+\Delta\psi=\sup_{d,\phi}\frac{d^2}{2r_0}
+\,k_{N-1}\sin^2\left(\phi-\frac{\omega T}{2}\right)
+\end{equation}
+\end{description}
+
+The suprema are greatest in intervals 2 and 5 because they are where the
+maxima and minima of $\sin^2(\phi-\omega\tau)$ have the greatest separation
+(the remaining four intervals are special cases where the gradient of
+$\sin^2(\phi-\omega\tau)$ starts to change sign).  These two intervals
+constitute a proportion of $1-4\omega T/2\pi$ of the whole target, which is
+almost the whole target because $\omega T\ll 1$.  Therefore unless the
+target's extent suddenly increases in intervals 1, 3, 4 or 6, the supremum
+of $\Delta\psi$ almost certainly occurs in intervals 2 or 5.  The target's
+extent does not suddenly increase because it is modelled as approximately
+rectangular, so the supremum of $\Delta\psi$ may be found by considering the
+form of the supremum in intervals 2 and 5 only.
+
+In interval 2, a little algebra shows that
+\begin{eqnarray}
+\Delta\psi_{xy}&\leq&\frac{d^2}{2r_0}\left[\vphantom{\frac{1}{2}}
+(k_{N-1}+k_0)\left|\sin\phi\cos\phi\right|\sin\omega T\right. 		\nn\\
+&&\left.\mbox{}+(k_{N-1}-k_0)\left(\sin^2\phi+\sin^2\frac{\omega T}{2}\right)
+\right]
+\end{eqnarray}
+Exactly the same expression is obtained for $\Delta\psi_{xy}$ in interval 5.
+
+Therefore $\Delta\psi$ may be written
+\begin{eqnarray}
+\Delta\psi&\leq&\sup_{d,\phi}\frac{d^2}{2r_0}\left[\vphantom{\frac{1}{2}}
+(k_{N-1}+k_0)\left|\sin\phi\cos\phi\right|\sin\omega T\right.		\nn\\
+&&\left.\mbox{}+(k_{N-1}-k_0)\left(\sin^2\phi+\sin^2\frac{\omega T}{2}\right)
+\right]
+\end{eqnarray}
+If $\phi$ is not close to $0$ or $\pi$, the $\sin^2\phi$ term is much
+greater than the $\sin^2(\omega T/2)$ term, which may then be neglected.
+Writing $d\cos\phi=x$ and $d\sin\phi=y$ gives an upper bound on $\Delta\psi$
+in terms of each point's $x$ and $y$ coordinates
+\begin{equation}
+\Delta\psi\leq\sup_{(x,y)}\frac{1}{2r_0}\left[
+(k_{N-1}+k_0)\left|xy\right|\sin\omega T+(k_{N-1}-k_0)y^2\right]
+\end{equation}
+The supremum is attained when $\left|y\right|=D_c/2$ and
+$\left|x\right|=D_r/2$.  Since the maximum phase variation has been set at
+$\pi/2$ in (\ref{rmc eqn:dphi lim}), this means that the target's extent and
+the ISAR image's resolution must satisfy
+\begin{equation}\label{rmc eqn:rd const}
+\frac{1}{8r_0}\left[(k_{N-1}+k_0)D_rD_c\sin\omega T+
+(k_{N-1}-k_0)D_c^2\right]<\frac{\pi}{2}
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Constraints Due to Range-Doppler Processing}
+
+Equation (\ref{rmc eqn:rd const}) is the basic constraint due to the
+range-Doppler plane-wave approximation.  It is more useful, however, if it is
+expressed in terms of the target and the image's resolution, not the radar
+waveform's parameters.
+
+From equations (\ref{ii eqn:rd drr}) and (\ref{ii eqn:drc rot}),
+the ISAR image's resolution in the range and cross-range directions are
+approximately
+\begin{eqnarray}
+\Delta r_r&=&\frac{2\pi}{k_{N-1}-k_0}\\
+\Delta r_c&=&\frac{4\pi}{(k_0+k_{N-1})\sin\omega T}
+\end{eqnarray}
+Substituting these for $k_0$ and $k_{N-1}$ in (\ref{rmc eqn:rd const})
+gives the condition
+\begin{equation}
+\frac{1}{8r_0}\left[\frac{4\pi}{\Delta r_c}D_rD_c+
+\frac{2\pi}{\Delta r_r}D_c^2\right]<\frac{\pi}{2}
+\end{equation}
+which is
+\begin{equation}
+\frac{D_rD_c}{r_0\Delta r_c}+
+\frac{D_c^2}{2r_0\Delta r_r}<1
+\end{equation}
+
+This is certainly satisfied if
+\begin{eqnarray}
+\frac{D_rD_c}{r_0\Delta r_c}&<&\frac{1}{2}\\
+\frac{D_c^2}{2r_0\Delta r_r}&<&\frac{1}{2}
+\end{eqnarray}
+
+Rearranging these gives limits on the best resolution that can be used with
+range-Dopler processing for a target of a given size and range.
+\begin{eqnarray}
+\Delta r_c&>&\frac{2D_rD_c}{r_0}		\label{rmc eqn:drc fl}\\
+\Delta r_r&>&\frac{D_c^2}{r_0}			\label{rmc eqn:drr fl}
+\end{eqnarray}
+
+When designing a range-Doppler ISAR system, the first step should be using
+equations (\ref{rmc eqn:drc fl}) and (\ref{rmc eqn:drr fl}) to determine the
+highest resolution that the imaging geometry allows.  Then the parameters of
+the stepped-frequency waveform can be selected to give the desired
+resolution providing this is consistent with these limits.
+
+These limits are consistent with the example used throughout chapter
+\ref{hrr chp}, which had a resolution of 1~m by 1~m for a
+target 30~m across at a range of 10~km.  The minimum cross-range resolution
+is 18~cm and the minimum range resolution is 9~cm.\footnote{Note that the
+analysis in this section does not mean that it is possible to obtain
+resolutions of 18~cm by 9~cm.  Other constraints, principly that of a
+narrow relative bandwidth, have to be violated for the limits in
+(\protect\ref{rmc eqn:drc fl}) and (\protect\ref{rmc eqn:drr fl}) to be
+approached.}  Both of these are substantially better than the required 
+resolution of 1~m by 1~m.
+
+One final comment about range-Doppler imaging is that the target does not
+have to be in the far-field for the Taylor series to be valid.  The
+target is in the far-field when
+\begin{equation}
+r_0>\frac{D^2}{\lambda}
+\end{equation}
+where $D$ is the target's extent.  For the parameters above, at X-band where
+$\lambda$=3~cm, the far-field starts at a range of 30~km, whereas the
+$\pi/2$ phase condition says that the target may be as close as 
+$r_0=2\cdot 30^2/1=1.8$~km.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Polar Reformatting}
+\label{rmc sec:pr}
+
+The classical but incorrect view of ISAR imaging as a temporal Doppler
+process restricted by the motion of scatterers through resolution cells
+leads to the bounds on $\Delta r_r$ and $\Delta r_c$ given in equations
+(\ref{rmc eqn:prc I}) and (\ref{rmc eqn:prc II}).  
+
+In this section, errors arising from omitting polar reformatting are
+analysed to derive simple conditions under which acceptable ISAR images
+may be formed without the complexity of polar reformatting.
+These conditions are similar to those in equations (\ref{rmc eqn:prc I}) and 
+(\ref{rmc eqn:prc II}) derived by considering the target's motion through 
+resolution cells.  However, the more exact analysis presented here also
+includes an extra factor of $D_c$ in (\ref{rmc eqn:prc I}) that has not been 
+included in any other analyses of polar reformatting.
+
+The results presented here are explicitly for ISAR imaging a uniformly 
+rotating target using range-Doppler processing.  However, the same method
+can also be used for targets moving in a straight line or for ISAR imaging
+using $\omega-k$ processing.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Defining the Phase Variation $\Delta\psi_{xy}$}
+
+As for the analysis of phase errors due to the range-Doppler approximation,
+the distance between the radar and a scatterer at $(x,y)$ is, at time $t$,
+\begin{equation}
+r_{xy}(t)=r_0+x\cos\omega t-y\sin\omega t+\epsilon_{xy}(t)
+\end{equation}
+where $\epsilon_{xy}(t)$ is the Taylor series' remainder, which is the error
+due to the range-Doppler linear approximation.
+
+Not performing polar reformatting is equivalent to assuming that the polar
+grid in $(k_x,k_y)$-space is rectangular.  Therefore the point
+$(k_x(k,t),k_y(k,t))$ in $(k_x,k_y)$-space is assumed to lie at
+the point given by $(k,t)$ under a linear scaling, translation and a
+rotation.  In matrix notation, 
+\begin{equation}
+\left[\begin{array}{c} k_x(k,t) \\ k_y(k,t) \end{array}\right]
+\approx 
+\left[\begin{array}{cc} \cos\zeta & \sin\zeta \\
+ -\sin\zeta& \cos\zeta \end{array}\right]
+\left[\begin{array}{cc} \alpha & 0 \\ 0 & \beta \end{array}\right]
+\left(
+\left[\begin{array}{c} k \\ t\end{array}\right]
+-\left[\begin{array}{c} k_c \\ t_c\end{array}\right]
+\right)
+\end{equation}
+where $(k_c,t_c)$ is the translation, $(\alpha,\beta)$ the scale factors and
+$\zeta$ the angle the rectangular grid is rotated.
+
+For the case considered here of a uniformly rotating target, the polar grid
+is
+\begin{eqnarray}
+k_x(k,t)&=&k\cos\omega t \\
+k_y(k,t)&=&k\sin\omega t
+\end{eqnarray}
+which is centred about the $k_x$ axis because $t$ varies from $-T/2$ to
+$T/2$.  The polar grid's symmetry indicates that the optimum rectangular 
+grid has its axes parallel with the $k_x$ and $k_y$ axes, thus $\zeta=0$.
+The perimeters of the polar grid for a uniformly rotating target and the
+assumed rectangular grid are shown in figure \ref{rmc fig:pol ref errors}.  
+
+%============================================================================
+\begin{figure}\centering
+\caption{The polar grid is assumed to be rectangular when the ISAR inversion
+does not use polar reformatting.}
+\label{rmc fig:pol ref errors}
+
+\setlength{\unitlength}{0.8cm}
+\begin{pspicture}(-6.5,-3.2)(6.5,4)
+% Allow polar coordinates
+\SpecialCoor	
+% First the axes and their labels
+\psline[linecolor=black,linewidth=1.5pt]{->}(-6,0)(6,0)
+\psline[linecolor=black,linewidth=1.5pt]{->}(0,-3)(0,3)
+\uput[r](6,0){$k_x$}
+\uput[u](0,3){$k_y$}
+% The polar grid
+\psarc[linecolor=gray,linewidth=1pt]{-}{3.8}{339}{381}
+\psarc[linecolor=gray,linewidth=1pt]{-}{5.6}{339}{381}
+\psline[linecolor=gray,linewidth=1pt]{-}(3.8;339)(5.6;339)
+\psline[linecolor=gray,linewidth=1pt]{-}(3.8;381)(5.6;381)
+% The rectangular grid
+\psline[linecolor=darkgray,linewidth=1pt]{-}(3.8,0|4.7;339)(5.6,0|4.7;339)(5.6,0|4.7;381)(3.8,0|4.7;381)(3.8,0|4.7;339)
+\NormalCoor
+\end{pspicture}
+\end{figure}
+%============================================================================
+
+
+Under this assumption of a rectangular grid, the phase $kr_{xy}(t)$ in
+$e^{-jkr_{xy}(t)}$ can be written as
+\begin{equation}
+kr_{xy}(t)=kr_0+(k-k_c)\alpha x+(t-t_c)\beta y+\psi_{xy}(k,t)
++k\epsilon_{xy}(t)
+\end{equation}
+Here $\psi_{xy}(k,t)$ is the phase error associated with ignoring polar
+reformatting and $k\epsilon_{xy}(t)$ is the phase error associated with the
+range-Doppler plane-wave approximation.
+
+The optimum rectangular grid depends on the choice of $\alpha$ and $\beta$
+and $\zeta$; the choice of translation $(k_c,t_c)$ does not matter because 
+this can be absorbed into the phase of $g(x,y)$.
+
+As for the analysis of the range-Doppler approximation, define the total
+variation in the phase error at a point $(x,y)$ over all $k$ and $t$ as
+\begin{equation}
+\Delta\psi_{xy}(\alpha,\beta,\zeta)=\max_{k,t,k',t'}
+\left|\psi_{xy}(k,t)-\psi_{xy}(k',t')\right|
+\end{equation}
+This is a function of the rectangular grid, hence 
+$\Delta\psi_{xy}(\alpha,\beta,\zeta)$ depends on $\alpha$, $\beta$ and $\zeta$.
+Since the aim of the selecting the rectangular grid is to minimize the maximum
+phase variation over the whole of the target, define the maximum phase
+variation for a particular rectangular grid as
+\begin{eqnarray}
+\Delta\psi(\alpha,\beta,\zeta)
+&=&\sup_{(x,y)}\Delta\psi_{xy}(\alpha,\beta,\zeta)\nn\\
+&=&\sup_{(x,y)}\max_{k,t,k',t'}\left|\psi_{xy}(k,t)-\psi_{xy}(k',t')\right|
+\end{eqnarray}
+
+Finally, as the rectangular grid should be selected so that 
+$\Delta\psi(\alpha,\beta,\zeta)$ is minimized, define the optimum maximum
+phase variation, $\Delta\psi$, as
+\begin{eqnarray}
+\Delta\psi&=&\inf_{\alpha,\beta,\zeta}\Delta\psi(\alpha,\beta,\zeta)\nn\\
+&=&\inf_{\alpha,\beta,\zeta}
+\sup_{(x,y)}\max_{k,t,k',t'}\left|\psi_{xy}(k,t)-\psi_{xy}(k',t')\right|
+\label{rmc eqn:dpsi def}
+\end{eqnarray}
+Now, once an upper limit on $\Delta\psi$ has been selected, such as
+\begin{equation}\label{rmc eqn:dpsi cond II}
+\Delta\psi<\frac{\pi}{2}
+\end{equation}
+substitute (\ref{rmc eqn:dpsi def}) and solve for the infinum, supremum and
+maximum to obtain some constraints on the target's motion and the ISAR
+image's resolution.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Evaluating the Phase Variation}
+
+
+For the uniformly rotating target and range-Doppler processing, the phase 
+error $\psi_{xy}(k,t)$ if polar reformatting is omitted is
+\begin{equation}
+\psi_{xy}(k,t)=x\left(\alpha k-k\cos\omega t\right)
+-y\left(\beta t-k\sin\omega t\right)
+\end{equation}
+As mentioned earlier, symmetry dictates that $\zeta=0$ so that the total 
+phase variation $\Delta\psi_{xy}(\alpha,\beta,0)$ is less than
+\begin{eqnarray}
+\Delta\psi_{xy}(\alpha,\beta,0)
+&\leq&\max_{k,t,k',t'} 
+\left|x\right|\left|\left(\alpha k-k\cos\omega t\right)
+-\left(\alpha k'-k'\cos\omega t'\right)\right|			\nn\\
+&&{}+\left|y\right|\left|\left(\beta t-k\sin\omega t\right)-
+\left(\beta t'-k'\sin\omega t'\right)\right| 			\nn\\
+&\leq&\max_{k,t,k',t'} 
+\frac{D_r}{2}\left|\left(\alpha k-k\cos\omega t\right)
+-\left(\alpha k'-k'\cos\omega t'\right)\right|			\nn\\
+&&{}+\frac{D_c}{2}\left|\left(\beta t-k\sin\omega t\right)-
+\left(\beta t'-k'\sin\omega t'\right)\right| 
+\end{eqnarray}
+because $\left|x\right|<D_r/2$ and $\left|y\right|<D_c/2$ for all points on
+the target.  Since this last expression is independent of $x$ and $y$, the 
+supremum over $(x,y)$ has been evaluated, leaving
+\begin{eqnarray}
+\Delta\psi&\leq&\inf_{\alpha,\beta}\max_{k,t,k',t'} 
+\frac{D_r}{2}\left|\left(\alpha k-k\cos\omega t\right)
+-\left(\alpha k'-k'\cos\omega t'\right)\right|			\nn\\
+&&{}+\frac{D_c}{2}\left|\left(\beta t-k\sin\omega t\right)-
+\left(\beta t'-k'\sin\omega t'\right)\right| 
+\end{eqnarray}
+which is bounded above by an expression where the two moduli are maximized
+separately
+\begin{eqnarray}
+\Delta\psi&\leq&\inf_{\alpha}\max_{k,t,k',t'} 
+\frac{D_r}{2}\left|\left(\alpha k-k\cos\omega t\right)
+-\left(\alpha k'-k'\cos\omega t'\right)\right|			\nn\\
+&&{}+\inf_{\beta}\max_{k,t,k',t'} 
+\frac{D_c}{2}\left|\left(\beta t-k\sin\omega t\right)-
+\left(\beta t'-k'\sin\omega t'\right)\right| 
+\end{eqnarray}
+
+Split this upper bound on $\Delta\psi$ into two halves, $L_r$ and $L_c$ so
+that
+\begin{equation}
+\Delta\psi\leq \frac{D_r}{2}\,L_r+\frac{D_c}{2}\,L_c
+\end{equation}
+where
+\begin{equation}
+L_r=\inf_{\alpha}\max_{k,t,k',t'} \left|\left(\alpha k-k\cos\omega t\right)
+-\left(\alpha k'-k'\cos\omega t'\right)\right|
+\end{equation}
+and
+\begin{equation}
+L_c=\inf_{\beta}\max_{k,t,k',t'} \left|\left(\beta t-k\sin\omega t\right)-
+\left(\beta t'-k'\sin\omega t'\right)\right| 
+\end{equation}
+
+Starting with $L_r$, note that $L_r$ can be written 
+\begin{equation}
+L_r=\inf_{\alpha}\max_{k,b,k',b'} \left|kb-k'b'\right|
+\end{equation}
+where the maximum includes values of $k$ and $k'$ in $[k_0,k_{N-1}]$ and 
+values of $b$ and $b'$ in $B$ which is the interval
+\begin{equation}
+B=\left[\cos\left(\frac{\omega T}{2}\right)-\alpha,1-\alpha\right]
+\end{equation}
+Apply theorem \ref{rmc thm:theorem} in appendix \ref{rmc app:lemma}
+with $a=k$, $a'=k'$ and $A=[k_0,k_{N-1}]$ to show that
+\begin{equation}
+L_r=k_{N-1}\left(1-\cos\left(\frac{\omega T}{2}\right)\right)
+\approx k_{N-1}\frac{(\omega T)^2}{8}
+\end{equation}
+where $\alpha$ may take any value between $\cos(\omega T/2)$ and $1$.
+
+The exact value of $L_c$ is much more difficult to obtain, so a slightly
+loose upper bound on $L_c$ will be found instead of the exact value.
+First, use the triangle inequality twice to show that
+\begin{eqnarray}
+L_c&=&\inf_{\beta}\max_{k,t,k',t'} \left|\left(\beta t-k\sin\omega t\right)-
+\left(\beta t'-k'\sin\omega t'\right)\right| \nn\\
+&\leq&2\inf_{\beta}\max_{k,t} \left|\beta t-k\sin\omega t\right| \nn\\
+&\leq&2\left(
+\max_{k,t}\left|k(\sin\omega t-\omega t)\right|+
+\max_{k,t} \left|(\overline{k}-k)\omega t\right|
+\right)
+\end{eqnarray}
+where one particular $\beta=\omega\overline{k}$ has been chosen so that the
+infinum over $\beta$ can be removed.  Here $\overline{k}=(k_0+k_{N-1})/2$.
+The optimum choice of $\beta$ satisfies
+\begin{equation}
+k_0\frac{2}{T}\sin\frac{\omega T}{2}\leq \beta \leq k_{N-1}\omega
+\end{equation}
+but finding it is quite difficult.  With $\beta=\omega\overline{k}$, 
+the maximum occurs when $t=T/2$ and $k=k_{N-1}$ so that
+\begin{eqnarray}
+L_c&\leq&2\left(k_{N-1}\left(\frac{\omega T}{2}-\sin\frac{\omega T}{2}\right)
++\frac{N\Delta k}{2}\frac{\omega T}{2}\right)\nn\\
+&\approx&k_{N-1}\frac{(\omega T)^3}{24}+\frac{N\Delta k\,\omega T}{2}
+\end{eqnarray}
+
+Combining these bounds on $L_r$ and $L_c$ shows that
+\begin{equation}
+\Delta\psi
+\leq\frac{D_r}{2}\,k_{N-1}\frac{(\omega T)^2}{8}
++\frac{D_c}{2}\left(k_{N-1}\frac{(\omega T)^3}{24}
++\frac{N\Delta k\,\omega T}{2}\right)			
+\end{equation}
+Neglecting the $(\omega T)^3$ term, 
+\begin{equation}
+\Delta\psi\leq
+D_r\,k_{N-1}\frac{(\omega T)^2}{16}
++D_c\frac{N\Delta k\,\omega T}{16}
+\end{equation}
+
+Since the maximum value of $\Delta\psi$ has been set to $\pi/2$,
+this means that the target's extent and the ISAR image's resolution 
+must satisfy
+\begin{equation}\label{rmc eqn:pr const}
+D_r\,k_{N-1}\frac{(\omega T)^2}{16}
++D_c\frac{N\Delta k\,\omega T}{16}<\frac{\pi}{2}
+\end{equation}
+if polar reformatting is not required.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Constraints Due to Neglecting Reformatting}
+
+Equation (\ref{rmc eqn:pr const}) is the basic constraint due to neglecting
+polar reformatting.  As for the equivalent constraint for the range-Doppler
+approximation in (\ref{rmc eqn:rd const}), it is more usefully expressed
+in terms of the target and the image's resolution, rather than the radar 
+waveform's parameters.  The radar's average wavelength is the only waveform
+parameter that cannot be eliminated, giving
+\begin{equation}
+\frac{\lambda D_r}{8\Delta r_c^2}+
+\frac{\lambda D_c}{8\Delta r_r\Delta r_c}<1
+\end{equation}
+
+This is satisfied if both terms on the left-hand side are less than a half,
+which gives the following two constraints for neglecting polar reformatting
+\begin{eqnarray}
+\Delta r_c^2&>&\frac{\lambda D_r}{4}		\label{rmc eqn:prc Ia}\\
+\Delta r_r\Delta r_c&>&\frac{\lambda D_c}{4}	\label{rmc eqn:prc IIa}
+\end{eqnarray}
+which are exactly the same as the classical constraints due to motion
+through resolution cells quoted at the beginning of the chapter in 
+equations (\ref{rmc eqn:prc I}) and (\ref{rmc eqn:prc II}), which is rather
+a surprising result.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Motion Estimation for Rotating Targets}
+\label{rmc sec:me}
+
+Because ISAR is designed to image moving targets, motion estimation and
+motion compensation are essential parts of producing a well-focussed image.
+The primary assumption of motion estimation is that the target rotates
+sufficiently slowly that over a short period of time, $t\in[0,\tau]$ for
+some $0\leq\tau\leq T$, measurements of the target's frequency response show
+a phase change due to its radial displacement so that
+\begin{equation}
+s(k,\tau)=e^{-jk\dr} \,s(k,0)
+\end{equation}
+where $\Delta r$ is the radial distance the target moves between $t=0$ and
+$t=\tau$.
+
+In this section, this basic assumption of a target rotating sufficiently
+slowly for motion estimation is analysed to find a constraint on a target's 
+maximum allowable rotation rate.  It is shown that if the target is rotating
+fast enough that it fills most of the ISAR image's cross-range window, it is
+rotating too quickly for accurate motion estimation.  This leads to a
+constraint that the cross-range extent of the target should be at most
+one-quarter of the size of the image's cross-range window.
+
+This result, one that has not appeared in the ISAR literature before, is
+slightly surprising because it suggests a fundamental limitation on accurate
+motion estimation for ISAR
+that is much stricter than the resolution constraints due to range-Doppler
+processing or ignoring polar reformatting.  Since many ISAR images have a
+target that fills more than a quarter of the cross-range window, this
+constraint is often violated.  When this happens, reflections from 
+scatterers that are far from the centre of the target appear as random phase
+shifts while reflections from those closer to the centre have phase shifts
+that are more tightly concentrated about $-k\dr$.  This leads to a type of
+rotation-induced noise which increases in variance as the target fills more
+and more of the cross-range window.
+
+The target motion considered in this section is that of a
+uniformly-rotating target a fixed distance from the radar.  This
+particular motion has been chosen because it is the same as that in the
+other two analyses in this chapter.  The same method can be used with any
+other target motion, and it is a simple matter to rewrite the results in
+terms of a target moving in a straight line at constant speed.  Using a
+target that is uniformly rotating with no radial motion emphasizes that this
+effect is due to the target's rotation, not to the radial motion itself.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Defining the Total Phase Variation $\Delta\psi$}
+
+
+From equation (\ref{ii eqn:rxy(t) rot}), the distance between a scatterer at
+$(x,y)$ in the target's local coordinate system and the radar is
+\begin{equation}
+r_{xy}(t)=\sqrt{(r_0+x\cos\omega t-y\sin\omega t)^2
++(x\sin\omega t+y\cos\omega t)^2}
+\end{equation}
+at time $t$.  This can be written slightly differently as
+\begin{equation}
+r_{xy}(t)=\sqrt{(r_0+x)^2+y^2-2r_0(x(1-\cos\omega t)+y\sin\omega t)}
+\end{equation}
+
+The radar measurement of the target at frequency $k$ and time $t=0$ is
+\begin{equation}
+s(k,0)=\int\!\!\int g(x,y)\,e^{-jkr_{xy}(0)}\,dx\,dy
+\end{equation}
+If the target is rotates negligibly between $t=0$ and $t=\tau$, then 
+\begin{equation}
+s(k,\tau)=e^{-jk\dr} \,s(k,0)
+\end{equation}
+which suggests that
+\begin{equation}
+s(k,\tau)=e^{-jk\dr}\int\!\!\int g(x,y)\,e^{-jkr_{xy}(0)}\,dx\,dy
+\end{equation}
+However, the target is rotating slowly, so the correct expression for
+$s(k,\tau)$ is
+\begin{equation}
+s(k,\tau)=e^{-jk\dr}\int\!\!\int g'(x,y,k,\tau)\,e^{-jkr_{xy}(0)}\,dx\,dy
+\end{equation}
+where the target's reflectivity function has been modified to give
+\begin{equation}
+g'(x,y,k,\tau)=g(x,y)\,e^{-jk\epsilon_{xy}(\tau)}
+\end{equation}
+with $\epsilon_{xy}(\tau)$ being the error in the range of a scatterer at
+$(0,0)$ due to the assumption that the target is not rotating.  Thus
+\begin{equation}
+r_{xy}(\tau)=r_{xy}(0)+\dr+\epsilon_{xy}(\tau)
+\end{equation}
+The variation in $\epsilon_{xy}(\tau)$ at different points $(x,y)$ on the
+target means that the phase difference between $(s(k,0)$ and $s(k,\tau)$ is
+not exactly $-k\dr$.  This is the cause of rotation-induced noise.
+
+Define the total phase variation as
+\begin{equation}
+\Delta\psi=\sup_{xy,x'y'}\left|k\epsilon_{xy}(\tau)-k\epsilon_{x'y'}(\tau)
+\right|
+\end{equation}
+To limit the rotation-induced noise to an acceptable level, place an upper 
+limit on the total phase variation over all points on the target, so that
+\begin{equation}
+\Delta\psi<\frac{\pi}{2}
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Evaluating the Total Phase Variation}
+
+For the uniformly-rotating target, $\epsilon_{xy}(\tau)$ is
+\begin{eqnarray}
+\epsilon_{xy}(\tau)
+&=&\sqrt{(r_0+x)^2+y^2-2r_0(x(1-\cos\omega\tau)+y\sin\omega\tau}
+-\sqrt{(r_0+x)^2+y^2}	\nn\\
+&\approx&x(1-\cos\omega\tau)+y\sin\omega\tau
+\end{eqnarray}
+so that
+\begin{equation}
+\Delta\psi=\sup_{xy,x'y'}\,k\,\left|
+(x-x')(1-\cos\omega\tau)+(y-y')\sin\omega\tau\right|
+\end{equation}
+This supremum is attained for $(x,y)$ and $(x',y')$ at opposite ends of the
+target.  The maximum value of $\left|x-x'\right|$ is $D_r$, the target's 
+range extent, and the maximum value of $\left|y-y'\right|$ is $D_c$, the 
+target's cross-range extent. Therefore
+\begin{equation}
+\Delta\psi=k D_r(1-\cos\omega\tau)+k D_c\sin\omega\tau
+\end{equation}
+
+The time $t=\tau$, at which the measurement of $s(k,\tau)$ was made, is
+between $0$ and $T$, the period over which the data for the ISAR image is
+acquired.  Therefore $\left|\omega\tau\right|\leq\left|\omega T\right|\ll 1$
+and $\Delta\psi$ can be written
+\begin{equation}
+\Delta\psi=\frac{k}{2}D_r(\omega\tau)^2+k D_c\omega\tau
+\end{equation}
+
+Since $\tau$ is some fraction of the total imaging period, write
+\begin{equation}
+\tau=\eta T\qquad\mbox{for some $\eta\in[0,1]$}
+\end{equation}
+Then using $\Delta\psi<\pi/2$, the constraint becomes
+\begin{equation}\label{rmc eqn:me const}
+\frac{k \eta^2}{2}D_r(\omega T)^2+k \eta D_c\omega T<\frac{\pi}{2}
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Constraints Due to Motion Estimation}
+
+Equation (\ref{rmc eqn:me const}), the basic constraint due to the
+target's rotation during motion estimation, can be written 
+\begin{equation}
+\pi\eta^2\frac{\lambda D_r}{\Delta r_c^2}
++2\pi\eta\frac{D_c}{\Delta r_c}<\frac{\pi}{2}
+\end{equation}
+
+The first term is negligible in comparison with the second as $\Delta r_c\gg
+\lambda$.  Therefore the single constraint due to the need for reliable
+motion estimation is
+\begin{equation}
+\Delta r_c>4\eta D_c
+\end{equation}
+
+From this, a small value of $\eta$ is needed for a high cross-range
+resolution.  The smallest $\eta$ can be is $1/M$, where $M$ is the number of
+time steps at which the target's frequency response is sampled.
+The width $W_c$ of the ISAR image's cross-range ambiguity window is 
+\begin{equation}
+W_c=M\Delta r_c
+\end{equation}
+so the constraint on the target's size is
+\begin{equation}
+D_c<\frac{W_c}{4}
+\end{equation}
+which indicates that the target can occupy no more than a quarter of the
+cross-range ambiguity window.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Rotation-Induced Noise}
+
+When a target is rotating slowly, all scatterers move approximately the same
+radial distance as the target moves.  The phase shifts due to each
+scatterer's radial motion add coherently so they can easily be detected for 
+motion compensation.
+
+%============================================================================
+\begin{figure}\centering
+\caption[Rotation-induced noise for a simulated target]{Rotation-induced 
+noise as a function of a simulated target's angular velocity.  The shaded
+horizontal line indicates the expected variance of the rotation-induced
+noise when the target is rotating very quickly and motion estimation becomes
+random.  The shaded vertical line shows the rotation rate when the simulated
+target completely fills the ISAR cross-range window.}
+\label{rmc fig:rin}
+
+\setlength{\unitlength}{1cm}
+\psset{unit=1cm}
+\begin{pspicture}(-1,-1)(11,7)
+% data: f:\phd\data\sim\737rot_f.mat
+% results:
+\psset{xunit=0.5cm,yunit=7cm}
+\savedata{\mydata}[{
+(1,0.0486) (2,0.0969) (3,0.2222) (4,0.3689) (5,0.4286)
+(6,0.4545) (7,.4119) (8,0.4683) (9,0.5196) (10,0.4560) 
+(11,0.5169) (12,0.4149) (13,0.4253) (14,0.4386) (15,0.4545) 
+(16,0.4960) (17,0.5588) (18,0.4673) (19,0.5050) (20,0.4500)
+}]\dataplot[plotstyle=line,showpoints=false]{\mydata} 
+
+\savedata{\mydata}[{
+(1,0.0243) (2,0.0967) (3,0.3783) (4,0.4321) (5,0.4902)
+(6,0.4761) (7,0.4172) (8,0.3702) (9,0.3273) (10,0.3027)
+(11,0.4929) (12,0.4267) (13,0.3535) (14,0.2989) (15,0.2936)
+(16,0.3052) (17,0.3587) (18,0.4301) (19,0.5232) (20,0.6134)
+}]\dataplot[plotstyle=line,showpoints=false]{\mydata}
+
+\savedata{\mydata}[{
+(1,0.0155) (2,0.0661) (3,0.1550) (4,0.2905) (5,0.5450) (6,0.5314) (7,0.5548) 
+(8,0.5758) (9,0.5670) (10,0.5785) (11,0.3975) (12,0.3914) (13,0.4039) (14,0.4208) 
+(15,0.4325) (16,0.4418) (17,0.4563) (18,0.4928) (19,0.5525) (20,0.6333)
+}]\dataplot[plotstyle=line,showpoints=false]{\mydata} 
+
+\savedata{\mydata}[{
+(1,0.0210) (2,0.0603) (3,0.1293) (4,0.2335) (5,0.3713) (6,0.3685) (7,0.4831) 
+(8,0.5392) (9,0.5058) (10,0.4589) (11,0.4205) (12,0.4095) (13,0.4099) (14,0.5089) 
+(15,0.4656) (16,0.3478) (17,0.3184) (18,0.3424) (19,0.3895) (20,0.4539)
+}]\dataplot[plotstyle=line,showpoints=false]{\mydata} 
+
+\savedata{\mydata}[{
+(1,0.0186) (2,0.0644) (3,0.1268) (4,0.1990) (5,0.2876) (6,0.2685) (7,0.4276) 
+(8,0.4490) (9,0.4963) (10,0.4187) (11,0.3867) (12,0.3617) (13,0.3962) (14,0.3872) 
+(15,0.4167) (16,0.4715) (17,0.5499) (18,0.6373) (19,0.6445) (20,0.6644)
+}]\dataplot[plotstyle=line,showpoints=false]{\mydata} 
+
+\savedata{\mydata}[{
+(1,0.0211) (2,0.0814) (3,0.1713) (4,0.3912) (5,0.4301) (6,0.5027) (7,0.5905) 
+(8,0.6963) (9,0.6899) (10,0.4491) (11,0.4471) (12,0.4371) (13,0.4127) (14,0.3852) 
+(15,0.3789) (16,0.5099) (17,0.5195) (18,0.5514) (19,0.5957) (20,0.6667)
+}]\dataplot[plotstyle=line,showpoints=false]{\mydata} 
+
+\savedata{\mydata}[{
+(1,0.0211) (2,0.0616) (3,0.1590) (4,0.2263) (5,0.3065) (6,0.4583) (7,0.4827) 
+(8,0.3179) (9,0.3975) (10,0.4710) (11,0.3868) (12,0.3308) (13,0.3083) (14,0.5454) 
+(15,0.5815) (16,0.5745) (17,0.4760) (18,0.3662) (19,0.3958) (20,0.4214)
+}]\dataplot[plotstyle=line,showpoints=false]{\mydata} 
+
+\savedata{\mydata}[{
+(1,0.0241) (2,0.0920) (3,0.1847) (4,0.4444) (5,0.4041) (6,0.3565) (7,0.3133) 
+(8,0.2760) (9,0.2607) (10,0.5014) (11,0.4727) (12,0.3980) (13,0.3535) (14,0.3124) 
+(15,0.3044) (16,0.3444) (17,0.5229) (18,0.7040) (19,0.7951) (20,0.7539)
+}]\dataplot[plotstyle=line,showpoints=false]{\mydata} 
+
+\savedata{\mydata}[{
+(1,0.0185) (2,0.0776) (3,0.1722) (4,0.5707) (5,0.4853) (6,0.5115) (7,0.5534) 
+(8,0.6387) (9,0.6484) (10,0.6833) (11,0.3849) (12,0.3955) (13,0.4088) (14,0.4155) 
+(15,0.4180) (16,0.4241) (17,0.4510) (18,0.5213) (19,0.6215) (20,0.6729)
+}]\dataplot[plotstyle=line,showpoints=false]{\mydata} 
+
+\savedata{\mydata}[{
+(1,0.0227) (2,0.0709) (3,0.1582) (4,0.2852) (5,0.3796) (6,0.4584) (7,0.5177) 
+(8,0.5500) (9,0.5154) (10,0.4879) (11,0.4765) (12,0.4727) (13,0.4701) (14,0.4600) 
+(15,0.3463) (16,0.3093) (17,0.3219) (18,0.3589) (19,0.4190) (20,0.4938)
+}]\dataplot[plotstyle=line,showpoints=false]{\mydata} 
+
+\savedata{\mydata}[{
+(1,0.0148) (2,0.0541) (3,0.1117) (4,0.1898) (5,0.3023) (6,0.4370) (7,0.4703) 
+(8,0.5218) (9,0.4629) (10,0.4329) (11,0.3900) (12,0.3743) (13,0.4117) (14,0.4160) 
+(15,0.4465) (16,0.4895) (17,0.5469) (18,0.5767) (19,0.6376) (20,0.6714)
+}]\dataplot[plotstyle=line,showpoints=false]{\mydata} 
+
+\savedata{\mydata}[{
+(1,0.0205) (2,0.0776) (3,0.1624) (4,0.2657) (5,0.4374) (6,0.5327) (7,0.6127) 
+(8,0.6810) (9,0.6570) (10,0.7009) (11,0.4702) (12,0.4271) (13,0.3787) (14,0.3511) 
+(15,0.3524) (16,0.5143) (17,0.5407) (18,0.5788) (19,0.6143) (20,0.6381)
+}]\dataplot[plotstyle=line,showpoints=false]{\mydata} 
+
+\savedata{\mydata}[{
+(1,0.0214) (2,0.0900) (3,0.2029) (4,0.3829) (5,0.4762) (6,0.5006) (7,0.5547) 
+(8,0.5068) (9,0.4468) (10,0.3884) (11,0.3554) (12,0.5073) (13,0.4150) (14,0.3429) 
+(15,0.2769) (16,0.2898) (17,0.3276) (18,0.3914) (19,0.4788) (20,0.5224)
+}]\dataplot[plotstyle=line,showpoints=false]{\mydata} 
+
+\savedata{\mydata}[{
+(1,0.0136) (2,0.0562) (3,0.1315) (4,0.2523) (5,0.4353) (6,0.5070) (7,0.5127) 
+(8,0.5291) (9,0.5051) (10,0.4501) (11,0.4436) (12,0.4066) (13,0.4071) (14,0.4254) 
+(15,0.4476) (16,0.4633) (17,0.4764) (18,0.4947) (19,0.5361) (20,0.5892)
+}]\dataplot[plotstyle=line,showpoints=false]{\mydata} 
+
+\savedata{\mydata}[{
+(1,0.0251) (2,0.0844) (3,0.1874) (4,0.3387) (5,0.4471) (6,0.5076) (7,0.5223) 
+(8,0.5544) (9,0.5529) (10,0.5090) (11,0.5031) (12,0.4971) (13,0.5109) (14,0.4234) 
+(15,0.2953) (16,0.2967) (17,0.3215) (18,0.3718) (19,0.4453) (20,0.6229)
+}]\dataplot[plotstyle=line,showpoints=false]{\mydata} 
+
+\savedata{\mydata}[{
+(1,0.0133) (2,0.0515) (3,0.1142) (4,0.2109) (5,0.3520) (6,0.6419) (7,0.5427) 
+(8,0.4877) (9,0.4759) (10,0.4307) (11,0.3977) (12,0.4289) (13,0.4126) (14,0.4260) 
+(15,0.4556) (16,0.4853) (17,0.5056) (18,0.6738) (19,0.6289) (20,0.6224)
+}]\dataplot[plotstyle=line,showpoints=false]{\mydata} 
+
+\savedata{\mydata}[{
+(1,0.0193) (2,0.0734) (3,0.1548) (4,0.2571) (5,0.3803) (6,0.3918) (7,0.6462) 
+(8,0.6815) (9,0.7793) (10,0.7287) (11,0.6529) (12,0.5423) (13,0.3315) (14,0.3212) 
+(15,0.3567) (16,0.4240) (17,0.5014) (18,0.6088) (19,0.6275) (20,0.7077)
+}]\dataplot[plotstyle=line,showpoints=false]{\mydata} 
+
+\savedata{\mydata}[{
+(1,0.0207) (2,0.0575) (3,0.1141) (4,0.1944) (5,0.3034) (6,0.4683) (7,0.3644) 
+(8,0.4275) (9,0.5033) (10,0.4261) (11,0.3866) (12,0.3567) (13,0.3477) (14,0.3491) 
+(15,0.5319) (16,0.4923) (17,0.3845) (18,0.3456) (19,0.3719) (20,0.4142)
+}]\dataplot[plotstyle=line,showpoints=false]{\mydata} 
+
+\savedata{\mydata}[{
+(1,0.0224) (2,0.0802) (3,0.1551) (4,0.2374) (5,0.3266) (6,0.2865) (7,0.2542) 
+(8,0.2425) (9,0.4343) (10,0.5224) (11,0.5373) (12,0.4116) (13,0.3606) (14,0.3360) 
+(15,0.3516) (16,0.4130) (17,0.5538) (18,0.7772) (19,0.8331) (20,0.6082)
+}]\dataplot[plotstyle=line,showpoints=false]{\mydata} 
+
+\savedata{\mydata}[{
+(1,0.0212) (2,0.0828) (3,0.1779) (4,0.4466) (5,0.4696) (6,0.4974) (7,0.5870) 
+(8,0.6626) (9,0.6677) (10,0.4012) (11,0.4100) (12,0.4183) (13,0.4176) (14,0.4089) 
+(15,0.4007) (16,0.4141) (17,0.4726) (18,0.5811) (19,0.6872) (20,0.7808)
+}]\dataplot[plotstyle=line,showpoints=false]{\mydata} 
+
+% Now the axes, tick marks and their labels
+\psaxes[linecolor=black, linewidth=1pt, Ox=0, Dx=5, dx=5, Oy=0.0, Dy=0.1,
+dy=0.1, tickstyle=top, axesstyle=frame]{->}(20,0.9)
+
+\psline[linecolor=white, linewidth=2.5pt](0,0.55)(20,0.55)
+\psline[linecolor=gray, linewidth=1.5pt](0,0.55)(20,0.55)
+\psline[linecolor=white, linewidth=2.5pt](4.8,0)(4.8,0.9)
+\psline[linecolor=gray, linewidth=1.5pt](4.8,0)(4.8,0.9)
+
+\rput[t](10,-0.15){angular velocity (degrees per second)}
+\rput[b]{90}(-3,0.45){rotation-induced noise variance}
+
+\end{pspicture}
+\end{figure}
+%============================================================================
+
+As the target rotates faster, differences in the radial movement of
+scatterers at the outside of the target become greater than a wavelength. 
+The phase shifts due to these scatterers' radial motion add incoherently,
+causing motion-induced noise.  Near the centre of the target, differences in
+the scatterers' ranges are still small enough for their phase shifts to add
+coherently.  As the target rotates more quickly, a smaller component of the
+radar reflection contains information that is useful for motion estimation.
+Therefore, the apparent signal-to-noise ratio for motion
+compensation decreases as the target's angular velocity increases.
+
+This motion-induced noise can be observed in ISAR simulations of a rotating 
+target with no background noise.  Using the maximum likelihood estimator of
+the signal-to-noise ratio in (\ref{ml eqn:nvML}), the apparent
+signal-to-noise ratio is
+\begin{equation}
+\nvML=\frac{1}{4N}\sum_{n=0}^{N-1} 
+\left|s(k_n,0)-s(k_n,\tau)\e{jk_n\rML}\right|^2
+\end{equation}
+where $\rML$ is the maximum likelihood estimate of the radial distance the
+target has moved between $t=0$ and $t=\tau$.  Since the simulation has no
+background noise, a non-zero $\nvML$ indicates noise caused by the target's 
+rotation.
+
+The rotation-induced noise's variance increases as the target rotates
+faster.  The upper limit of the noise variance's expectation is
+\begin{equation}
+\frac{1}{4N}\sum_{n=0}^{N-1}\left|s(k_n,0)\right|^2+\left|s(k_n,\tau)\right|^2
+\end{equation}
+when the phase changes from all scatterers add incoherently and motion
+estimation becomes random.
+
+This is illustrated in figure~\ref{rmc fig:rin} for twenty estimates of the
+rotation-induced noise for target angular velocities ranging from $1^o$ per
+second to $20^o$ per second.  The horizontal line at a noise variance
+of about $0.55$ indicates the noise variance for which motion compensation 
+gives totally random results.  This shows that motion compensation is not
+possible when this simulated target is rotating faster than about
+$5^o$ per second.
+
+Since the target, a simulated 737 aircraft, is $30$~metres by $26$ metres, 
+and the stepped-frequency radar had a centre frequency of $9.19$~GHz, the 
+target fills the ISAR cross-range window when $\omega=4.8^o$ per 
+second.  At this rate, the rotation-induced noise is very high and motion
+estimation will perform poorly.
+
+For motion estimation to work well for this particular simulation, the 
+target's rotation rate should be kept below about $1.2^o$ per second, when
+the ISAR image fills about a quarter of the cross-range window.  This may
+require sampling the target's frequency response more frequently so that the 
+motion estimation is accurate, but using only a subset of the data for
+forming the ISAR image.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Accuracy of Motion Estimation}
+\label{rmc sec:ma}
+
+Many discussions of motion estimation for radar imaging and of focussing
+phased-array radars quote a benchmark of $\lambda/10$ as the conventional
+tolerance required.  This figure is mentioned by Steinberg
+\cite{Tah76} and by Xu {\em et al.\/} \cite{Xu89,Xu90a,Xu90b}.
+
+In this section, a similar analysis to that used throughout this chapter is
+employed to show that for a maximum phase error of $\pi/2$, the magnitude of
+the residual phase errors after motion compensation must be less than
+$\lambda/8$.
+
+This simple result is then extended to show that the residual range errors 
+can be substantially larger than $\lambda/8$ without having a maximum phase
+error greater than $\pi/2$ providing they are clustered
+around multiples of $\lambda/2$.  Since the radial motion estimates produced
+by the maximum likelihood motion estimator are clustered around multiples of
+$\lambda/2$, this justifies using the maximum likelihood motion estimator
+for ISAR motion compensation,  and it also indicates that simple measures of
+motion estimation errors such as variance are inadequate for ISAR.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Simple Analysis of Residual Errors}
+
+Suppose that motion estimation and motion compensation have been applied to
+the radar measurements $s(k,t)$.  If the motion compensation were perfect,
+the measurements would be
+\begin{equation}
+s(k,t)=\int\!\!\int g(x,y)\,e^{-jkr_{xy}(t)}\,dx\,dy
+\end{equation}
+where $r_{xy}(t)$ is the range of point $(x,y)$ on the target at time $t$
+expected by the ISAR inversion algorithm.  However, no motion compensation
+is perfect so the actual measurements are different from the ideal 
+\begin{equation}
+s(k,t)=\int\!\!\int g(x,y)\,e^{-jkr_e(t)}\,e^{-jkr_{xy}(t)}\,dx\,dy
+\end{equation}
+where $r_e(t)$ is the residual motion error at time $t$.
+
+This is equivalent to applying the ISAR inversion to a target reflectivity
+function $g'(x,y,k,t)$ that varies with time and frequency according to the
+severity of the motion estimation error at that time
+\begin{equation}
+g'(x,y,k,t)=g(x,y)\,e^{-jkr_e(t)}
+\end{equation}
+Define the maximum phase variation in $g(x,y)$ as
+\begin{equation}
+\Delta\psi=\max_{k,t,k't,}\left|kr_e(t)-k'r_e(t')\right|
+\end{equation}
+Then by setting an upper limit on the maximum phase variation, such as 
+\begin{equation}
+\Delta\psi<\frac{\pi}{2}
+\end{equation}
+bounds on $r_e(t)$ can be established.
+
+In general, $r_e(t)$ is just as likely to be positive as negative.  Using
+theorem \ref{rmc thm:theorem} in appendix \ref{rmc app:lemma},
+\begin{equation}
+\Delta\psi<2k_{N-1}\max_{\tau} \left|r_e(\tau)\right|
+\end{equation}
+Since $k_{N-1}\approx 8\pi/\lambda$ where $\lambda$ is the average
+wavelength of the frequencies in the stepped-frequency waveform, 
+this shows that the residual motion errors must satisfy
+\begin{equation}
+\left|r_e(t)\right|<\frac{\lambda}{16}\qquad\forall t\in[-T/2,T/2]
+\end{equation}
+which is equivalent to
+\begin{equation}\label{rmc eqn:ma cond I}
+\left|r_e(t)-r_e(t')\right|<\frac{\lambda}{8}\qquad\forall t,t'\in[-T/2,T/2]
+\end{equation}
+These limits are similar to the benchmark accuracy of $\lambda/10$ quoted
+above.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Better Analysis of Residual Errors}
+
+The analysis of residual motion estimation errors in (\ref{rmc eqn:ma cond
+I}) is inadequate because only the residual error modulo $2\pi$ is
+important.\footnote{The modulo $2\pi$ is not important in the other three
+assumptions analysed in this chapter because for all three, $\Delta\psi$ is
+a supremum over all points $(x,y)$ on the target.  Since $x$ and $y$ are
+continuous variables, taking the phase variation modulo $2\pi$ would give
+$\Delta\psi=2\pi$ if any phase variations greater than $2\pi$ were
+present.}  One example of motion estimation where omitting the modulo $2\pi$ 
+condition  does matter is
+the maximum likelihood motion estimator in chapter \ref{ml chp}, where the
+residual motion errors are tightly clustered around small multiples of
+$\lambda/2$.
+
+When modulo $2\pi$ phase errors are included, the definition of $\Delta\psi$
+is modified to read
+\begin{equation}
+\Delta\psi=\min_n\max_{k,t,k't,}\left|kr_e(t)-k'r_e(t')+2n\pi\right|
+\end{equation}
+where the minimum is taken over all integers $n$.
+
+Now suppose that the range errors $r_e(t)$ are clustered around multiples of
+$\lambda/2$, so that $r_e(t)\in R$ where the set $R$ is the union of
+intervals of width $2\delta_i$ centred about $r_i=i\lambda/2$, where $i$ is
+any integer
+\begin{equation}
+R=\bigcup_{i=-\infty}^{\infty} 
+\left[i\frac{\lambda}{2}-\delta_i, i\frac{\lambda}{2}+\delta_i\right]
+\end{equation}
+%The range errors are assumed to have a probability distribution that
+%is symmetrical about $r_e=0$, so that $\delta_{-i}=\delta_i$ for all $i$.
+
+Since the phase error $\psi_e(k,t)$ corresponding to a motion error of 
+$r_e(t)$ at frequency $k$ is
+\begin{equation}
+\psi_e(k,t)=kr_e(t)
+\end{equation}
+the set of phase errors resulting from motion errors in $R$ and frequencies
+in $[k_0,k_{N-1}]$ can be found using similar considerations to lemma
+\ref{rmc thm:lemma} and theorem \ref{rmc thm:theorem} in appendix 
+\ref{rmc app:lemma}.  This set of phase errors $\Psi$ is
+\begin{eqnarray}
+\Psi&=&\left(
+  \bigcup_{i=-\infty}^{-1}\left[
+    k_{N-1}\left(i\frac{\lambda}{2}-\delta_i\right), 
+    k_0\left(i\frac{\lambda}{2}+\delta_i\right)
+  \right]
+\right)\cup\left[-k_{N-1}\delta_0,k_{N-1}\delta_0\right]\nn\\
+&&\qquad\cup\left(
+  \bigcup_{i=1}^{\infty}\left[
+    k_0\left(i\frac{\lambda}{2}-\delta_i\right), 
+    k_{N-1}\left(i\frac{\lambda}{2}+\delta_i\right)
+  \right]
+\right)
+\end{eqnarray}
+
+Then the maximum modulo $2\pi$ phase variation will always be less than
+$\pi/2$ if $\Psi$ is a subset of $\Psi_0$ where
+\begin{equation}
+\Psi_0=\bigcup_{i=-\infty}^{\infty} 
+\left[2i\pi-\frac{\pi}{4}, 2i\pi+\frac{\pi}{4}\right]
+\end{equation}
+This leads to three sets of conditions on $\delta_i$, depending on whether
+$i<0$, $i=0$ or $i>0$.
+
+\begin{description}
+\item[Case (i):] If $i<0$, $\delta_i$ must be chosen so that
+\begin{equation}
+\left[k_{N-1}\left(i\frac{\lambda}{2}-\delta_i\right), 
+      k_0\left(i\frac{\lambda}{2}+\delta_i\right)\right]
+\subset
+\left[2i\pi-\frac{\pi}{4}, 2i\pi+\frac{\pi}{4}\right]
+\end{equation}
+This imposes the following two conditions on the interval's endpoints
+\begin{equation}
+k_{N-1}\left(i\frac{\lambda}{2}-\delta_i\right)\geq 2i\pi-\frac{\pi}{4}
+\end{equation}
+\begin{equation}
+k_0\left(i\frac{\lambda}{2}+\delta_i\right)\leq 2i\pi+\frac{\pi}{4}
+\end{equation}
+Subtracting them shows that each $\delta_i$ must satisfy
+\begin{equation}
+\delta_i\leq\frac{\frac{\pi}{2}+i(k_{N-1}-k_0)\frac{\lambda}{2}}{k_{N-1}+k_0}
+\end{equation}
+
+\item[Case (ii):] If $i=0$, $\delta_0$ must be chosen so that
+\begin{equation}
+\left[-k_{N-1}\delta_0,k_{N-1}\delta_0\right]
+\subset
+\left[-\frac{\pi}{4},\frac{\pi}{4}\right]
+\end{equation}
+which shows that $\delta_0$ must satisfy
+\begin{equation}
+\delta_0\leq\frac{\pi}{4k_{N-1}}
+\end{equation}
+
+\item[Case (iii):] If $i>0$, $\delta_i$ must be chosen so that
+\begin{equation}
+\left[k_0\left(i\frac{\lambda}{2}-\delta_i\right), 
+      k_{N-1}\left(i\frac{\lambda}{2}+\delta_i\right)\right]
+\subset
+\left[2i\pi-\frac{\pi}{4}, 2i\pi+\frac{\pi}{4}\right]
+\end{equation}
+This imposes the following two conditions on the interval's endpoints
+\begin{equation}
+k_0\left(i\frac{\lambda}{2}-\delta_i\right)\geq 2i\pi-\frac{\pi}{4}
+\end{equation}
+\begin{equation}
+k_{N-1}\left(i\frac{\lambda}{2}+\delta_i\right)\leq 2i\pi+\frac{\pi}{4}
+\end{equation}
+Subtracting them shows that each $\delta_i$ must satisfy
+\begin{equation}
+\delta_i\leq\frac{\frac{\pi}{2}-i(k_{N-1}-k_0)\frac{\lambda}{2}}{k_{N-1}+k_0}
+\end{equation}
+\end{description}
+
+Now that all three cases have been considered, putting their separate 
+conditions together shows that
+\begin{equation}
+\delta_i\leq\cases{
+	\ds\frac{\pi}{4k_{N-1}}			& if $i=0$ \cr
+	\ds\frac{\frac{\pi}{2}-\left|i\right|(k_{N-1}-k_0)\frac{\lambda}{2}}
+	  {k_{N-1}+k_0}				& otherwise
+}
+\end{equation}
+%============================================================================
+\begin{figure}\centering
+\caption[Allowable residual motion estimation errors.]{The allowable values 
+of the residual motion estimation errors $r_e$ lie in small intervals
+centred at multiples of $\lambda/2$.  The width of each interval (twice
+$\delta_i$) is shown plotted against the position of its centre.}
+\label{rmc fig:motion errors}
+
+\psset{unit=0.6cm}
+\begin{pspicture}(-7,-1.25)(7,8)
+% First the axes and their labels
+\psline[linecolor=black,linewidth=1.5pt,ticks=none,labels=none]{->}(-6,0)(6,0)
+\psline[linecolor=black,linewidth=1.5pt,ticks=none,labels=none]{->}(0,0)(0,6)
+\uput[r](6,0){$r_e$}
+\uput[u](0,6){width}
+% And the labels with ticks
+\uput[l](0,5){$\frac{\lambda}{8}$}
+\psline[linecolor=black,linewidth=1pt]{-}(0,5)(0.15,5)
+\uput[d](5,0){$\frac{1}{4}\Delta r_r$}
+\psline[linecolor=black,linewidth=1pt]{-}(5,0)(5,-0.15)
+\uput[d](-5,0){$-\frac{1}{4}\Delta r_r$}
+\psline[linecolor=black,linewidth=1pt]{-}(-5,0)(-5,-0.15)
+% Draw in the widths
+\psclip{\pspolygon[linestyle=none](-5,0)(0,5)(5,0)}
+\multido{\nx=-4.5+0.5}{19}{%
+	\psline[linecolor=gray,linewidth=1.2pt]{-}(\nx,0)(\nx,5)
+}
+\endpsclip
+% Finish with an arrow indicating that the intervals are lambda/2 apart
+\psline[linecolor=black,linewidth=1pt]{->}(1,2)(1.5,2)
+\psline[linecolor=black,linewidth=1pt]{<-}(2,2)(2.5,2)
+\uput[u](1.75,2){$\frac{\lambda}{2}$}
+\end{pspicture}
+\end{figure}
+%============================================================================ 
+Now 
+\begin{equation}
+k_{N-1}-k_0\approx \frac{4\pi N\Delta f}{c}
+=4\pi\frac{N\Delta f}{\lambda\overline{f}} 
+\end{equation}
+and
+\begin{equation}
+2k_{N-1}\approx k_{N-1}+k_0 =\frac{8\pi}{\lambda}
+\end{equation}
+so that each $\delta_i$ must satisfy
+\begin{equation}
+\delta_i\leq \frac{\lambda}{16}\left(1-4\frac{N\Delta f}{\overline{f}}
+\left|i\right|\right)
+\end{equation}
+
+Since each $\delta_i$ must be positive, this sets an upper limit on
+$\left|i\right|$
+\begin{equation}
+\left|i\right|\leq\frac{\overline{f}}{4N\Delta f}
+\end{equation}
+From this, the greatest allowable range error $r_e(t)$ can be calculated.
+Using the formula for the ISAR image's range resolution $\Delta r_r$ from
+(\ref{ii eqn:rd drr}), the residual error at the maximum values of $i$ has 
+absolute value $\Delta r_r/4$, so the range errors may vary between
+\begin{equation}
+-\Delta r_r/4 \leq r_e(t) \leq \Delta r_r/4
+\end{equation}
+providing the $r_e(t)$ become increasingly tightly clustered about multiples
+of $\lambda/2$ the further from $r_e=0$ they are.  This is shown in figure
+\ref{rmc fig:motion errors}, where the length of each interval has been 
+plotted against its centre.
+
+Note that when using the maximum likelihood motion estimator $\rML$, 
+the spread of residual motion estimation errors may be as wide as half the ISAR
+image's range resolution, which is a quarter the width
+of the central lobe of the envelope of $J(r)$ (which can be seen in
+figure \ref{ml fig:J(r) pictures}(a)).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Summary of the Constraints}
+
+To summarize the results of this chapter, sets of constraints have
+been obtained for the three assumptions commonly made for ISAR imaging.
+These constraints involve the radar's average wavelength $\lambda$, the
+target's extent in the range and cross-range directions, $D_r$ and $D_c$,
+the ISAR image's resolutions in the range and cross-range directions,
+$\Delta r_r$ and $\Delta r_c$, and the width $W_c$ of the ISAR image's
+cross-range window.
+
+\begin{description}
+\item[Range-Doppler Processing]  The approximation of a spherical wave as
+a plane-wave in range-Doppler ISAR is valid providing
+$$\Delta r_c>\frac{2D_rD_c}{r_0} $$
+and
+$$\Delta r_r>\frac{D_c^2}{r_0}	$$
+
+\item[Polar Reformatting]  The polar reformatting step of the ISAR inversion
+algorithm can be omitted if
+$$\Delta r_c^2>\frac{\lambda D_r}{4}	   $$
+and
+$$\Delta r_r\Delta r_c>\frac{\lambda D_c}{4}  $$
+which are identical to the classical constraints obtained by
+limiting the motion of all scatterers to a single resolution cell.
+
+\item[Motion Estimation]  Accurate motion estimation necessary for ISAR 
+imaging requires that 
+$$D_c<\frac{W_c}{4}$$
+\end{description}
+
+Finally, the analysis of the motion estimation accuracy required for well-focussed ISAR
+images shows that residual motion errors after motion compensation may
+be significantly greater than the conventional limit of $\lambda/10$
+providing the errors are nearly integral multiples of $\lambda/2$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix{Theorems Concerning Maxima}
+\label{rmc app:lemma}
+
+%============================================================================
+\begin{lemma}
+\label{rmc thm:lemma}
+Let $A=[A_0,A_1]$ be an interval of the real line where 
+\begin{equation}
+A_1\geq A_0\geq 0
+\end{equation}
+Similarly, let $B=[B_0,B_1]$ be an interval of the real line where
+\begin{equation}
+B_1\geq B_0\geq 0
+\end{equation}
+Then
+\begin{equation}
+\sup_{\scriptstyle a,a'\in A\atop\scriptstyle b,b'\in B}
+\left|ab-a'b'\right|=A_1B_1-A_0B_0
+\end{equation}
+\end{lemma}
+%============================================================================
+
+%============================================================================
+\begin{proof} For any $a\in A$ and any $b\in B$,\footnote{This is a very
+laborious proof for a lemma which seems intuitively obvious.  This is
+because there are two classes of obvious results; those that are obvious and
+true, and those that are obvious and false.  Sometimes, to be sure
+which class a result belongs to, it is necessary to follow through
+every single step.}
+
+\begin{eqnarray}
+&A_1\geq a\geq A_0\geq 0&\\
+&B_1\geq b\geq B_0\geq 0&
+\end{eqnarray}
+Therefore
+\begin{equation}
+A_1B_1\geq aB_1\geq ab\geq A_0b\geq A_0B_0\geq 0
+\end{equation}
+for all $a\in A$ and $b\in B$.  Therefore, for any $a,a'\in A$ and any
+$b,b'\in B$,
+\begin{equation}
+A_1B_1\geq ab\qquad\mbox{and}\qquad a'b'\geq A_0B_0\geq 0
+\end{equation}
+Subtracting $a'b'$ from $ab$ shows that
+\begin{equation}
+A_1B_1-A_0B_0\geq ab-a'b'\geq A_0B_0-A_1B_1
+\end{equation}
+so that 
+\begin{equation}
+A_1B_1-A_0B_0\geq \left|ab-a'b'\right|
+\end{equation}
+Therefore
+\begin{equation}
+A_1B_1-A_0B_0\geq\sup_{\scriptstyle a,a'\in A\atop\scriptstyle b,b'\in B}
+\left|ab-a'b'\right|
+\end{equation}
+
+To show that this upper bound is attained, let $a=A_1$, $b=B_1$, $a'=A_0$
+and $b'=B_0$.  Therefore
+\begin{equation}
+A_1B_1-A_0B_0=\sup_{\scriptstyle a,a'\in A\atop\scriptstyle b,b'\in B}  
+\left|ab-a'b'\right|
+\end{equation}
+and the lemma is proved.
+\end{proof}
+%============================================================================
+
+
+%============================================================================
+\begin{theorem}
+\label{rmc thm:theorem}
+Let $A=[A_0,A_1]$ be an interval of the real line where 
+\begin{equation}
+A_1\geq A_0\geq 0
+\end{equation}
+Similarly, let $B=[B_0,B_1]$ be an interval of the real line where
+\begin{equation}
+B_1\geq B_0
+\end{equation}
+where now $B_0$ and $B_1$ may be negative.  Then for $s$ real
+\begin{equation}
+\inf_s\sup_{\scriptstyle a,a'\in A\atop\scriptstyle b,b'\in B}
+\left|a(b-s)-a'(b'-s)\right|=A_1(B_1-B_0)
+\end{equation}
+and this is attained for any value of $s$ in $B$.
+\end{theorem}
+%============================================================================
+
+%============================================================================
+\begin{proof}
+First note that the intervals $A$ and $B$ are finite and bounded, hence the
+space $A^2\times B^2$ from which each $(a,a',b,b')$ comes is compact.  
+Therefore for all finite $s$, the supremum of $\left|a(b-s)-a'(b'-s)\right|$ 
+is attained for some $(a,a',b,b')$ in $A^2\times B^2$.  Now suppose $s\in S$
+for some sufficiently large closed set $S$.  Then the infinum of 
+$\sup\left|a(b-s)-a'(b'-s)\right|$ is also attained for some $s\in
+S$.\footnote{This artificial compact set $S$ is needed to ensure that the 
+infinum is attained, not just approached as $s\to\pm\infty$.  The conclusion
+of the theorem that the infinum is attained for every $s\in B$ is an 
+{\em a posteriori\/} justification for choosing any closed finite set $S$
+such that $B\subset S$.}
+
+Initially, consider
+\begin{equation}
+\sup_{\scriptstyle a,a'\in A\atop\scriptstyle b,b'\in B}
+\left|a(b-s)-a'(b'-s)\right|
+\end{equation}
+for a fixed real $s$.  There are three cases to consider depending on the
+value of $s$ for which the infinum is attained; $s\leq B_0$, $s\geq B_1$ and
+$B_0\leq s\leq B_1$.
+\begin{description}
+\item[Case (i):] $s\leq B_0$\hfill\mbox{}\linebreak
+For every $b,b'\in B$, $b-s$ and $b'-s$ are positive.  Using the lemma
+\ref{rmc thm:lemma} shows that
+\begin{eqnarray}
+\sup_{\scriptstyle a,a'\in A\atop\scriptstyle b,b'\in B}
+\left|a(b-s)-a'(b'-s)\right|
+&=&A_1(B_1-s)-A_0(B_0-s)\nn\\
+&=&(A_1B_1-A_0B_0)-(A_1-A_0)s\nn\\
+&\geq&(A_1B_1-A_0B_0)-(A_1-A_0)B_0\nn\\
+&=&A_1(B_1-B_0)
+\end{eqnarray}
+
+\item[Case (ii):] $s\geq B_1$\hfill\mbox{}\linebreak
+For every $b,b'\in B$, $s-b$ and $s-b'$ are positive.  Using the lemma
+\ref{rmc thm:lemma} again shows that
+\begin{eqnarray}
+\sup_{\scriptstyle a,a'\in A\atop\scriptstyle b,b'\in B}
+\left|a(b-s)-a'(b'-s)\right|
+&=&A_1(s-B_0)-A_0(s-B_1)\nn\\
+&=&(A_0B_1-A_1B_0)+(A_1-A_0)s\nn\\
+&\geq&(A_0B_1-A_1B_0)+(A_1-A_0)B_1\nn\\
+&=&A_1(B_1-B_0)
+\end{eqnarray}
+
+\item[Case (iii):] $B_0\leq s \leq B_1$\hfill\mbox{}\linebreak 
+If the supremum is attained with $s\leq b,b'\leq B_1$, apply case (i) with
+$B_0$ replaced by $s$ to show that
+\begin{eqnarray}
+\sup_{\scriptstyle a,a'\in A\atop\scriptstyle b,b'\in B}
+\left|a(b-s)-a'(b'-s)\right|
+&=&A_1(B_1-s)-A_0(s-s)\nn\\
+&=&A_1(B_1-s)\nn\\
+&\leq&A_1(B_1-B_0)
+\end{eqnarray}
+If the supremum is attained with $B_0\leq b,b'\leq s$, apply case (ii) with
+$B_1$ replaced by $s$ to show that
+\begin{eqnarray}
+\sup_{\scriptstyle a,a'\in A\atop\scriptstyle b,b'\in B}
+\left|a(b-s)-a'(b'-s)\right|
+&=&A_1(s-B_0)-A_0(s-s)\nn\\
+&=&A_1(s-B_0)\nn\\
+&\leq&A_1(B_1-B_0)
+\end{eqnarray}
+The third possibility is that the supremum is attained with $B_0\leq b\leq
+s\leq b'\leq B_1$.  For all $b$ and $b'$ between these limits
+\begin{eqnarray}
+\left|a(b-s)-a'(b'-s)\right|&=&a(s-b)+a'(b'-s)\nn\\
+&\leq&A_1(s-B_0)+A_1(B_1-s)\nn\\
+&=&A_1(B_1-B_0)
+\end{eqnarray}
+This upper bound on the supremum is attained when $a=a'=A_1$, $b=B_0$ and
+$b'=B_1$.  Therefore, if $B_0\leq b\leq s\leq b'\leq B_1$
+\begin{equation}
+\sup_{\scriptstyle a,a'\in A\atop\scriptstyle b,b'\in B}
+\left|a(b-s)-a'(b'-s)\right|=A_1(B_1-B_0)
+\end{equation}
+\end{description}
+
+Since all three cases have an identical upper bound, the supremum must be
+less than or equal to this common upper bound
+\begin{equation}
+\sup_{\scriptstyle a,a'\in A\atop\scriptstyle b,b'\in B}
+\left|a(b-s)-a'(b'-s)\right|\leq A_1(B_1-B_0)
+\end{equation}
+so that
+\begin{equation}
+\inf_s\sup_{\scriptstyle a,a'\in A\atop\scriptstyle b,b'\in B}
+\left|a(b-s)-a'(b'-s)\right|\leq A_1(B_1-B_0)
+\end{equation}
+
+Setting $a=a'=A_1$, $b=B_0$ and $b'=B_1$ for any $s\in B$ shows that
+this bound is reached with equality.  Therefore
+\begin{equation}
+\inf_s\sup_{\scriptstyle a,a'\in A\atop\scriptstyle b,b'\in B}
+\left|a(b-s)-a'(b'-s)\right|=A_1(B_1-B_0)
+\end{equation}
+as required.
+\end{proof}
+%============================================================================
+

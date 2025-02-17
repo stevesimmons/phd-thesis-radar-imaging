@@ -1,0 +1,533 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%			INVERSE SYNTHETIC APERTURE RADAR
+%
+%				  PhD Thesis
+%
+%		Stephen Simmons		simmons@ee.mu.oz.au
+%
+%	    Department of Electrical and Electronic Engineering
+%	    University of Melbourne, Parkville, 3052, Australia
+%
+% Chapter 2:	Mathematical Preliminaries
+%
+%		started first draft:	30 September
+%		finished first draft:	1 October
+%		second draft:		23 December
+%		submitted:		9 January
+%
+%%%%%%%%%%%%%%%%%%%%% Copyright (C) 1995 Stephen Simmons %%%%%%%%%%%%%%%%%%
+
+\chapter{Mathematical Preliminaries}
+\label{mp chp}
+
+\bigletter Statistical estimation theory is used throughout this thesis to
+derive and analyse estimators of a radar target's motion.  This chapter
+summarizes the main results of maximum likelihood estimation for 
+real parameters, and extends it for use with complex parameters.
+
+Full derivations of the results mentioned here may be found in the papers by
+Fisher \cite{Fis25,Fis34b,Fis34a}, and the books by Cram\'{e}r~\cite{Cra46}, 
+Kay~\cite{Kay93}, Kendall, Stuart and Ord \cite{Stu87,Stu91}, 
+Rao~\cite{Rao65}, and Van Trees~\cite{Van68}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Statistical Estimation Theory}
+
+As expressed by Fisher in {\em Theory of Statistical Estimation\/}
+\cite{Fis25}, 
+\begin{quote}\singlespaced
+``Problems of estimation arise when we know, or are willing to assume, the
+form of the frequency distribution of the population, as a mathematical
+function involving one or more unknown parameters, and wish to estimate the
+values of these parameters by means of the observational record available. 
+A statistic may be defined as a function of the observations designed as an
+estimate of any such parameter.''
+\hspace*{\fill}{\em R. A. Fisher, 1925.}
+\end{quote}
+
+The population's known frequency distribution takes the form of a
+probability density function $p(\md;\uvp)$.\footnote{To distinguish scalars,
+vectors and matrices, scalars usually appear in a normal-weight typeface
+$x$, vectors as bold lower-case letters $\vect{x}$ and matrices as bold
+upper-case letters $\vect{X}$.}  This is one member of the family of
+probability distributions $p(\md;\cdot)$ selected by the vector of unknown
+parameters 
+\begin{equation}
+\uvp=\left[\up_1, \up_2, \cdots, \up_M\right]^T
+\end{equation} 
+The estimator $\uvpWH$ is a function of the measured data $\md$ used to 
+estimate $\uvp$, and the estimate is the value of the estimator for one
+particular realization of $\md$.\footnote{Some authors use an upper-case
+letter for an estimator and a lower-case letter for an estimate.
+Here both are indicated by the same symbol $\upWH$ and the context
+indicates whether the estimator or an estimate is meant.}
+
+In general, there are infinitely many ways in which $\md$ can be processed
+to give $\uvpWH$.  Estimation theory is used to select one particular way of
+processing the measurements to give the ``best'' estimate of $\uvp$, where
+``best'' is defined in terms of some optimality criteria.  Three useful 
+optimality criteria are consistency, bias and efficiency.
+
+An estimator is consistent if the estimates tend to the parameter as
+the number of measurements tends to infinity.  Formally, this convergence in
+probability is written that for any $\epsilon>0$ and any $\nu>0$, there 
+exists some $N$ such that
+\begin{equation}
+\Pr\left\{\left|\uvpWH_n-\uvp\right|<\epsilon\right\}>1-\nu \qquad\forall n>N
+\end{equation}
+where $n$ is the number of measurements in $\md$ combined to form the
+estimate $\uvpWH_n$.  
+
+An estimator is unbiased if its expectation is equal to the unknown
+parameter
+\begin{equation}
+\E{\uvpWH}=\uvp
+\end{equation}
+This is a stronger condition than consistency, because a consistent
+estimator with a finite expectation is asymptotically unbiased as the number 
+of measurements tends to infinity.  A consistent estimator is not, in
+general, unbiased for a finite number of measurements.
+
+If an estimator is not unbiased, it is biased.  The
+expectation of a biased estimator is 
+\begin{equation}
+\E{\uvpWH}=\uvp+\vect{b}(\uvp)
+\end{equation}
+where $\vect{b}(\uvp)$ is the bias.  Depending on the form of
+$\vect{b}(\uvp)$, it may be possible to modify the estimator
+so that it becomes unbiased.
+
+Bias and consistency are important criteria, but they are not the only 
+criteria by which estimators should be judged.  When $\uvp$ has a number of
+unbiased estimators, the optimal estimator is the one which makes best use
+of the information contained in the set of measurements.\footnote{Fisher was
+critical of the method of moments for ignoring efficiency and using
+consistency as the only criterion, saying ``estimates of the parameters may
+be obtained $\ldots$ but they are often estimates of little value''
+\protect\cite{Fis25}.}
+
+Fisher measured an estimator's efficiency as the ratio of the estimator's
+variance to the most efficient estimator's variance, expressed as a
+percentage.  Then an efficient estimator, with an efficiency of $100\,\%$,
+has the lowest variance of all consistent estimators.  Another estimator,
+with an efficiency of $\eta\,\%$, requires approximately $100 N/\eta$
+measurements to have the same variance as the efficient estimator has with $N$
+measurements.
+
+Terminology has evolved since Fisher's papers on statistical estimation
+theory.  Optimal estimators are now minimum variance unbiased
+estimators (MVUE) and efficient now means a MVUE which also
+attains the \CR bound.  Rao \cite[p. 283]{Rao65} complains that ``logically,
+this does not appear to be a good definition'' because the \CR bound is only 
+one among many lower bounds.  The word ``efficient'' has such strong
+non-mathematical connotations that it seems wrong not calling a
+minimum-variance estimator efficient if the \CR bound is unobtainable by any
+estimator.
+
+The difficulty with using the MVUE criterion to select an estimator is that
+there is no general method for minimizing $\Var{\uvpWH}$ over all unbiased
+estimators.  All that can be done is analyse different estimators to compare
+their biases and variances.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The Cram\'{e}r-Rao Bound}
+
+The \CR bound provides a simple lower bound on the variance of any unbiased
+estimator $\uvpWH$.  It is stated first for a scalar parameter $\up$, then 
+for a vector parameter $\uvp$, and finally, it is restated as a lower bound
+on the mean square error of any biased estimator.  The \CR bound is
+sometimes called the minimum variance bound, or MVB \cite{Stu91}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{The Scalar \CR Bound}
+
+Let $\md$ be a set of measurements used to estimate an unknown parameter
+$\up$ where the probability density function $p(\md;\up)$ is known and the 
+partial derivatives
+$$\frac{\del p(\md;\up)}{\del\up}$$
+and
+$$\frac{\del^2p(\md;\up)}{\del \up^2}$$
+exist and are absolutely integrable.
+If $\upWH$ is an unbiased estimator of $\up$, the variance of $\upWH$
+is always bounded below by the \CR bound
+\begin{equation}
+\Var{\upWH}\geq \left[\E{\left(\frac{\del\ln p(\md;\up)}
+{\del \up}\right)^2}\right]^{-1}
+=\left[-\E{\frac{\del^2\ln p(\md;\up)}
+{\del\up^2}}\right]^{-1}
+\end{equation}
+
+The \CR bound is satisfied with equality exactly when 
+\begin{equation}\label{mp eqn:NSCforCRB}
+\frac{\del\ln p(\md;\up)}{\del\up}=k(\up)\left(\upWH-\up\right)
+\end{equation}
+for some function $k(\up)$ not dependent on $\md$.
+If this is the case, the estimator has the lowest variance of
+all unbiased estimators and is called efficient.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{The Vector \CR Bound}
+
+When the unknown parameter $\uvp$ is a vector, the \CR bound is expressed in
+terms of the Fisher information matrix $\infmat{\uvp}$.  The elements of
+$\infmat{\uvp}$ are
+\begin{eqnarray}
+I_{ij}&=&\E{\frac{\del\ln p(\md;\uvp)}{\del\ui{i}}
+\frac{\del\ln p(\md;\uvp)}{\del \ui{j}}}\nn\\
+&=&-\E{\frac{\del^2\ln p(\md;\uvp)}{\del\ui{i}\del\ui{j}}}
+\end{eqnarray}
+Then, following the notation used by Bhattacharyya in \cite{Bha46},
+if $I^{ii}$ is the $i^{\rm th}$ element on the diagonal of 
+$\invinfmat{\uvp}$, the vector \CR bound is
+\begin{equation}
+\Var{\uiWH{i}}\geq I^{ii}
+\end{equation}
+provided $\uiWH{i}$ is an unbiased estimator of $\ui{i}$.  This follows from 
+the more general result that the covariance of $\uvpWH$,
+defined by
+\begin{equation}
+\Cov{\uvpWH}=\E{(\uvpWH-\uvp)(\uvpWH-\uvp)^T}
+\end{equation}
+satisfies 
+\begin{equation}
+\Cov{\uvpWH}-\invinfmat{\uvp}\geq 0
+\end{equation}
+which is read as ``the matrix $\Cov{\uvpWH}-\invinfmat{\uvp}$
+is positive semidefinite.''
+
+The vector \CR bound is satisfied with equality if and only if 
+\begin{equation}
+\uiWH{i}-\ui{i}=\sum_{j=1}^M k_{ij}(\uvp)\frac{\del\ln p(\md;\uvp)}{\del
+\ui{j}}
+\end{equation}
+for all $\md$ and all $i$ from $1$ to $M$ and for some set of functions 
+$k_{ij}(\uvp)$ not dependent on $\md$.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{The Scalar \CR Bound for a Biased Estimator}
+
+When the estimator $\upWH$ is biased, the \CR bound becomes a lower bound 
+on the mean square error
+\begin{equation}
+\E{\left(\upWH-\up\right)^2}\geq 
+\frac{\ds\left(1+\frac{db(\up)}{d\up}\right)^2}
+{\ds\E{\left(\frac{\del\ln p(\md;\up)}{\del \up}\right)^2}}
+\end{equation}
+Note that if $-2<db(\up)/d\up<0$, the mean square error of the 
+biased estimator may be lower than the variance of an unbiased estimator.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Some Other Bounds}
+
+If an efficient estimator does not exist, the \CR bound sets a lower limit
+on an estimator's variance that cannot be attained.  This makes it difficult
+to find how close a particular estimator is to the MVUE.
+
+A number of other bounds may be used instead of the \CR bound to give
+greater lower bounds on the variance of any unbiased estimator.  The
+Bhattacharyya bound \cite{Bha46,Bha47,Bha48} gives a tighter bound than the
+\CR bound by considering higher-order partial derivatives of $p(\md;\up)$.
+The Barankin bound~\cite{Bar49} is a more general bound on the estimator's
+$s^{\rm th}$ central moments that includes both the \CR and the Bhattacharyya
+bounds as special cases.
+
+One of the problems with these bounds is that improving the variance's 
+lower bound comes at the price of increased complexity.  Therefore the \CR
+bound is often the only bound considered, even when no efficient estimator
+exists.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Maximum Likelihood Estimation}
+
+In maximum likelihood estimation, the population's probability density 
+function $p(\md;\uvp)$ dependent on the unknown parameters is called the likelihood
+function\footnote{Fisher would not approve of this!  In \protect\cite{Fis30},
+he complained ``In spite of the emphasis I have always laid upon the
+difference between probability and likelihood there is still a tendency to
+treat likelihood as though it were a sort of probability.'' Probability
+relates a population with known parameters to an unknown sample.  Likelihood
+relates a known sample to a population with unknown parameters.  The
+conceptual difference is important, but mathematically it is just a scaling 
+factor which usually may be ignored.}
+
+Since there is no {\em a priori\/} knowledge about $\uvp$, the most likely 
+value of $\uvp$ is that which maximizes $p(\md;\uvp)$.  If $p(\md;\uvp)$ 
+has a unique maximum over the domain of $\uvp$, the maximum likelihood 
+estimate of $\uvp$ is
+\begin{equation}
+\uvpML=\arg\max_{\uvp}\;p(\md;\uvp)
+\end{equation}
+The maximum likelihood estimator $\uvpML$ is also a solution to the 
+likelihood equation
+\begin{equation}
+\left.\frac{\del p(\md;\uvp)}{\del\ui{i}}\right|_{\uvp=\uvpML}=0
+\qquad\forall\, i=1,2,\ldots, M
+\end{equation}
+
+Since $\ln x$ is strictly monotonically increasing with $x$, the global 
+maximum of $p(\md;\uvp)$ occurs at the same value of $\uvp$ as the
+global maximum of $\ln p(\md;\uvp)$.  The maximum likelihood estimator may
+be found by maximizing $\ln p(\md;\uvp)$
+\begin{equation}
+\uvpML=\arg\max_{\uvp}\;\ln p(\md;\uvp)
+\end{equation}
+or equivalently by solving the log-likelihood equation
+\begin{equation}
+\left.\frac{\del\ln p(\md;\uvp)}{\del\ui{i}}\right|_{\uvp=\uvpML}=0
+\qquad\forall\, i=1,2,\ldots, M
+\end{equation}
+
+Note that the global maximum of $p(\md;\uvp)$ must be unique for the
+maximum likelihood estimator to exist.
+
+If the maximum likelihood estimator is unbiased and 
+$\del\ln p(\md;\uvp)/\del\ui{i}$ can be written in the form of equation 
+(\ref{mp eqn:NSCforCRB}), the maximum likelihood estimator satisfies the
+\CR bound with equality.  
+
+If $\del\ln p(\md;\uvp)/\del\ui{i}$ cannot be written in this form,
+all that can be said is that the maximum likelihood estimator's variance is
+greater than the \CR lower bound.  Other estimators may have lower variances 
+than $\uvpML$, but there is no simple way of finding them.
+
+Conversely, if an efficient estimator exists, then it is necessarily the
+maximum likelihood solution $\uvpML$ which is the unique solution of the
+likelihood equation.
+
+In general, $\uvpML$ is neither unbiased nor efficient.  But as the number of
+data samples tends to infinity,
+\begin{equation}
+\uvpML\to\uvp
+\end{equation}
+and
+\begin{equation}
+\Cov{\uvpML}\to\invinfmat{\uvp}
+\end{equation}
+so $\uvpML$ is asymptotically unbiased and asymptotically efficient,
+and tends to a normal distribution with mean $\uvp$ and variance equal to 
+the \CR lower bound
+\begin{equation}
+\uvpML\stackrel{d}{\sim}{\cal N}\left(\uvp,\invinfmat{\uvp}\right)
+\end{equation}
+as $N\rightarrow\infty$.  The $\stackrel{d}{\sim}$ indicates that
+probability distribution of $\uvpML$ is asymptotically equal to the normal
+distribution on the right-hand side.
+
+
+In order for the maximum likelihood estimator to be asymptotically normal,
+the likelihood function must satisfy a number of regularity conditions.  
+
+One approach \cite[p. 175]{Ngu89b} combines the likelihood function
+$p(\md;\uvp)$ and the regions of support of $\md$ and $\uvp$ to form a
+model.   If the model satisfies seven regularity conditions, then it is
+called a regular model.  Finally, a necessary and sufficient condition for
+the asymptotic normality of the maximum likelihood estimator is that it is
+formed from a regular model.
+
+A simpler set of regularity conditions can be used if they are to be
+sufficient but not necessarily necessary.  Examples of sufficient sets of
+regularity conditions are given by \cite[section 5f.1]{Rao65} and 
+\cite[appendix 7B]{Kay93}.  The following theorem from \cite{Kay93} is for a
+scalar parameter.
+
+%============================================================================
+\begin{theorem}[Asymptotic Properties of the MLE]
+\label{mp thm:normality}
+Given a likelihood function $p(\md;\up)$, the maximum likelihood 
+estimator $\upML$ of the unknown parameter $\up$ has a probability density
+function for large data records that is asymptotically normal 
+\begin{equation}
+\upML\stackrel{d}{\sim}{\cal N}\left(\up,\invinfmat{\up}\right)
+\end{equation}
+if the first and second-order partial derivatives of the log-likelihood
+function are well-defined and
+\begin{equation}
+\E{\frac{\del\ln\,p(\md;\up)}{\del\up}}=0
+\end{equation}
+\end{theorem}
+%============================================================================
+
+\begin{proof}
+See appendix 7B of \cite{Kay93}.
+\end{proof}
+
+Similar regularity conditions apply for maximum likelihood estimators
+$\uvpML$ of vector parameters $\uvp$ provided that the estimators of each of
+the parameters average the measurements so that the central limit theorem
+applies.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Bayesian Estimation}
+
+
+Maximum likelihood estimation assumes that nothing is known about the
+unknown parameters $\uvp$ before the measurements $\md$ are made.  This
+means that in order to use maximum likelihood estimation, any {\em a priori\/}
+information must be discarded.
+
+Bayesian estimation, a completely different estimation philosophy from maximum
+likelihood estimation, assumes that the unknown parameters are random.  The
+prior information takes the form of an {\em a priori\/} probability density
+function $p(\uvp)$ on the unknown parameters.
+
+This prior knowledge can be combined with the model's conditional
+probability density $p(\md|\uvp)$ to give the joint probability density
+function
+\begin{equation}
+p(\md,\uvp)=p(\md|\uvp)\,p(\uvp)
+\end{equation}
+
+The performance of a Bayesian estimator is measured a little differently
+from a maximum likelihood estimator.  The minimum variance criterion is not
+appropriate because the $\uvp$ in 
+\begin{equation}
+\Var{\uvpWH}=\E{(\uvpWH-\uvp)^2}
+\end{equation}
+is a random parameter, not a constant.  However, this concept can be 
+generalized to random parameters using the Bayes risk $\cal R$.
+
+Define the error $\bayeserror$ as the difference between the random parameters 
+and their estimates
+\begin{equation}
+\bayeserror=\uvp-\uvpWH
+\end{equation}
+for one particular set of measurements $\md$ and realization of $\uvp$.  Then 
+the seriousness of making a particular error is measured using a cost
+function ${\cal C}(\bayeserror)$.  The Bayes risk associated with a
+particular estimator $\uvpWH$ and cost function ${\cal C}(\bayeserror)$ is the
+expected cost averaged over all values of $\md$ and $\uvp$
+\begin{equation}
+{\cal R}=\int\!\!\int {\cal C}(\uvp-\uvpWH)\,p(\md,\uvp)\,d\md\,d\uvp
+\end{equation}
+Minimizing $\cal R$ over all estimators gives the Bayesian estimator for
+that particular cost function.
+
+%When the cost function is quadratic, ${\cal C}(\bayeserror)=\bayeserror^2$, the
+%Bayesian estimator is the the minimum mean-square error (MMSE),
+%which is the mean of the posterior probability density
+%\begin{equation}
+%\uvpWH=\int \up\,p(\uvp|\md)\,d\uvp
+%\end{equation}
+%When the cost function is absolute, ${\cal C}(\bayeserror)=\left|\bayeserror\right|$,
+%the Bayesian estimator is the median of the posterior probability density
+%\begin{equation}
+%\Pr\left(\uvp\leq\uvpWH\,|\,\md\right)=\frac{1}{2}
+%\end{equation}
+When the cost function is $1$ unless the error is less than a threshold 
+$\delta$, 
+\begin{equation}
+{\cal C}(\bayeserror)=\cases{0 &  $\left|\bayeserror\right|<\delta$\cr
+1 &  $\left|\bayeserror\right|\geq\delta$}
+\end{equation}
+the Bayesian estimator in the limit $\delta\rightarrow 0$ is the value of 
+$\uvp$ that maximizes the posterior density function
+\begin{equation}
+\uvpWH=\arg\max_{\uvp}\,p(\uvp|\md)
+\end{equation}
+which is called the maximum {\em a posteriori\/} (MAP) estimator.
+
+%It can be shown that if the cost function is symmetric and convex, and the
+%{\em a posteriori\/} probability density $p(\uvp|\md)$ is unimodal and is
+%symmetric about its conditional mean, then these three Bayesian estimators
+%are equivalent.
+
+%Therefore, when the prior distribution $p(\up)$ of $\up$ is Gaussian 
+%and the measurement noise is Gaussian, and one of these three cost functions
+%is used, the Bayesian estimator may be expressed as the MAP estimator
+%$$\upH=\arg\max_{\up}\,p(\up|\md)$$
+
+Using Bayes' rule,
+\begin{equation}
+p(\uvp|\md)=\frac{p(\md|\uvp)\,p(\uvp)}{p(\md)}
+\end{equation}
+Since the denominator is independent of $\uvp$, the MAP estimator can be
+written
+\begin{equation}
+\uvpWH=\arg\max_{\uvp}\,p(\md|\uvp)\,p(\uvp)
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Diffuse Priors}
+\label{mp sec:dp}
+
+If the {\em a priori\/} probability density is uniform 
+\begin{equation}
+p(\uvp)=\frac{1}{\epsilon}	
+\end{equation}
+over a sufficiently large region of volume $1/\epsilon$, and zero elsewhere,
+the MAP estimator coincides with the maximum likelihood estimator in the limit that
+$\epsilon\to 0$.  A $p(\uvp)$ like this is called a diffuse prior
+\cite{Bar88}.
+
+In the special case that $p(\uvp)$ is constant on some closed subset
+$\UVP$, the MAP estimator becomes
+\begin{equation}
+\uvpWH=\arg\max_{\uvp\in\UVP}\,p(\md|\uvp)
+\end{equation}
+Provided that $\uvpML\in\UVP$, this has the same form as the maximum 
+likelihood estimator
+\begin{equation}
+\uvpML=\arg\max_{\uvp}\,p(\md;\uvp)
+\end{equation}
+because the {\em a posteriori\/} probability density function $p(\md|\uvp)$
+has the same form as the likelihood function $p(\md;\uvp)$.
+This provides the justification for using maximum likelihood estimation over
+a restricted domain $\UVP$ which is known {\em a priori\/} to contain $\uvp$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Estimation with Complex Parameters}
+\label{mp sec:complex}
+
+When the unknown parameter in an estimation problem is a complex vector 
+$\uvp$, the maximum likelihood estimator $\uvpML$ and the Fisher information matrix 
+$\infmat{\uvp}$ may be found by forming a new vector $\tilde{\uvp}$ of real 
+parameters
+\begin{equation}
+\tilde{\uvp}=\left[\begin{array}{c}\real{\uvp}\\\imag{\uvp}\end{array}\right]
+\end{equation}
+and proceed as for the real case to find the maximum likelihood estimator and Fisher
+information matrix of $\tilde{\uvp}$.
+
+A more satisfying approach is to reformulate real parameter estimation 
+for complex parameters.  This is a brief summary of the results
+obtained by Kay in section 15.7 of \cite{Kay93}.
+
+The derivative of a function $f(z)$ with respect to the complex argument $z$
+is defined as
+\begin{equation}\label{mp eqn:complex deriv}
+\frac{\del f(z)}{\del z}=\frac{1}{2}
+\left(\frac{\del f(x+jy)}{\del x}-j\frac{\del f(x+jy)}{\del y}\right)
+\end{equation}
+where $z=x+jy$ with $x$ and $y$ real.  Then it is easy to show that
+\begin{equation}
+\frac{\del z}{\del z}=1 \quad\quad\mbox{and}\quad\quad
+\frac{\del\conj{z}}{\del z}=0
+\end{equation}
+One surprising consequence of this is that
+\begin{equation}
+\frac{\del\,|z|^2}{\del z}=\conj{z}
+\end{equation}
+with no factor of $2$ as in the real case.
+
+The maximum likelihood estimator $\uvpML$ is, as for real $\uvp$,
+\begin{equation}
+\uvpML=\arg\max_{\uvp}\,p(\md;\uvp)
+\end{equation}
+If $\uvpWH$ is any unbiased estimator of $\uvp$, the \CR bound is
+\begin{equation}
+\Cov{\uvpWH}\geq \invinfmat{\uvp}
+\end{equation}
+which is interpreted to mean that $\Cov{\uvpWH}-\invinfmat{\uvp}$ is
+positive semidefinite.  The elements of the covariance matrix are
+\begin{equation}
+\left(\Cov{\uvpWH}\right)_{ij}=\E{\left(\uiWH{i}-\ui{i}\right)
+\conj{\left(\uiWH{j}-\ui{j}\right)}}
+\end{equation}
+and the elements of the Fisher information matrix $\infmat{\uvp}$ are
+\begin{equation}
+I_{ij}=\E{\frac{\del\ln p(\md;\uvp)}{\del \conj{\ui{i}}}
+\frac{\del\ln p(\md;\uvp)}{\del \ui{j}}}
+=-\E{\frac{\del^2\ln p(\md;\uvp)}{\del \conj{\ui{i}}\del \ui{j}}}
+\end{equation}

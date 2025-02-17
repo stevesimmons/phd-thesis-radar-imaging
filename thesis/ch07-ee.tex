@@ -1,0 +1,1080 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%			INVERSE SYNTHETIC APERTURE RADAR
+%
+%				  PhD Thesis
+%
+%		Stephen Simmons		simmons@ee.mu.oz.au
+%
+%	    Department of Electrical and Electronic Engineering
+%	    University of Melbourne, Parkville, 3052, Australia
+%
+% Chapter 7:	Evaluating the Maximum Likelihood Estimator
+%
+%		started first draft:	Thu 6 Oct 1994
+%		finished first draft:	Sun 9 Oct 1994
+%		started second draft:	Tue 3 Jan 1995
+%		submitted:		Mon 9 Jan 1995
+%
+%%%%%%%%%%%%%%%%%%%%% Copyright (C) 1995 Stephen Simmons %%%%%%%%%%%%%%%%%%
+
+\chapter[Evaluating the ML Motion Estimator]{Evaluating the Maximum Likelihood Motion Estimator}
+\label{ee chp}
+
+\bigletter One problem with maximum likelihood estimation is that the
+estimator is found by maximizing the likelihood function.  In some cases,
+this maximization problem gives the estimator as an explicit function of the
+measurements
+\begin{equation}
+\uvpML=f(\md)
+\end{equation}
+Unfortunately, estimating a target's radial motion $\dr$ is not such a
+case.  The maximum likelihood estimator $\rML$ is found by minimizing the 
+cost function
+\begin{equation}\label{ee eqn:J(r)}
+J(\r)=\sum_{n=0}^{N-1} \left|a_n-b_n\e{jk_n\r}\right|^2
+\end{equation}
+but the machinery of maximum likelihood estimation does not reveal how to
+minimize $J(\r)$, or even say whether $\rML$ can be found with
+sufficient accuracy for ISAR motion estimation at an acceptably low cost in
+both time and computational resources.
+
+The straightforward approach of maximizing a function using Newton-Raphson
+iteration or gradient descent is not practical because $J(\r)$ has many
+closely-spaced local minima.  An order-of-magnitude calculation shows that 
+the motion estimation for a $128\times 128$ pixel ISAR image taken at
+X-band would require about one billion floating point arithmetic operations
+if one of these methods were used.
+
+Clearly, an exhaustive search is not suitable for finding the global minimum
+of $J(\r)$.  This chapter examines the problem of minimizing $J(\r)$ and
+proposes a number of efficient methods.   Each method uses a global 
+minimization scheme to find the approximate location of $\rML$ followed by a
+local minimization scheme which converges to $\rML$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Global Minimization of $J(\r)$}
+\label{ee sec:agm}
+
+Two algorithms for the approximate global minimization of $J(\r)$ are
+presented here.  The first algorithm is based on a discrete Fourier
+transform (DFT) and gives an approximation $\rWH$ to the global minimum of
+$J(\r)$ that is at most $c/2N\Delta f$, or one ISAR range bin, away from
+$\rML$.
+
+The second algorithm uses a chirp-Z transform (CZT) \cite{Rab69b,Rab69a} 
+to interpolate part of the Fourier spectrum of the first
+method, and so determine $\rML$ with an accuracy much better than one ISAR range
+bin.  The parameters of the chirp-Z transform can be adjusted to select the
+resolution and the portion of the Fourier spectrum zoomed into.
+
+These algorithms are efficient because they look only at the envelope of
+$J(\r)$, ignoring the high frequency carrier.  They can be implemented
+efficiently using the fast Fourier transform if the
+frequencies in the stepped-frequency waveform are uniformly spaced, as in
+(\ref{ml eqn:f0+ndf})
+\begin{equation}\label{ee eqn:fn}
+k_n=k_0+n\dk\qquad\mbox{for $n=0,1,\ldots,N-1$}
+\end{equation}
+
+Note that these global minimizations of $J(\r)$ are not using the discrete
+Fourier transform as a spectral estimator.  Rather one form of the expression
+for $J(\r)$ is as the real part of a continuous-range\footnote{\label{ee
+ftn:crft}The
+continuous-time Fourier series gives a continuous-time representation of a 
+function with a discrete frequency spectrum.  Here, the two domains are
+range and frequency, not time and frequency.  Hence $J(\r)$ is a
+continuous-range Fourier series.} Fourier series.  The maximum likelihood
+estimate of $\dr$ is found by locating the maximum of the Fourier spectrum.
+Since this is really implementing a correlation, it is misguided to try
+modern spectral estimators with the hope of achieving a higher resolution 
+estimate of $\dr$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Global Minimization Using a DFT}
+
+The following algorithm describes an efficient way to find the approximate
+location $\rWH$ of the global minimum of $J(\r)$, which occurs when
+$\r=\rML$.  The estimate $\rWH$ is guaranteed to be within
+$c/2N\Delta f$ of the true global minimum at $\rML$.
+
+%============================================================================
+\begin{algorithm}[Global Minimization of $J(\r)$ using a DFT]
+\label{ee alg:min using DFT}\mbox{}\par
+
+To obtain a rough estimate $\rWH$ of the location of the global minimum of 
+$J(\r)$:
+\begin{enumerate}
+\item From the set of measurements $\md$ in (\ref{ml eqn:md}), form 
+\begin{equation}
+c_n=a_n\overline{b_n}\qquad\forall n=0,1,\ldots, N-1
+\end{equation}
+
+\item Take the discrete Fourier transform (in the form of an FFT) of 
+the $\{c_n\}$ to give the vector $\{C_m\}$
+\begin{equation}
+C_m={\cal F}\{c_n\}
+\end{equation}
+
+\item Find the index of the absolute maximum of the $\{C_m\}$
+\begin{equation}
+k=\arg\,\max_m\,\left|C_m\right|
+\end{equation}
+
+\item A rough estimate $\rWH$ of the location of the global minimum of
+$J(\r)$ is
+\begin{equation}
+\rWH=k\,\frac{c}{2N\Delta f}
+\end{equation}
+\end{enumerate}
+\end{algorithm}
+%============================================================================
+
+The next theorem is a formal statement of the accuracy of $\rWH$.  
+Note that it is a theorem concerning the maximum distance between $\rWH$ and
+$\rML$, not the distance between $\rWH$ and $\dr$.  That depends on the bias
+and variance of $\rML$, and is discussed in chapter~\ref{sp chp}.
+
+%============================================================================
+\begin{theorem}[Global Minimization of $J(\r)$ using a DFT]
+\label{ee thm:min using DFT}\mbox{}\par
+
+Let $\rML=\arg\min_{\r}J(\r)$ where $J(\r)$ is the cost function given by
+(\ref{ee eqn:J(r)}) and the stepped-frequency waveform is given by
+(\ref{ee eqn:fn}).  Then $\rWH$, the rough estimate of $\rML$ calculated
+using algorithm~\ref{ee alg:min using DFT}, is less than one ISAR range bin from
+$\rML$
+\begin{equation}
+\left|\rWH-\rML\right|<\frac{c}{2N\Delta f}
+\end{equation}
+\end{theorem}
+%============================================================================
+
+%============================================================================
+\begin{proof}
+See appendix~\ref{ee app:min using DFT}.
+\end{proof}
+%============================================================================
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Global Minimization Using a CZT}
+
+
+The procedure in algorithm~\ref{ee alg:min using DFT} determines $\rML$ to
+within one ISAR range bin, which is typically orders of magnitude larger
+than the small fraction of a wavelength required for ISAR motion
+estimation.  The procedure is also inefficient because the minimum of
+$J(\r)$ is sought over the whole ISAR range ambiguity window.  Most
+targets, even those moving as swiftly as aircraft, can move only a few
+range bins in the time between measuring consecutive frequency responses. 
+It would make sense to examine only part of the range ambiguity window, and
+do so with a higher resolution than algorithm~\ref{ee alg:min using DFT}.
+
+The resolution of the DFT can be increased by appending zeros to the end of
+the data sequence before transforming.  This interpolates the discrete 
+frequency spectrum, giving a a discrete spectrum which more closely
+approximates the data's continuous Fourier transform.  Note that the
+discrete spectrum has more samples, so the spectral peaks may be found more
+accurately, but the fundamental frequency resolution of the transform is
+unchanged because this depends on the interval between the measurements,
+which stays the same.  (This is illustrated convincingly in figure~4 of 
+\cite{Kay81}.)
+
+While zero padding can be used to interpolate the Fourier spectrum and so 
+achieve more accurate estimates of $\rML$, the increase in resolution comes
+at the cost of longer vectors to be transformed.  Another disadvantage of
+zero-padding is that the Fourier spectrum is still calculated over the whole
+of the range ambiguity window.
+
+Both of these difficulties with the DFT may be overcome by using a chirp-Z
+transform to compute the Fourier spectrum over an arbitrary portion of the
+range ambiguity window with an arbitrary resolution.
+
+The chirp-Z transform, described by Rabiner, Schafer and Rader in
+\cite{Rab69b} and \cite{Rab69a}, is an efficient way of evaluating the 
+Z transform\footnote{Incidently, the chirp-Z transform implemented in 
+{\tt MATLAB} version 4.1 does not follow Rabiner's, Schafer's and Rader's
+papers.  A revised version of {\tt czt.m} is included in
+appendix~\protect\ref{ee app:Matlab CZT}.} 
+\begin{equation}
+X_k=\sum_{n=0}^{N-1}x_nz_k^{-n}
+\end{equation}
+along a spiral contour in the $Z$ plane where
+\begin{equation}
+z_k=AW^{-k}\qquad \mbox{for $k=0,1,\ldots,M-1$}
+\end{equation}
+$A$ is the start of the contour, $\arg W$ is the angular spacing between
+samples and $\left|W\right|$ determines how quickly the contour moves 
+towards or away from the origin.  The number of samples, $M$, in the contour
+is independent of the number of data points, $N$.
+
+When $M=N$, $A=1$, and $W=\e{j\frac{2\pi}{N}}$, the spiral contour is the
+set of points spaced uniformly around the unit circle and the chirp-Z
+transform becomes a discrete Fourier transform. 
+
+Well-chosen values of $M$, $A$ and $W$ can achieve a higher resolution over 
+a small part of the spectrum, and this is used in the following algorithm to
+obtain a much better approximation to $\rML$ than 
+algorithm~\ref{ee alg:min using DFT}. 
+
+%============================================================================
+\begin{algorithm}[Global Minimization of $J(\r)$ using a CZT]
+\label{ee alg:min using CZT}\mbox{}\par
+
+To obtain a rough estimate $\rWH$ of the location of the global minimum
+$\rML$ of $J(\r)$ when it is known that $\rML$ lies within the range
+$[\r_l,\r_u]$:
+\begin{enumerate}
+\item Choose the desired accuracy of the estimate $\rWH$ of $\rML$. This
+accuracy $\epsilon_{\r}$ should be smaller than an ISAR range bin but
+larger than half the radar wavelength
+\begin{equation}
+\frac{c}{2 f_0} < \epsilon_{\r} < \frac{c}{2 N \Delta f}
+\end{equation}
+
+\item Choose an integer $M$ (not necessarily a power of $2$) such that the 
+resolution of the CZT is better than the desired accuracy $\epsilon_{\r}$
+\begin{equation}
+\frac{\r_u-\r_l}{M-1}<\epsilon_{\r}
+\end{equation}
+
+\item From the set of measurements $\md$ in (\ref{ml eqn:md}), form 
+\begin{equation}
+c_n=a_n\overline{b_n}\qquad\forall n=0,1,\ldots, N-1
+\end{equation}
+
+\item Given $M$, $\r_l$ and $\r_u$, define $A$ and $W$ by
+\begin{equation}
+A=\e{j\frac{4\pi}{c}\Delta f \r_l}
+\end{equation}
+and
+\begin{equation}
+W=\e{j\frac{4\pi}{c}\Delta f \frac{\r_u-\r_l}{M-1}}
+\end{equation}
+
+\item Take the CZT of the $\{c_n\}$ using the values of $M$, $A$ and $W$
+just calculated to give the sequence $\{C_m\}$ for $m=0,1,\ldots, M-1$.
+
+\item Find the index of the absolute maximum of the $\{C_m\}$
+\begin{equation}
+k=\arg\,\max_m\,\left|C_m\right|
+\end{equation}
+
+\item The estimate $\rWH$ of $\rML$ accurate to $\epsilon_{\r}$ is
+\begin{equation}
+\rWH= \r_l+k\frac{\r_u-\r_l}{M-1}
+\end{equation}
+\end{enumerate}
+\end{algorithm}
+%============================================================================
+
+The correctness of the algorithm is stated formally in the following
+theorem:
+
+%============================================================================
+\begin{theorem}[Global Minimization of $J(\r)$ using a CZT]
+\label{ee thm:min using CZT}\mbox{}\par
+
+Let $\rML=\arg\min_{\r}J(\r)$ where $J(\r)$ is the cost function given by
+(\ref{ee eqn:J(r)}) and the stepped-frequency waveform is given by
+(\ref{ee eqn:fn}).  Then $\rWH$, the estimate of $\rML$ calculated
+using algorithm~\ref{ee alg:min using CZT}, attains the desired accuracy,
+$\epsilon_{\r}$ providing
+\begin{equation}
+\epsilon_{\r} > \frac{c}{2f_0}
+\end{equation}
+\end{theorem}
+%============================================================================
+
+%============================================================================
+\begin{proof}
+This is an outline of the proof of theorem~\ref{ee thm:min using CZT}.  Most of
+the additional steps needed to fill in the gaps and make it rigorous 
+are given in the proof of theorem~\ref{ee thm:min using DFT} in 
+appendix~\ref{ee app:min using DFT}.
+
+Minimizing $J(\r)$ is equivalent to maximizing the bandpass signal 
+\begin{equation}
+g(\r)=\real{\e{-jk_0\r}\sum_{n=0}^{N-1}c_n\e{-jn\Delta k\r}}
+\end{equation}
+so that
+\begin{equation}
+\rML=\arg\max_{\r}g(\r)
+\end{equation}
+The complex envelope of $g(\r)$ is
+\begin{equation}
+g_{+}(\r)=\e{-jk_0\r}\sum_{n=0}^{N-1}c_n\e{-jn\Delta k\r}
+\end{equation}
+Because $g(\r)$ is a bandpass signal, the location of the global maximum of
+$g(\r)$ differs from the location of the global maximum of
+$\left|g_{+}(\r)\right|$ by at most half the period of the modulation of
+$g(\r)$.  Therefore
+\begin{equation}
+\left|\rML-\arg\max_{\r}\left|g_{+}(\r)\right|\right|\leq\frac{c}{4f_0}
+\end{equation}
+Similarly, the peak in the CZT spectrum is at most half the resolution of
+the CZT away from the global maximum of $\left|g_{+}(\r)\right|$
+\begin{equation}
+\left|\rWH-\arg\max_{\r}\left|g_{+}(\r)\right|\right|\leq\frac{1}{2}
+\epsilon_{\r}
+\end{equation}
+Therefore using the triangle inequality
+\begin{equation}
+\left|\rWH-\rML\right|\leq \frac{c}{4f_0}+\frac{1}{2}\epsilon_{\r}
+<\epsilon_{\r}
+\end{equation}
+and the accuracy in the estimate of $\rML$ is better than $\epsilon_{\r}$.
+\end{proof}
+%============================================================================
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Justifying the Incorporation of Prior Knowledge}
+
+Algorithm~\ref{ee alg:min using CZT} has suggested that one way to speed up 
+the search for the global minimum of $J(\r)$ is to restrict the scope of the 
+search by including some {\em a priori\/} information.  The theoretical
+justification for this is discussed in the context of the maximum 
+likelihood estimator.
+
+Maximizing the likelihood function in maximum likelihood estimation is
+justified on the basis that no {\em a priori\/} information about the
+unknown parameter is available.  But when {\em a priori\/} information about
+the unknown parameter is available, it should be used along with the
+likelihood function.  In this situation, the appropriate estimator
+of $\up$ is not the maximum likelihood estimator $\upML$ but the maximum {\em
+a posteriori\/} estimator $\upMAP$ which maximizes the {\em a posteriori\/}
+probability density function $\pr{\up|\md}$. 
+
+The discussion of diffuse priors in section \ref{mp sec:dp} shows that when
+the {\em a priori\/} information takes the form of a closed interval on
+which the unknown parameter has uniform prior probability, the maximum {\em
+a posteriori\/} estimator has the same form as the maximum likelihood
+estimator restricted to that closed interval.
+
+This justifies using {\em a priori\/} information to restrict the search
+for the global minimum of $J(\r)$ to a particular portion of the ISAR range
+ambiguity window in algorithm~\ref{ee alg:min using CZT}.  The estimate of
+$\dr$ is no longer the maximum likelihood estimate but the maximum {\em a
+posteriori\/} estimate.   Since the difference is one of name rather than
+form, the estimate of $\dr$ will continue to be called the maximum likelihood
+estimate, even though this is strictly speaking incorrect.
+
+As an example, if a ship's maximum velocity is $v$, and two frequency
+responses are measured separated by a time interval of length $T$, $\dr$
+must lie in the interval $[-vT,vT]$.  If the prior distribution of $\dr$ is
+uniform over this interval and the maximum likelihood estimator $\rML$ lies
+within the interval, the maximum likelihood and the maximum {\em a
+posteriori\/} estimates are identical.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Exact Local Minimization}
+\label{ee sec:elm}
+
+
+Once one of the two approximate global minimization algorithms 
+\ref{ee alg:min using DFT} or \ref{ee alg:min using CZT} have been used to obtain
+a rough estimate of $\rML$, another step is needed to find the global
+minimum of $J(\r)$ in the neighbourhood of the rough estimate $\rWH$.
+
+The two exact local minimization algorithms presented here find the position
+of $\r_0$, the local minimum of $J(\r)$ closest to any $\r$.  
+Once one local minimum $\r_0$ has been located and $J(\r_0)$ found, this
+process can be repeated for all the local minima of $J(\r)$ near $\rWH$.
+Then the local minimum at which $J(\r_0)$ is smallest gives the location of
+the global minimum of $J(\r)$, which is $\rML$.
+
+The number of local minima which have to be examined depends on the accuracy
+of the rough estimate $\rWH$.  For the global minimization algorithm using 
+the DFT, this may mean $50$ or more local minima (depending on the radar's
+parameters).  For the global minimization algorithm using the CZT,
+this may mean only a few local minima.  Since the number of arithmetic
+operations required to find one local minimum is about the same as the
+number required to implement either of the approximate global minimization
+algorithms, the maximum likelihood estimator can be found most efficiently 
+by using algorithm~\ref{ee alg:min using CZT} with an accuracy that is 
+at most a couple of wavelengths at frequency $f_0$.
+
+The first local minimization algorithm assumes that because $J(\r)$ is
+bandpass, the phase of a sinusoidal signal fitted to $J(\r)$ can be used to
+locate $\r_0$.  The second method uses the likelihood equation for $\dr$ to
+derive an iterative procedure that converges to $\r_0$.  This is shown to be
+a contraction mapping and the rate of contraction is analysed to find
+how many iterations are necessary to achieve any desired accuracy in $\r_0$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Minimization by Sinusoidal Parameter Estimation}
+
+Given an initial value of $\r$, the approximate position $\r_0$ of
+the local minimum of $J(\r)$ closest to $\r$ may be found using
+the following algorithm.  
+
+In practice, algorithm~\ref{ee alg:min with cm} on page 
+\pageref{ee alg:min with cm} should be used as it is guaranteed to converge
+to the exact location of the closest local minimum.  The statement and
+derivation of algorithm \ref{ee alg:min with sinusoids} are included here
+because the statements of the two algorithms are similar, and the
+derivation of this algorithm conveys a degree of geometrical insight which
+is absent in the purely analytical derivation of algorithm
+\ref{ee alg:min with cm}.
+
+%============================================================================
+\begin{algorithm}[Approximate Local Minimization of $J(\r)$]
+\label{ee alg:min with sinusoids}\mbox{}\par
+
+Suppose that $\r_0$ is the position of the local minimum of $J(\r)$ closest
+to $\r$.  Then an approximation to $\r_0$ may be obtained by solving
+\begin{equation}
+\tan\left(\overline{k}(\r_0-\r)\right)=
+\frac{
+  \imag{\ds\sum_{n=0}^{N-1}a_n\overline{b_n}\e{-jk_n\r}}
+}{
+  \real{\ds\sum_{n=0}^{N-1}a_n\overline{b_n}\e{-jk_n\r}}
+}
+\end{equation}
+where $\overline{k}$ is $4\pi/c$ times the centre frequency of the 
+stepped-frequency waveform. 
+
+If the denominator of this equation is negative, a local maximum has been
+found instead of a local minimum.  Let
+\begin{equation}
+\r'=\r_0+\frac{\pi}{\overline{k}}\sgn\left(\r-\r_0\right)
+\end{equation}
+and repeat the algorithm with $\r=\r'$ to find the closest local minimum.
+\end{algorithm}
+%============================================================================
+
+An informal derivation of this algorithm will now be presented.  No attempt is
+made to formalize how accurate the approximation to $\r_0$ may be; this will
+be left for the next algorithm, which converges to the exact value of $\r_0$.
+
+Given a value of $\r$, the local extremum of $J(\r)$ closest to $\r$ may be
+found by assuming that the envelope of $J(\r)$ is constant in the
+neighbourhood of $\r$.  This assumption is valid because the envelope varies
+very slowly in comparison to the modulation since the stepped-frequency
+waveform has a small relative bandwidth.
+Therefore $J(\r)$ may be written
+\begin{equation}\label{ee eqn:sin model}
+J(\r)=A-B\cos\left(\overline{k}(\r_0-\r)\right)
+\end{equation}
+where $\r_0$ is the location of the local extremum closest to $\r$ and
+$\lambda=2\pi/\overline{k}$ is the instantaneous period of $J(\r)$.  $A$ and
+$B$ are constants.  $A$ is always positive and $B$ is positive if the local
+extremum is a minimum, or negative if it is a maximum. 
+
+Now
+\begin{equation}
+2B\sin\left(\overline{k}(\r_0-\r)\right)=J\left(\r-\frac{\lambda}{4}\right)
+-J\left(\r+\frac{\lambda}{4}\right)
+\end{equation}
+and 
+\begin{equation}
+2B\cos\left(\overline{k}(\r_0-\r)\right)=
+\frac{1}{2}\left[J\left(\r+\frac{\lambda}{2}\right)
++J\left(\r-\frac{\lambda}{2}\right)\right]
+-J(\r)
+\end{equation}
+Cancelling out the unknown amplitude $B$ in these two equations shows that
+\begin{equation}
+\tan\left(\overline{k}(\r_0-\r)\right)=
+\frac{
+  J\left(\r-\frac{\lambda}{4}\right)-J\left(\r+\frac{\lambda}{4}\right)
+}{
+  \frac{1}{2}\left[J\left(\r+\frac{\lambda}{2}\right)
+  +J\left(\r-\frac{\lambda}{2}\right)\right]-J(\r)
+}
+\end{equation}
+Substitute in $J(\r)$ using (\ref{ee eqn:J(r)}) and expand each of the
+$\left|\cdot\right|^2$.  After a small algebraic struggle,
+\begin{equation}\label{ee eqn:sin tan}
+\tan\left(\overline{k}(\r_0-\r)\right)=
+\frac{
+  \imag{
+    \ds\sum_{n=0}^{N-1}\sin\left(\frac{\pi k_n}{2\overline{k}}\right)
+    a_n\overline{b_n}\e{-jk_n\r}
+  }
+}{
+  \real{
+    \ds\sum_{n=0}^{N-1}\sin^2\left(\frac{\pi k_n}{2\overline{k}}\right)
+    a_n\overline{b_n}\e{-jk_n\r}
+  }
+}
+\end{equation}
+Since the stepped-frequency waveform is assumed to have a narrow relative
+bandwidth, $k_n/\overline{k}\approx 1$ so each of the 
+$\sin\left(\pi k_n/2\overline{k}\right)$ terms is
+\begin{equation}\label{ee eqn:neglect sin}
+\sin\left(\frac{\pi k_n}{2\overline{k}}\right)\approx
+\sin\left(\frac{\pi}{2}\right)=1
+\end{equation}
+Neglecting these in (\ref{ee eqn:sin tan}) gives
+\begin{equation}\label{ee eqn:sin tan approx}
+\tan\left(\overline{k}(\r_0-\r)\right)=
+\frac{\imag{\ds\sum_{n=0}^{N-1}a_n\overline{b_n}\e{-jk_n\r}}}
+{\real{\ds\sum_{n=0}^{N-1}a_n\overline{b_n}\e{-jk_n\r}}}
+\end{equation}
+as required.
+
+This method of calculating $\r_0$ is independent of the sign of $B$, so
+$\r_0$ is the extremum that is closest to $\r$, not necessarily 
+the local minimum that is closest.  The extremum is a local
+minimum if the denominator of (\ref{ee eqn:sin tan approx}) is positive.  
+If the denominator is negative, increment the calculated value of $\r_0$ by
+$\lambda/4$ and use it as $\r$ once again to find the local minimum.
+
+The approximations inherent in equations (\ref{ee eqn:sin model}) and
+(\ref{ee eqn:neglect sin}) are dependent on the ISAR's relative bandwidth.  
+In the limit as
+\begin{equation}
+\frac{N\Delta k}{k_0}\rightarrow 0
+\end{equation}
+the approximations become exact, and the algorithm determines the
+positions of the local minima of $J(\r)$ exactly.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Minimization by Contraction Mapping}
+
+Given an initial value of $\r$, the position $\r_0$ of the local minimum
+of $J(\r)$ closest to $\r$ may be found to any desired accuracy using
+the following iterative algorithm, whose derivation is given in 
+appendix~\ref{ee app:min with cm}.
+
+%============================================================================
+\begin{algorithm}[Iterative Local Minimization of $J(\r)$]
+\label{ee alg:min with cm}\mbox{}\par
+
+Suppose that $\r_0$ is the position of the local extremum of $J(\r)$ closest
+to $\r$.  Let $\r_1=\r$ and use the iterative equation
+\begin{equation}
+\tan\left(\overline{k}(\r_{k+1}-\r_k)\right)=
+\frac{
+  \imag{\ds\sum_{n=0}^{N-1}k_na_n\overline{b_n}\e{-jk_n\r_k}}
+}{
+  \real{\ds\sum_{n=0}^{N-1}k_na_n\overline{b_n}\e{-jk_n\r_k}}
+}
+\end{equation}
+to generate a sequence $\{r_k\}$.  Here $\overline{k}$ is $4\pi/c$ times the 
+centre frequency of the stepped-frequency waveform.   Then
+\begin{equation}
+\lim_{k\rightarrow\infty} \r_k=\r_0
+\end{equation}
+
+If the denominator of the iterative equation is negative, a local maximum 
+has been found instead of a local minimum.  Let
+\begin{equation}
+\r_1=\r_0+\frac{\pi}{\overline{k}}\sgn\left(\r-\r_0\right)
+\end{equation}
+and start iterating again to find the closest local minimum.
+
+If the denominator of the iterative equation is zero, $\r$ is exactly
+mid-way between a local maximum and a local minimum.  Increase or decrease
+$\r$ by $\pi/2\overline{k}$ if the numerator is respectively 
+positive or negative.
+\end{algorithm}
+%============================================================================
+
+The following theorem shows that the algorithm converges to the closest
+local extremum to the initial estimate $\r$, and that the rate of
+convergence is dependent on the ISAR's relative bandwidth.  
+
+%============================================================================
+\begin{theorem}[Iterative Local Extremum of $J(\r)$]
+\label{ee thm:min with cm}\mbox{}\par
+
+Suppose that $\r_0$ is the position of the local extremum of $J(\r)$ closest
+to $\r$, where $J(\r)$ is the cost function in (\ref{ee eqn:J(r)}).  
+Let $\r_1=\r$ and use the iterative equation
+\begin{equation}\label{ee eqn:cm}
+\tan\left(\overline{k}(\r_{k+1}-\r_k)\right)=
+\frac{
+  \imag{\ds\sum_{n=0}^{N-1}k_na_n\overline{b_n}\e{-jk_n\r_k}}
+}{
+  \real{\ds\sum_{n=0}^{N-1}k_na_n\overline{b_n}\e{-jk_n\r_k}}
+}
+\end{equation}
+with $k_0\leq\overline{k}\leq k_{N-1}$ to generate a sequence $\{r_k\}$.  
+Then $\r_k\rightarrow\r_0$ as $k\rightarrow\infty$ for all $\r$ whose
+closest extremum of $J(\r)$ is at $\r_0$.
+
+This is a contraction mapping whose fixed point is $\r_0$
+\begin{equation}
+\left|\r_{k+1}-\r_0\right|< \alpha^k \left|\r-\r_0\right|
+\end{equation}
+$\alpha$, the speed of convergence to $\r_0$ is given by
+\begin{equation}
+\alpha=\frac{\Delta_k}{\overline{k}}
+\end{equation}
+where
+\begin{equation}
+\Delta_k=\max_n\,\left|k_n-\overline{k}\right|
+\end{equation}
+\end{theorem}
+%============================================================================
+
+%============================================================================
+\begin{proof}
+See appendix~\ref{ee app:proof using cm}.
+\end{proof}
+%============================================================================
+
+
+This proof shows that the algorithm is guaranteed to converge to $\r_0$ 
+if $\Delta_k<\overline{k}$.  This is equivalent to
+\begin{equation}
+k_0\leq\overline{k}\leq k_{N-1}
+\end{equation}
+
+For a given stepped-frequency waveform and arbitrary target, 
+the guaranteed rate of convergence $\alpha$ is maximized if
+\begin{equation}
+\overline{k}=\arg\min_{k_0\leq k\leq k_{N-1}}
+\max_n \left|\frac{k_n}{k}-1\right|
+\end{equation}
+which implies, not unsurprisingly, that the best choice of $\overline{k}$ is
+\begin{equation}
+\overline{k}=\frac{1}{2}\left(k_0+k_{N-1}\right)
+\end{equation}
+
+For a target with a given geometry, orientation and radar scattering
+characteristics, the optimal choice of $\overline{k}$ is much harder to
+calculate.
+
+In the limit as the stepped-frequency waveform's relative bandwidth tends to
+zero, $\alpha\rightarrow 0$, the algorithm converges in a single step, and
+the approximate algorithm~\ref{ee alg:min with sinusoids} becomes equivalent to
+the iterative algorithm~\ref{ee alg:min with cm}.
+
+ 
+To illustrate calculating the number of iterations required for a typical 
+X-band ISAR image with parameters of $f_0=9.16$~GHz, $\Delta f=2$~MHz and 
+$N=128$, 
+\begin{equation}
+\alpha=\frac{k_{N-1}-k_0}{k_{N-1}+k_0}
+=\frac{f_{N-1}-f_0}{f_{N-1}+f_0}
+=0.014
+\end{equation}
+Since the wavelength at X-band is about $30$~mm,
+any initial guess $\r_1$ is at most $7.5$~mm from a local extremum of $J(\r)$.
+One iteration determines $\r_0$ to an accuracy of $\pm0.1$~mm and two 
+iterations gives an accuracy of $\pm1.5$~$\mu$m, which is more than good
+enough for ISAR motion compensation.
+
+Once one local minimum has been located, the uncertainty in the position
+of the next one is much less than $7.5$~mm so only one iteration is all that
+is required when hopping along adjacent local minima.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Summary of the Procedure to Obtain $\rML$}
+
+In summary, the maximum likelihood estimator $\rML$ of the radial
+distance $\dr$ a target moves in the interval between two measurements of
+the target's frequency response, using a stepped-frequency radar operating at
+$N$ uniformly spaced frequencies, is found as follows:
+
+\begin{enumerate}
+\item Use any prior knowledge to restrict $\dr$ to some subinterval
+$[\r_l,\r_u]$ on which $\dr$ is uniformly probable.
+
+\item Given the subinterval $[\r_l,\r_u]$ and the radar's initial frequency, 
+$f_0$, use algorithm~\ref{ee alg:min using CZT} to determine a rough estimate
+$\rWH$ of $\rML$ with an accuracy of $c/2f_0$.
+
+\item Use algorithm~\ref{ee alg:min with cm} to determine the positions of the 
+local minima of $J(\r)$ within a distance given by the accuracy in the 
+previous step to $\rWH$.  The number of iterations of the contraction
+mapping required for each local minimum may be calculated using
+theorem~\ref{ee thm:min with cm}.
+
+\item Find which of the local minima has the smallest $J(\r_0)$.  This is
+now $\rML$, the global minimum of $J(\r)$ and the maximum likelihood
+estimate of $\dr$
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix{Proof of Theorem~\protect\ref{ee thm:min using DFT}}
+\label{ee app:min using DFT}
+
+The proof of theorem~\ref{ee thm:min using DFT} given here shows that the
+rough estimates $\rWH$ of the location of the global minimum of $J(\r)$
+satisfy
+\begin{equation}
+\left|\rWH-\rML\right|<\frac{c}{2N\Delta f}
+\end{equation}
+which means that $\rWH$ is less than one ISAR range bin away
+from the global minimum of $J(\r)$.  
+
+\begin{proof}
+$J(\r)$ can be rewritten as
+\begin{eqnarray}
+J(\r)&=&\sum_{n=0}^{N-1} \left|a_n-b_n\e{jk_n\r}\right|^2\nn\\
+&=&\sum_{n=0}^{N-1}\left(\left|a_n\right|^2+\left|b_n\right|^2\right)
+-2\sum_{n=0}^{N-1}\real{a_n\conj{b_n}\e{-jk_n\r}}
+\end{eqnarray}
+so an equivalent definition of $\rML$ is
+\begin{equation}
+\rML=\arg\max_{\r}\,g(\r)
+\end{equation}
+where $g(\r)$ is 
+\begin{eqnarray}
+g(\r)&=&\sum_{n=0}^{N-1}\real{a_n\conj{b_n}\e{-jk_n\r}}\nn\\
+&=&\real{\e{-jk_0\r}\sum_{n=0}^{N-1}c_n\e{-jn\Delta k\r}}
+\end{eqnarray}
+where $c_n=a_n\conj{b_n}$ and each $k_n$ has been split into 
+\begin{equation}
+k_n=k_0+n\Delta k
+\end{equation}
+
+From this, $g(\r)$ is a bandpass signal whose centre frequency is
+$f_c=\frac{1}{2}f_0$ and bandwidth is $W=\frac{1}{2}N\Delta f$.%
+\footnote{Strictly speaking, this is not the best choice for $f_c$ and $W$ 
+because $f_0$ is the base frequency of the stepped-frequency waveform, not
+the centre frequency.  The difference is not important providing 
+$N\Delta f>f_0$, but the theorem remains true even if this condition is not 
+satisfied.  Incidentally, $f_c$ and $W$ are half what may be expected
+because of the factor of $2$ included in $k_n$ to account for all ranges
+being measured as round-trip distances from radar to target and back again.} 
+The envelope of $g(\r)$ is given by $\left|g_{+}(\r)\right|$, where
+$g_{+}(\r)$ is the pre-envelope of $g(\r)$
+\begin{equation}
+g_{+}(\r)=\e{-jk_0\r}\sum_{n=0}^{N-1}c_n\e{-jn\Delta k\r}
+\end{equation}
+Formally, the pre-envelope is defined as the complex bandpass signal with
+$g(\r)$ as its real part and the Hilbert transform of $g(\r)$ as its
+imaginary part
+\begin{equation}
+g_{+}(\r)=g(\r)+j\check{g}(\r)
+\end{equation}
+Because $g(\r)$ is bandpass, the distance between the global maxima of 
+$g(\r)$ and its envelope is at most half a carrier wavelength
+\begin{equation}
+\left|\rML-\arg\max_{\r}\left|g_{+}(\r)\right|\right|\leq\frac{c}{4f_0}
+\end{equation}
+
+Now
+\begin{eqnarray}
+\arg\max_{\r}\left|g_{+}(\r)\right|
+&=&\arg\max_{\r}\left|\e{-jk_0\r}\sum_{n=0}^{N-1}c_n\e{-jn\Delta k\r}\right|\nn\\
+&=&\arg\max_{\r}\left|\sum_{n=0}^{N-1}c_n\e{-jn\Delta k\r}\right|\nn\\
+&=&\arg\max_{\r}\left|\sum_{n=0}^{N-1}c_n
+\e{-j\frac{2\pi}{N}\,\frac{2N\Delta f}{c}\r\,n}\right|\nn\\
+&=&\arg\max_{\r}\left|N{\cal F}\{c_n\}\right|
+\end{eqnarray}
+From this, the global maximum of the envelope of $g(\r)$ is found by the
+peak in the magnitude of the Fourier transform of the $c_n$.  
+This transform is implemented using a DFT, so the peak in
+the discrete Fourier spectrum occurs at the discrete frequency that is
+closest to the actual peak in the continuous spectrum.  The resolution is
+$c/2N\Delta f$, therefore the error is at most half this, or
+\begin{equation}
+\left|\rWH-\arg\max_{\r}\left|g_{+}(\r)\right|\right|\leq\frac{c}{4N\Delta f}
+\end{equation}
+Finally, using the triangle inequality shows that
+\begin{eqnarray}
+\left|\rWH-\arg\max_{\r}\left|g_{+}(\r)\right|\right|
+&=&\left|\left(\rWH-\rML\right)+\left(\rML-
+\arg\max_{\r}\left|g_{+}(\r)\right|\right)\right|\nn\\
+&\leq&\left|\rWH-\rML\right|
+	+\left|\rML-\arg\max_{\r}\left|g_{+}(\r)\right|\right|\nn\\
+&\leq&\frac{c}{4N\Delta f}+\frac{c}{4f_0}\nn\\
+&<&\frac{c}{2N\Delta f}
+\end{eqnarray}
+as required.
+\end{proof}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix{Derivation of Algorithm~\protect\ref{ee alg:min with cm}}
+\label{ee app:min with cm}
+
+The derivation of algorithm~\ref{ee alg:min with cm} starts with the condition
+for a local extremum of $J(\r)$ at $\r=\r_0$
+\begin{equation}
+\left.\frac{\del J(\r)}{\del\r}\right|_{\r=\r_0}=0
+\end{equation}
+Writing $J(\r)$ in (\ref{ee eqn:J(r)} as
+\begin{equation}
+J(\r)=\sum_{n=0}^{N-1} \left|a_n\right|^2+\sum_{n=0}^{N-1} \left|b_n\right|^2
+-2\real{\sum_{n=0}^{N-1} a_n\overline{b_n}\e{-jk_n\r}}
+\end{equation}
+the existence of a local extremum at $\r=\r_0$ means that
+\begin{equation}\label{ee eqn:temp1}
+\imag{\sum_{n=0}^{N-1} k_na_n\overline{b_n}\e{-jk_n\r_0}}=0
+\end{equation}
+Using the relationship
+\begin{equation}
+k_n\r_0=\overline{k}(\r_0-\r)+k_n\r+(k_n-\overline{k})(\r_0-\r)
+\end{equation}
+equation (\ref{ee eqn:temp1}) can be written as
+\begin{equation}\label{ee eqn:temp2}
+\imag{\e{-j\overline{k}(\r_0-\r)}
+\sum_{n=0}^{N-1} k_na_n\overline{b_n}\,\e{-jk_n\r}
+\,\e{-j(k_n-\overline{k})(\r_0-\r)}}=0
+\end{equation}
+Expanding the imaginary component of (\ref{ee eqn:temp2}) explicitly gives
+\begin{equation}\label{ee eqn:temp3}
+\tan\left(\overline{k}(\r_0-\r)\right)=
+\frac{\ds\imag{\sum_{n=0}^{N-1} k_na_n\overline{b_n}\e{-jk_n\r}
+\e{-j(k_n-\overline{k})(\r_0-\r)}}}
+{\ds\real{\sum_{n=0}^{N-1} k_na_n\overline{b_n}\e{-jk_n\r}
+\e{-j(k_n-\overline{k})(\r_0-\r)}}}
+\end{equation}
+This cannot be solved for $\r_0$ directly because $\r_0$ appears on both 
+the left and the right hand sides.  However, because $\r_0$ is the closest 
+extremum to $\r$,
+\begin{equation}\label{ee eqn:condit1}
+\overline{k}\left|\r_0-\r\right|<\pi
+\end{equation}
+Furthermore, the stepped-frequency waveform has a narrow relative bandwidth
+so that
+\begin{equation}\label{ee eqn:condit2}
+\left|k_n-\overline{k}\right|\ll\overline{k}
+\end{equation}
+Combining (\ref{ee eqn:condit1}) and (\ref{ee eqn:condit2}) shows that
+\begin{equation}
+\left|(k_n-\overline{k})(\r_0-\r)\right|\ll
+\overline{k}\left|\r_0-\r\right|
+<\pi
+\end{equation}
+Therefore each $\e{-j(k_n-\overline{k})(\r_0-\r)}$ in (\ref{ee eqn:temp3})
+is very close to unity and (\ref{ee eqn:temp3}) may be written as the close
+approximation
+\begin{equation}
+\tan\left(\overline{k}(\r_0-\r)\right)\approx
+\frac{\ds\imag{\sum_{n=0}^{N-1} k_na_n\overline{b_n}\e{-jk_n\r}}}
+{\ds\real{\sum_{n=0}^{N-1} k_na_n\overline{b_n}\e{-jk_n\r}}}
+\end{equation}
+which can be solved directly to give an approximate value for $\r_0$.
+
+This is only an approximation, but it is an approximation which gets 
+progressively better as $\r\rightarrow \r_0$.  So rewriting the
+approximation as the iterative equation
+\begin{equation}\label{ee eqn:cm soln}
+\tan\left(\overline{k}(\r_{k+1}-\r_k)\right)=
+\frac{\ds\imag{\sum_{n=0}^{N-1} k_na_n\overline{b_n}\e{-jk_n\r_k}}}
+{\ds\real{\sum_{n=0}^{N-1} k_na_n\overline{b_n}\e{-jk_n\r_k}}}
+\end{equation}
+where $\r_1$ is an initial estimate of $\r_0$ and $\r_k$ is used to find
+$\r_{k+1}$, gives a sequence $\{r_k\}$ which it is hoped converges to $\r_0$
+\begin{equation}
+\lim_{k\rightarrow\infty}\r_k=\r_0
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix{Proof of Theorem~\protect\ref{ee thm:min with cm}}
+\label{ee app:proof using cm}
+
+Banach's Fixed Point Theorem will be used to show that the iterative 
+equation (\ref{ee eqn:cm}) is a contraction mapping whose iterates $\{\r_k\}$ 
+converge to the closest local extremum of $J(\r)$ at $\r=\r_0$.
+This requires that when (\ref{ee eqn:cm}) is written as the mapping $T$
+\begin{equation}
+\r_{k+1}=T\left(\r_k\right)
+\end{equation}
+whose domain $R$ is the set of points that are less than an eighth of a
+wavelength from $\r_0$
+\begin{equation}
+R=\left\{
+\r\,\mbox{such that}\,\left|\r-\r_0\right|<\frac{\pi}{2\overline{k}}
+\right\}
+\end{equation}
+the following two conditions be satisfied:
+\begin{description}
+\item[(i)]  $\r_0$ is a fixed point of $T$
+\begin{equation}
+T\left(\r_0\right)=\r_0
+\end{equation}
+and that
+\item[(ii)] $T$ is a contraction for all $\r\in R$.  This means that
+there exists some constant $0\leq\alpha<1$ such that
+\begin{equation}
+\left|T\left(\r\right)-\r_0\right|\leq\alpha \left|\r-\r_0\right|
+\end{equation}
+for all $\r\in R$.
+\end{description}
+
+The first condition is satisfied because if $\r_k=\r_0$, 
+(\ref{ee eqn:temp1}) shows that 
+\begin{equation}
+\imag{\sum_{n=0}^{N-1} k_na_n\overline{b_n}\e{-jk_n\r_k}}=0
+\end{equation}
+But $\r_{k+1}=T(\r_k)$, which is
+\begin{equation}
+\imag{\e{-j\overline{k}(\r_{k+1}-\r_k)}
+\sum_{n=0}^{N-1} k_na_n\overline{b_n}\e{-jk_n\r_k}}=0
+\end{equation}
+Therefore $\e{-j\overline{k}(\r_{k+1}-\r_k)}=\pm 1$ and
+\begin{equation}
+\r_{k+1}=\r_k+l\,\frac{\pi}{\overline{k}}
+\end{equation}
+for some integer $l$.  The only solution with $\r_{k+1}\in R$ occurs when
+$l=0$.  Thus 
+\begin{equation}
+\r_{k+1}=\r_k
+\end{equation}
+and $\r_0$ is a fixed point of $T$.
+
+To show that $T$ is a contraction for all $\r\in R$, define a new 
+mapping $\r'_{k+1}=T'(\r'_k)$ from $T$ by changing variables
+\begin{equation}
+\r'_k=\r_k-\r_0
+\end{equation}
+Then $T'$ is given implicitly by
+\begin{equation}\label{ee eqn:T'}
+\imag{\e{-j\overline{k}(\r'_{k+1}-\r'_k)}
+\sum_{n=0}^{N-1} c_n\e{-jk_n\r'_k}}=0
+\end{equation}
+where $c_n=k_na_n\overline{b_n}\e{-jk_n\r_0}$ and the domain of $T'$ is
+\begin{equation}
+R'=\left\{
+\r'\,\mbox{such that}\,\left|\r'\right|<\frac{\pi}{2\overline{k}}
+\right\}
+\end{equation}
+Also define $\Delta_k$ as
+\begin{equation}
+\Delta_k=\max_n\,\left|k_n-\overline{k}\right|
+\end{equation}
+
+Since $\r_0$ is a fixed point of $T$, $\r'_0=\r_0-\r_0=0$ is a fixed point
+of $T'$.  One consequence of this is
+\begin{equation}
+\imag{\sum_{n=0}^{N-1}c_n}=0
+\end{equation}
+Now consider the image $\r'_{k+1}$ of some $\r'_k\in R'$ under $T'$.
+
+Multiplying the complex constant $c_n$ by $\e{-jk_n\r'_k}$ rotates $c_n$ by
+an angle $\theta_n=-k_n\r'_k$ which satisfies
+\begin{equation}
+\left|\theta_n\right|=
+k_n\left|\r'_k\right|\leq\left(\overline{k}+\Delta_k\right)\left|\r'_k\right|
+\end{equation}
+and 
+\begin{equation}
+\left|\theta_n+\overline{k}\r'_k\right|
+=\left|(k_n-\overline{k})\r'_k\right|\leq\Delta_k\left|\r'_k\right|
+\end{equation}
+Let $\theta$ be the angle that $\ds\sum_{n=0}^{N-1}c_n$ is rotated to give
+$\ds\sum_{n=0}^{N-1}c_n\e{-jk_n\r'_k}$.  Then
+\begin{equation}
+\min_n\, \theta_n\leq \theta\leq\max_n\,\theta_n
+\end{equation}
+In particular,
+\begin{equation}
+\left|\theta\right|\leq\left(\overline{k}+\Delta_k\right)\left|\r'_k\right|
+\end{equation}
+and 
+\begin{equation}
+\left|\theta+\overline{k}\r'_k\right|\leq\Delta_k\left|\r'_k\right|
+\end{equation}
+
+From (\ref{ee eqn:T'}) and the definition of $\theta$,
+\begin{equation}
+\e{-j\overline{k}(\r'_{k+1}-\r'_k)}=\pm\e{j\theta}
+\end{equation}
+Therefore
+\begin{equation}
+\overline{k}(\r'_{k+1}-\r'_k)=\theta+l\pi
+\end{equation}
+for some integer $l$ which is set appropriately to ensure that $\r'_{k+1}$
+is in $R'$.  Thus
+\begin{eqnarray}
+\left|l\right|\pi
+&=&\left|\overline{k}(\r'_{k+1}-\r'_k)-\theta\right| \nn\\
+&\leq&\overline{k}\left|\r'_{k+1}\right|+\left|\theta+\overline{k}\r'_k\right|\nn\\
+&<&\frac{\pi}{2}\left(1+\frac{\Delta_k}{\overline{k}}\right)
+\end{eqnarray}
+This has the unique solution $l=0$ if $\Delta_k<\overline{k}$.  Therefore
+\begin{equation}
+\overline{k}(\r'_{k+1}-\r'_k)=\theta
+\end{equation}
+which can be rearranged into
+\begin{equation}
+\left|\r'_{k+1}\right|=\frac{1}{\overline{k}}\left|\theta+\overline{k}\r'_k
+\right|\leq \frac{\Delta_k}{\overline{k}}\,\left|\r'_k\right|
+\end{equation}
+So setting $\alpha'=\Delta_k/\overline{k}$ shows that
+\begin{equation}
+\left|\r'_{k+1}\right|\leq \alpha'\left|\r'_k\right|
+\end{equation}
+and $T'$ is a contraction mapping.
+
+Expressing this in terms of $T$ and $\r_k$, $T$ is a contraction mapping 
+with fixed point $\r_0$
+\begin{equation}
+\left|\r_{k+1}-\r_0\right|\leq \alpha\left|\r_k-\r_0\right|
+\end{equation}
+providing
+\begin{equation}
+\alpha=\frac{\Delta_k}{\overline{k}}<1
+\end{equation}
+
+Finally, applying the contraction mapping $k$ times in succession
+shows that
+\begin{equation}
+\left|\r_{k+1}-\r_0\right|< \alpha^k \left|\r-\r_0\right|
+\end{equation}
+to complete the proof.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix{Corrected {\tt MATLAB} Code to Implement the CZT}
+\label{ee app:Matlab CZT}
+
+The chirp-Z transform routine that comes with {\tt MATLAB} version 4.1 does
+not follow the notation used by Rabiner in \cite{Rab69b} and \cite{Rab69a}.
+This is a version of the MathWorks' {\tt czt.m} routine that has been
+rewritten to follow Rabiner's notation.  It also works for a chirp-Z 
+transform giving fewer elements that the input vector.
+
+\begingroup
+\singlespaced\small
+\begin{verbatim}
+function g = czt(x, m, w, a)
+%CZT    Chirp-z transform.
+%       G = CZT(X, M, W, A) returns:
+%       G   the M-element chirp-z transform of data X,
+%       X   the input matrix of signal columns
+%       M   the length of the chirp z-transform
+%       W   is the ratio W between points along the
+%           complex-plane spiral contour of interest
+%       A   the complex starting point on that contour
+
+% Reference:
+%  L.R. Rabiner, R.W. Schafer and C. M. Rader, The Chirp-Z 
+%  Transform and Its Application, Bell System Technical Journal, 
+%  May-June 1969, pp. 1249-1292.
+
+% The original MATLAB algorithm, dated 15-Aug-90, did not work
+% for M<N, and the circular convolution was specified
+% differently from Rabiner et al.'s original paper.  
+% Rewritten by Stephen Simmons (simmons@ee.mu.oz.au), 16-Feb-94,
+% to correct these problems and to follow Rabiner's notation.
+
+[n, k] = size(x); oldn = n;
+if n == 1, x = x(:); [n, k] = size(x); end
+
+if nargin < 2, m = length(x); end
+if nargin < 3, w = exp(-sqrt(-1) .* 2 .* pi ./ m); end
+if nargin < 4, a = 1; end
+
+%------- Length for power-of-two fft.
+l = 1;
+while l < (m + n - 1), l = 2 .* l; end
+
+%------- Premultiply data.
+aa=a.^([0:-1:-(n-1)].');
+wn=w.^((([0:1:n-1].').^2)/2);
+wm=w.^(-(([0:1:m-1].').^2)/2);
+y=[x .* [(aa.*wn)*ones(1,k)]; zeros(l-n,k) ];
+
+v=zeros(l,1);
+v(1:m,1)=wm;
+v(l-n+2:l,1)=1./wn([n-1:-1:1]);
+
+%------- Fast convolution via FFT.
+fy = fft(y);
+fv = fft(v);
+fy = fy .* ( fv * ones(1,k) );
+g  = ifft( fy );
+
+%------- Final multiply.
+g = g(1:m,:) .* [ wm * ones(1,k) ];
+if oldn == 1, g = g.'; end
+\end{verbatim}
+\endgroup

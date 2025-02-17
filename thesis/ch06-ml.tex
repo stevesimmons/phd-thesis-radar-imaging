@@ -1,0 +1,754 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%			INVERSE SYNTHETIC APERTURE RADAR
+%
+%				  PhD Thesis
+%
+%		Stephen Simmons		simmons@ee.mu.oz.au
+%
+%	    Department of Electrical and Electronic Engineering
+%	    University of Melbourne, Parkville, 3052, Australia
+%
+% Chapter 6:	Maximum Likelihood Motion Estimation
+%
+%		started first draft:	Wed 5 Oct 1994
+%		finished first draft:	Thu 6 Oct 1994
+%		started second draft:	Mon 2 Jan 1995
+%		submitted:		Mon 9 Jan 1995
+%
+%%%%%%%%%%%%%%%%%%%%% Copyright (C) 1995 Stephen Simmons %%%%%%%%%%%%%%%%%%
+
+\chapter{Maximum Likelihood Motion Estimation}
+\label{ml chp}
+
+\bigletter Chapter \ref{mc chp} introduced a number of methods for
+estimating the radial motion of a target during ISAR imaging.  Each
+measured changes in the target's frequency responses or range profiles in
+different ways, and each justified their derivation on different intuitive
+grounds.  
+
+This chapter does not present another {\em ad hoc\/} method of radial
+motion estimation.  Rather it uses the full machinery of statistical
+estimation theory to derive the maximum likelihood estimator $\rML$ of the
+radial distance $\dr$ the target moves between two times at which its
+frequency response is sampled.
+
+The maximum likelihood estimator is obtained in two different ways.  The
+first approach assumes that $\dr$ is the only unknown parameter, so the
+scalar form of the maximum likelihood estimator is used to obtain $\rML$. 
+The second approach uses the vector form of the maximum likelihood
+estimator to estimate the value of a vector $\uvp$ of unknown parameters
+which includes $\dr$ along with the measurement noise's variance $\nv$ and
+the target's frequency response.  
+
+Both approaches give the maximum likelihood estimate of $\dr$ in the form
+of a cost function $J(r)$ which is minimized when $r=\rML$.  The cost
+function is analysed and the properties that make it suitable for motion
+estimation for ISAR imaging are discussed.
+
+Efficient methods of finding the minimum of $J(r)$ are the subject of
+chapter \ref{ee chp} and the statistical properties of $\rML$
+are discussed in chapter \ref{sp chp}.  Finally, in chapter \ref{do chp}, 
+some of the {\em ad hoc\/}
+motion estimators from chapter \ref{mc chp} are reappraised in the light of
+the maximum likelihood solution.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The Motion Estimation Model}
+
+The first step towards deriving any estimator involves writing down a
+mathematical model expressing the relationship between the measurements and 
+the unknown parameters on which the measurements depend.  
+
+For ISAR motion estimation, the unknown parameter of most interest is the
+radial change in the target's position at each discrete time step during
+the ISAR imaging period.  If the solution has to allow for a target moving in a
+totally arbitrary way, the fundamental problem is one of estimating a
+target's radial movement between any two times at which its frequency 
+response has been measured.  After briefly discussing the set of
+measurements for a whole ISAR image, a model for this more fundamental
+problem will be constructed.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{A Model for a Whole ISAR Image}
+
+For stepped-frequency ISAR imaging, the measurements $\md$ consist of the
+target's frequency responses sampled at $M$ evenly spaced times $t_m$
+during the imaging period of $[-T/2,T/2]$
+\begin{equation}
+t_m=t_0+m\Delta t\qquad\mbox{for $m=0,1,\ldots,M-1$}
+\end{equation}
+where $t_0=-T/2$ and $t_{M-1}=T/2$.
+Each frequency response at time $t_m$ is composed of samples of the
+target's radar reflectivity $s(k_n,t_m)$ at the $N$ discrete frequencies
+$k_n$ in the stepped-frequency waveform
+\begin{equation}
+k_n=k_0+n\dk\qquad\mbox{for $n=0,1,\ldots,N-1$}
+\end{equation}
+As in chapters \ref{hrr chp} to \ref{mc chp}, the $k_n$ are really twice the
+wavenumber, so that $k_n=4\pi f_n/c$ where 
+\begin{equation}\label{ml eqn:f0+ndf}
+f_n=f_0+n\df
+\end{equation}
+For convenience, the single word ``frequency'' is often used to refer to
+both $f$ and to $k=4\pi f/c$; the difference, if it is important, is
+indicated by the context.
+
+Using the notation and the results of chapter \ref{mc chp}, the full ISAR
+motion estimation problem is to estimate the change in radial position 
+\begin{equation}
+\Delta r(t_m)=r(t_m)-r(t_0)
+\end{equation}
+of a moving target for all $M$ time steps using only the radar measurements 
+\begin{equation}
+s_{mn}=s(k_n,t_m)+\noise_{mn}
+\end{equation}
+where $s(k_n,t_m)$ is the target's frequency response at time $t_m$ and
+frequency $k_n$, and $\noise_{mn}$ is the measurement noise affecting
+$s_{mn}$.  The target is assumed to be rotating sufficiently
+slowly\footnote{This assumption is questioned in section 
+\protect\ref{rmc sec:me}.}
+during the ISAR imaging period that any two samples at the same frequency
+of $s(k_n,t_m)$ from different times, $t_m$ and $t_{m'}$, are related by a
+phase shift depending on the radial distance moved by the target between
+these times
+\begin{equation}
+s(k_n,t_m)=e^{-jk_n(r(t_m)-r(t_{m'}))}\,s(k_n,t_{m'})
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{The Fundamental Motion Estimation Problem}
+
+As mentioned at the start of this chapter, the fundamental problem of
+ISAR radial motion estimation is finding the radial distance $\dr$ moved by
+a target between two times at which the target's frequency
+response is measured.  
+
+Suppose the target rotates a negligible amount between two times $t=0$ and
+$t=T$.\footnote{From here to the end of chapter \protect\ref{sp chp}, $T$
+will be generally be used to represent the time between the two frequency 
+responses, not the ISAR imaging period.  This saves introducing yet another
+symbol.} Then any change in its frequency response is directly attributable
+to the radial distance $\Delta r$ moved by the target.  Using this model,
+the measurements of the target's frequency responses at times $t=0$ and
+$t=T$ are
+\begin{eqnarray}
+a_n&=&s_n+\na{n}\nn\\
+b_n&=&s_n\e{-jk_n\dr}+\nb{n}    
+\label{ml eqn:std model}
+\end{eqnarray}
+respectively where $s_n$ is the target's complex frequency response at frequency
+$k_n$, the $n^{\rm th}$ frequency in the stepped-frequency waveform.
+The phase shifts in the measurements of $b_n$ at
+time $t=T$ are proportional to $\dr$, the unknown distance the target moved
+during this interval.  $\na{n}$ and $\nb{n}$ are measurement noise terms
+that are assumed to be independent and identically distributed zero-mean
+complex Gaussian random processes with variance $\nv$
+\begin{equation}
+\E{\na{n}\overline{\na{n}}}=\E{\nb{n}\overline{\nb{n}}}=\nv
+\end{equation}
+
+Therefore the complete data set available for estimating $\dr$ is the 
+set of $N$ pairs of frequency responses
+\begin{equation}\label{ml eqn:md} 
+\md=\left\{a_n,b_n \,|\, n=0,1,\ldots,N-1\right\}
+\end{equation}
+where $a_n$ and $b_n$ are the target's noisy frequency responses at times 
+$t=0$ and $t=T$ respectively, as given in equation (\ref{ml eqn:std
+model}).  In practice, the frequencies at which the $a_n$ and $b_n$ are
+measured are uniformly spaced so that $k_n=k_0+n\dk$, but this is not a
+necessary condition for deriving the maximum likelihood estimator of $\dr$.
+
+
+Now that the measurement model in (\ref{ml eqn:std model}) and the
+measurement vector $\md$ in (\ref{ml eqn:md}) have been defined, maximum likelihood estimation
+can be used to find the maximum likelihood estimate $\rML$ of the unknown
+radial distance $\dr$ that the target has moved between $t=0$ and $t=T$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Estimating $\dr$ Only}
+
+The model in (\ref{ml eqn:std model}) has $N+1$ unknown parameters, the 
+target's radial displacement $\dr$ and the target's reflectivities $s_n$ at
+each of the $N$ frequencies in the stepped-frequency waveform.  By combining
+the two measurement equations at each frequency to eliminate $s_n$, 
+\begin{equation}\label{ml eqn:comb model}
+\nb{n}=b_n-(a_n-\na{n})\e{-jk_n\dr}
+\end{equation}
+which now only contains one unknown parameter, namely $\dr$.
+
+Following the description of maximum likelihood estimation in
+chapter~\ref{mp chp}, the maximum likelihood estimate $\rML$ of 
+$\dr$ is the value of $\dr$ which maximizes the likelihood function
+$p(\md;\dr)$, the probability density function of observing the
+measurements $\md$ conditional on the value of the unknown parameter $\dr$.
+
+Since noise in the measurements at each of the $N$ frequencies is
+independent, the $N$ pairs of measurements are themselves independent and
+\begin{equation}\label{ml eqn:p(md;dr)}
+p(\md;\dr)=\prod_{n=0}^{N-1} p(a_n,b_n;\dr)
+\end{equation}
+
+The individual likelihood functions $p(a_n,b_n;\dr)$ can be calculated 
+from the probability density function of the two complex noise processes 
+$\na{n}$ and $\nb{n}$
+\begin{equation}
+\prs{\na{n}}{z}=\prs{\nb{n}}{z}=\frac{1}{\pi\nv}\,\e{-\left|z\right|^2/\nv}
+\end{equation}
+by noting that $p(a_n,b_n;\dr)$ is the convolution
+\begin{equation}
+p(a_n,b_n;\dr)=\int_{\C}\prs{\na{n}}{z}\cdot\prs{\nb{n}}{b_n-(a_n-z)\e{-jk_n\dr}}\,dz
+\end{equation}
+where the subscript $\C$ on the integral sign indicates that the integral
+is evaluated over the whole complex plane.  Then substituting in the
+probability density functions of $\na{n}$ and $\nb{n}$ and using the identity 
+\begin{equation}
+\left|u\right|^2+\left|v\right|^2={\frac{1}{2}}\left(
+\left|u-v\right|^2+\left|u+v\right|^2\right)
+\end{equation}
+the likelihood function $p(a_n,b_n;\dr)$ is
+\begin{eqnarray}
+p(a_n,b_n;\dr)
+&=&\frac{1}{\left(\pi\nv\right)^2} \int_{\C}\e{-\left|z\right|^2/\nv}
+\e{-\left|b_n-(a_n-z)\e{-jk_n\dr}\right|^2/\nv}\,dz \nn \\
+&=&\frac{1}{\pi\nv}\,\e{-\left|a_n-b_n\e{jk_n\dr}\right|^2/2\nv}
+\cdot\frac{1}{\pi\nv}
+	\int_{\C}\e{-\left|2z-(a_n-b_n\e{jk_n\dr})\right|^2/2\nv}\,dz\nn\\
+&=&\frac{2}{\pi\nv}\,\e{-\left|a_n-b_n\e{jk_n\dr}\right|^2/2\nv}
+\end{eqnarray}
+
+Applying this result to (\ref{ml eqn:p(md;dr)}) gives the likelihood
+function for all $N$ pairs of measurements
+\begin{eqnarray}
+p(\md;\dr)&=&\prod_{n=0}^{N-1} p(a_n,b_n;\dr)\nn\\
+&=&\prod_{n=0}^{N-1} \frac{2}{\pi\nv}\,
+	\e{-\left|a_n-b_n\e{jk_n\dr}\right|^2/2\nv}\nn\\
+&=&\frac{2^N}{\left(\pi\nv\right)^N}\,
+	\exp\left(-\frac{1}{2\nv}
+	\ds\sum_{n=0}^{N-1}\left|a_n-b_n\e{jk_n\dr}\right|^2\right)\nn\\
+&=&\frac{2^N}{\left(\pi\nv\right)^N}\,
+	\exp\left(-\frac{1}{2\nv}J(\dr)\right)
+\label{ml eqn:p(md;dr) with J(r)}
+\end{eqnarray}
+where the cost function $J(\r)$ is
+\begin{equation}\label{ml eqn:J(r)}
+J(\r)=\sum_{n=0}^{N-1} \left|a_n-b_n\e{jk_n\r}\right|^2
+\end{equation}
+
+Since (\ref{ml eqn:p(md;dr) with J(r)}) shows that 
+$p(\md;\dr)$ is a monotonically decreasing function of $J(\r)$,
+the local maxima of $p(\md;\dr)$ are the local minima of $J(\r)$ and
+the global maximum of $p(\md;\dr)$ is the global minimum of $J(\r)$.
+Therefore a necessary and sufficient condition for the existence of a
+maximum likelihood estimator of $\dr$ is a unique global minimum of $J(\r)$.  
+A proof of the uniqueness of the global maximum of $J(\r)$ is given in 
+section~\ref{ml sec:J(r)'s period}, so the maximum likelihood estimator $\rML$
+exists and is given by
+\begin{equation}\label{ml eqn:rML}
+\rML=\arg\,\min_{\r}\,J(\r)
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Estimating All Parameters}
+
+The maximum likelihood derivation of the previous section assumed that $\dr$
+was the only unknown parameter.  However this is an oversimplification of
+the model because the target's frequency responses $s_n$ are always unknown
+and the noise variance $\nv$ is normally unknown or has been estimated from
+the radar data.  It is not apparent that it is legitimate to eliminate the
+$s_n$ as in equation (\ref{ml eqn:comb model}) and assume that $\nv$ is
+known when deriving $\rML$.  It is even less apparent that this is valid 
+when analysing the statistical performance of $\rML$, such as while 
+calculating the \CR bound.  
+
+The correct technique is to treat all unknown parameters as components of a
+vector of parameters to be estimated, and apply the vector form of maximum
+likelihood estimation.  In this case, the column vector of unknown
+parameters is
+\begin{equation}\label{ml eqn:uvp}
+\uvp=\left[\nv, \dr, s_0, s_1, \ldots, s_{N-1}\right]^T
+\end{equation}
+where $\nv$ and $\dr$ are real and the $s_n$ are complex.  
+
+Solving the vector likelihood equations shows that the maximum likelihood
+estimator of $\dr$ is the same as the expression obtained in 
+equation~(\ref{ml eqn:rML}) when $\dr$ was considered the only unknown.  
+An obvious question to ask is ``why should the vector maximum likelihood
+estimator be used when the two methods of estimating $\dr$ produce the 
+same answer?''  Three reasons why the vector estimator should be used are:
+\begin{itemize}
+\item Maximum likelihood estimation demands that the likelihood
+equations maximizing $p(\md;\uvp)$ with respect to each $\ui{i}$ in $\uvp$
+be solved simultaneously.  Solving just one of the likelihood equations 
+(which is what the scalar unknown case does) does not guaranteed that the 
+others are also solved.  
+\item Finding the maximum likelihood estimates of $\nv$ and $s_n$ gives
+expressions that are useful in their own right.
+\item The vector and the scalar maximum likelihood estimators may have
+different statistical properties even though the estimator of $\dr$ is the
+same in both cases.  In particular the \CR bound is higher for the vector
+estimator than for the scalar estimator.
+\end{itemize}
+
+A little thought shows that the first of these reasons is not entirely valid.
+This is because if the scalar maximum likelihood estimator can be evaluated,
+the neglected unknown parameters must have been eliminated.  This lack of
+dependence of the unknown parameter on the other neglected unknown 
+parameters is reflected in the vector case by the likelihood equation for
+the one unknown parameter from the scalar case becoming decoupled from the
+likelihood equations for the unknown parameters that were ignored in the
+scalar case.
+
+The second and third reasons, however, are strong enough to justify the
+additional complexity of the full multiple-parameter maximum likelihood
+solution.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{The Vector Maximum Likelihood Estimator}
+
+The likelihood function for estimating the vector $\uvp$ of unknown
+parameters from the data set $\md$ can be broken into the product of
+$N$ likelihood functions of the form $p(a_n,b_n;\dr,s_n,\nv)$ because each 
+of the noise terms in (\ref{ml eqn:std model}) is independent.  Then
+\begin{equation}
+p(\md;\uvp)=\prod_{n=0}^{N-1}p(a_n,b_n;\dr,s_n,\nv)
+\end{equation}
+Furthermore, because $\na{n}$ and $\nb{n}$ are independent,
+$p(a_n,b_n;\dr,s_n,\nv)$ is the product
+\begin{equation}
+p(a_n,b_n;\dr,s_n,\nv)=p(a_n;\dr,s_n,\nv)\cdot p(b_n;\dr,s_n,\nv)
+\end{equation}
+Each of these can be written down in terms of the complex Gaussian
+probability density function
+\begin{eqnarray}
+p(a_n;\dr,s_n,\nv)&=&\frac{1}{\pi\nv}\,
+\exp\left(-\frac{1}{\nv}\left|a_n-s_n\right|^2\right) \\
+p(b_n;\dr,s_n,\nv)&=&\frac{1}{\pi\nv}\,
+\exp\left(-\frac{1}{\nv}\left|b_n-s_n\e{-jk_n\dr}\right|^2\right)
+\end{eqnarray}
+Then the likelihood function for frequency $k_n$ is
+\begin{equation}
+p(a_n,b_n;\dr,s_n,\nv)=\frac{1}{\left(\pi\nv{}\right)^2}\,\exp\left(
+-\frac{1}{\nv}\left[
+\left|\vphantom{\e{k}}a_n-s_n\right|^2+\left|b_n-s_n\e{-jk_n\dr}\right|^2
+\right]\right)
+\end{equation}
+and the likelihood function for all $N$ frequencies is
+\begin{eqnarray}
+p(\md;\uvp)&=&\prod_{n=0}^{N-1} p(a_n,b_n;\uvp)\nn\\
+&=&\frac{1}{\left(\pi\nv\right)^{2N}}\,\exp\left(
+-\frac{1}{\nv}\sum_{n=0}^{N-1}
+\left|\vphantom{\e{k}}a_n-s_n\right|^2+\left|b_n-s_n\e{-jk_n\dr}\right|^2
+\right)
+\label{ml eqn:p(md;uvp)}
+\end{eqnarray}
+
+Since $\ln x$ increases monotonically as $x$ increases, the likelihood 
+function is usually written as the log-likelihood function to
+remove the exponential
+\begin{equation}\label{ml eqn:ln p(md;uvp)}
+\ln p(\md;\uvp)=-2N\ln\left(\pi\nv\right)-\frac{1}{\nv}\sum_{n=0}^{N-1}
+\left|\vphantom{\e{k}}a_n-s_n\right|^2+\left|b_n-s_n\e{-jk_n\dr}\right|^2
+\end{equation}
+The maximum likelihood estimator $\uvpML$ is the value of $\uvp$ which
+maximizes $\ln p(\md;\uvp)$.  This is equivalent to solving the log-likelihood
+equation 
+\begin{equation}
+\left.\frac{\del\ln p(\md;\uvp)}{\del\uvp}\right|_{\uvp=\uvpML}=0
+\end{equation}
+provided that $\ln p(\md|\uvp)$ has its only local extremum at the global
+maximum.  If there is more than one local extremum, some other information
+must be available to choose the solution of (\ref{ml eqn:ln p(md;uvp)})
+which maximizes $\ln p(\md;\uvp)$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Finding $\sML{n}$}
+
+The partial derivative of $\ln p(\md;\uvp)$ with respect to $s_n$, the
+target's reflectivity at frequency $k_n$, is 
+\begin{equation}
+\frac{\del\ln p(\md;\uvp)}{\del s_n}=
+-\frac{1}{\nv}\,\frac{\del}{\del s_n}\sum_{n'=0}^{N-1}
+\left|\vphantom{\e{k}}a_{n'}-s_{n'}\right|^2
++\left|b_{n'}-s_{n'}\e{-jk_{n'}\dr}\right|^2
+\end{equation}
+Using the definition of the derivative of a real function of a complex
+argument in (\ref{mp eqn:complex deriv}), 
+\begin{eqnarray}
+\frac{\del\ln p(\md;\uvp)}{\del s_n}
+&=&-\frac{1}{\nv}\,\frac{\del}{\del s_n}\left(
+\left|\vphantom{\e{k}}a_n-s_n\right|^2+\left|b_n-s_n\e{-jk_n\dr}\right|^2
+\right)\nn\\
+&=&-\frac{1}{\nv}\,\frac{\del}{\del s_n}\left(
+\left|\vphantom{\e{k}}s_n-a_n\right|^2+\left|s_n-b_n\e{jk_n\dr}\right|^2
+\right)\nn\\
+&=&-\frac{1}{\nv}\left[
+\left(\vphantom{\e{k}}\conj{s_n}-\conj{a_n}\right)
++\left(\conj{s_n}-\conj{b_n}\e{-jk_n\dr}\right)\right]\nn\\
+&=&-\frac{1}{\nv}\conj{\left(
+2s_n-\left(a_n+b_n\e{jk_n\dr}\right)\right)}
+\end{eqnarray}
+Replacing $s_n$ and $\dr$ with their maximum likelihood estimators 
+$\sML{n}$ and $\rML$, then equating to zero shows that
+\begin{equation}\label{ml eqn:sML}
+\sML{n}=\frac{1}{2}\left(a_n+b_n\e{jk_n\rML}\right)
+\end{equation}
+
+Therefore the maximum likelihood estimate of the target's response at
+frequency $k_n$ is the average of the noisy measurements at $t=0$ and $t=T$
+after $b_n$ has had its phase adjusted to compensate for the target's radial
+motion during the interval $[0,T]$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Finding $\rML$}
+
+The partial derivative of $\ln p(\md;\uvp)$ with respect to $\dr$, the
+radial distance the target has moved, is 
+\begin{eqnarray}
+\frac{\del\ln p(\md;\uvp)}{\del \dr}
+&=&-\frac{1}{\nv}\,\frac{\del}{\del \dr}\sum_{n=0}^{N-1}
+\left|\vphantom{\e{k}}a_n-s_n\right|^2+\left|b_n-s_n\e{-jk_n\dr}\right|^2\nn\\
+&=&-\frac{1}{\nv}\sum_{n=0}^{N-1}\frac{\del}{\del \dr}
+\left|b_n-s_n\e{-jk_n\dr}\right|^2
+\end{eqnarray}
+Since $\dr$ is real, this is the derivative of a real function of a real
+variable.  So
+\begin{eqnarray}
+\frac{\del\ln p(\md;\uvp)}{\del \dr}
+&=&-\frac{1}{\nv}\sum_{n=0}^{N-1}\frac{\del}{\del \dr}
+\left|b_n-s_n\e{-jk_n\dr}\right|^2\nn\\
+&=&\frac{1}{\nv}\sum_{n=0}^{N-1}jk_n\left(
+b_n\conj{s_n}\e{jk_n\dr}+\conj{b_n}s_n\e{-jk_n\dr}\right)\nn\\
+&=&-\frac{2}{\nv}\imag{\sum_{n=0}^{N-1}k_nb_n\conj{s_n}\e{jk_n\dr}}
+\end{eqnarray}
+Replacing $\dr$ with its maximum likelihood estimator $\rML$ and $s_n$ with
+the expression for $\sML{n}$ from (\ref{ml eqn:sML}), then equating to zero
+gives the solution of the likelihood equation as
+\begin{eqnarray}
+0&=&\imag{\sum_{n=0}^{N} k_n\sML{n}\conj{b_n}\e{-jk_n\rML}}\nn\\
+&=&\frac{1}{2}\imag{\sum_{n=0}^{N} k_n\left(a_n+b_n\e{jk_n\rML}\right)
+\conj{b_n}\e{-jk_n\rML}}\nn\\
+&=&\frac{1}{2}\imag{\sum_{n=0}^{N} k_na_n\conj{b_n}\e{-jk_n\rML}}
+\end{eqnarray}
+because the imaginary part of $b_n\conj{b_n}$ is zero.
+
+Therefore the maximum likelihood estimator $\rML$ is one of the solutions of 
+\begin{equation}
+\imag{\sum_{n=0}^{N} k_na_n\conj{b_n}\e{-jk_n\rML}}=0
+\end{equation}
+This has many solutions, not all of which maximize $\ln p(\md;\uvp)$.
+
+To find which of these solutions maximizes $\ln p(\md;\uvp)$, use the
+maximum likelihood estimator of $s_n$ in (\ref{ml eqn:sML}) to eliminate the
+$s_n$ from (\ref{ml eqn:p(md;uvp)}).  Then
+\begin{eqnarray}
+\left|\vphantom{\e{k}}a_n-\sML{n}\right|^2
+&=&\left|\vphantom{\e{k}}a_n-\frac{1}{2}
+	\left(a_n+b_n\e{jk_n\rML}\right)\right|^2\nn\\
+&=&\frac{1}{4}\left|a_n-b_n\e{jk_n\rML}\right|^2
+\end{eqnarray}
+and
+\begin{eqnarray}
+\left|b_n-\sML{n}\e{-jk_n\rML}\right|^2
+&=&\left|b_n-\frac{1}{2}\left(a_n+b_n\e{jk_n\rML}\right)
+	\e{-jk_n\rML}\right|^2\nn\\
+&=&\frac{1}{4}\left|b_n-a_n\e{-jk_n\rML}\right|^2\nn\\
+&=&\frac{1}{4}\left|a_n-b_n\e{jk_n\rML}\right|^2
+\end{eqnarray}
+Therefore the maximum value of $p(\md;\uvp)$ is
+\begin{eqnarray}
+p(\md;\uvp)
+&=&\frac{1}{\left(\pi\nv\right)^{2N}}\,\exp\left(
+-\frac{1}{\nv}\sum_{n=0}^{N-1}
+\left|\vphantom{\e{k}}a_n-\sML{n}\right|^2+\left|b_n-\sML{n}\e{-jk_n\dr}\right|^2
+\right)\nn\\
+&=&\frac{1}{\left(\pi\nv\right)^{2N}}\,\exp\left(
+-\frac{1}{2\nv}\sum_{n=0}^{N-1}
+\left|a_n-b_n\e{jk_n\rML}\right|^2\right)
+\end{eqnarray}
+Thus the maximum likelihood estimator $\rML$ is found by minimizing 
+\begin{equation}
+\sum_{n=0}^{N-1} \left|a_n-b_n\e{jk_n\r}\right|^2
+\end{equation}
+which is the same cost function as $J(\r)$ in equation (\ref{ml eqn:J(r)})
+derived using the scalar maximum likelihood estimator.
+Therefore
+\begin{equation}\label{ml eqn:J(r) uvp}
+\rML=\arg\,\min_{\r}\,J(\r)
+\end{equation}
+where the cost function is
+\begin{equation}
+J(\r)=\sum_{n=0}^{N-1} \left|a_n-b_n\e{jk_n\r}\right|^2
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Finding $\nvML$}
+
+The final parameter to be estimated is the noise variance $\nv$.
+The partial derivative of $\ln p(\md;\uvp)$ with respect to
+$\nv$ is
+\begin{equation}
+\frac{\del\ln p(\md;\uvp)}{\del \nv}
+=-\frac{2N}{\nv}+\frac{1}{\left(\nv\right)^2}
+\sum_{n=0}^{N-1}
+\left|\vphantom{\e{k}}a_n-s_n\right|^2+\left|b_n-s_n\e{-jk_n\dr}\right|^2
+\end{equation}
+Equating to zero and substituting in $\nvML$, $\sML{n}$ and $\rML$ shows that
+\begin{equation}
+\nvML=\frac{1}{2N}\sum_{n=0}^{N-1} 
+\left|a_n-\sML{n}\right|^2+\left|b_n-\sML{n}\e{-jk_n\rML}\right|^2
+\end{equation}
+Using the expression for $\sML{n}$ in (\ref{ml eqn:sML}) gives the noise 
+variance as $1/4N$ times the minimum of $J(\r)$
+\begin{eqnarray}
+\nvML
+&=&\frac{1}{4N}\sum_{n=0}^{N-1} \left|a_n-b_n\e{jk_n\rML}\right|^2\nn\\
+&=&\frac{1}{4N}\,J(\rML)		
+\label{ml eqn:nvML}
+\end{eqnarray}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Properties of the Cost Function $J(\r)$}
+
+%----------------------------------------------------------------------------
+\begin{figure}
+\caption{The cost function $J(\r)$ for a variety of simulated and
+experimental radar data as a function of estimated radial motion, $r$.}
+\label{ml fig:J(r) pictures}
+
+These used a stepped-frequency radar with an initial frequency of 
+$f_0=9.16$~GHz and $128$ frequency steps with a $2$~MHz spacing.
+In (a) and (b), the target has no radial motion, while in (c) and (d), the
+target moved $-0.58$~m between the two frequency responses.
+
+\def\picturewidth{0.5\textwidth}
+\def\captionwidth{0.37\textwidth}
+\def\precaptionwidth{0.083\textwidth}
+\def\postcaptionwidth{0.047\textwidth}
+
+\def\subcaption#1#2{\hbox{\hbox to\precaptionwidth{\hfill#1\quad}
+	\parbox[t]{\captionwidth}{#2}\hbox to\postcaptionwidth{}}}
+
+\vbox{
+\vphantom{I}
+\hbox{\epsfxsize=\picturewidth\epsffile{../pics/ugfig1a.eps}
+	\epsfxsize=\picturewidth\epsffile{../pics/ugfig1d.eps}}
+\hbox{	
+\subcaption{(a)}{$J(\r)$ for a simple simulated target
+	with a frequency response of $s(f)\equiv 1$.}
+\subcaption{(b)}{A magnified view of the global minimum of (a), showing how
+	the high frequency modulation locates the minimum very accurately.}
+}
+\vphantom{I}
+\vphantom{I}
+\hbox{\epsfxsize=\picturewidth\epsffile{../pics/ugfig1b.eps}
+	\epsfxsize=\picturewidth\epsffile{../pics/ugfig1c.eps}}
+\hbox{
+\subcaption{(c)}{$J(\r)$ for a simulation of a 737 aircraft composed of 165
+	point scatterers.  This shows a similar shape to that of (a).}
+\subcaption{(d)}{$J(\r)$ for a real 737 aircraft whose frequency responses
+were measured while landing at Adelaide Airport.}
+}
+}
+\end{figure}
+%----------------------------------------------------------------------------
+
+In this section, the cost function $J(\r)$ is examined in detail to discover 
+why it is useful for ISAR motion estimation, and to see whether the
+assumption of a unique global minimum necessary for the existence of the
+maximum likelihood estimator is justified.
+
+The exact behaviour of $J(\r)$ depends on the target's frequency response, 
+which in turn depends on the target's geometry and orientation.  
+However, the general features of $J(\r)$ are common to all targets, and
+these will be illustrated by considering a very simple target geometry.
+For this simple geometry, it will be shown that $J(\r)$ has a unique global
+minimum when the frequency response is known for a continuum of frequencies.
+For arbitrary targets imaged using stepped-frequency ISAR, it will be shown 
+that $J(\r)$ is periodic but this does not invalidate the maximum likelihood
+estimate because the period is exactly the length of the ISAR range 
+ambiguity window.  Therefore, it can be safely assumed that for real targets, 
+$J(\r)$ has a unique global minimum whose location is the maximum 
+likelihood estimate of $\dr$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{General Features of $J(\r)$}
+
+To illustrate the general behaviour of the cost function $J(\r)$, consider 
+a simple target whose frequency responses are measured in the 
+absence of noise at times $t=0$ and $t=T$ respectively to give
+\begin{eqnarray}
+a(f)&=&1\nn\\
+b(f)&=&\e{-j\fpc f\dr}\label{ml eqn:flattarget}
+\end{eqnarray}
+This represents a target, with a physically unrealistic constant radar 
+cross-section, which moves a distance $\dr$ between $t=0$ and $t=T$.  
+For analytical simplicity, assume that the frequency responses are measured 
+over a continuous frequency band from $f_0$ to $f_1=f_0+\Delta f$.  
+Then equation (\ref{ml eqn:J(r)}) for $J(\r)$ becomes an integral rather than 
+a summation
+\begin{equation}
+J(\r)=\frac{1}{\Delta f}\int_{f_0}^{f_1} 
+\left|a(f)-b(f)\e{j\fpc f\r}\right|^2\;df
+\end{equation}
+Solving this for the frequency responses in (\ref{ml eqn:flattarget}) gives
+\begin{equation}
+J(\r)=2\left[1-m(\r)e(\r)\right]\label{ml eqn:J(r) for flat target}
+\end{equation}
+where $e(\r)$ is the low frequency envelope
+\begin{equation}
+e(\r)=\sinc\left(\frac{2}{c}\Delta f(\dr-\r)\right)
+\end{equation}
+which has zero crossings every $c/2\Delta f$, and $m(\r)$ is the high 
+frequency modulation
+\begin{equation}
+m(\r)=\cos\left(\frac{4\pi}{c}\overline{f}(\dr-\r)\right)
+\end{equation}
+which has a period of $c/2\overline{f}$ where $\overline{f}=(f_0+f_1)/2$.
+
+From (\ref{ml eqn:J(r) for flat target}), $J(\r)$ is only ever zero when both 
+$e(\r)$ and $m(\r)$ are unity.  The envelope $e(\r)$ is only unity when 
+$\r=\dr$ and the cosine modulation $m(\r)$ has one of its local maxima at 
+$\r=\dr$.  
+
+Therefore the global minimum of $J(\r)$ occurs when $\r$ is equal to the
+radial distance $\dr$ the target moved, and so
+\begin{equation}
+\rML=\dr
+\end{equation}
+
+This combination of low frequency envelope and high frequency modulation
+enables the global minimum of $J(\r)$ to be estimated very accurately.  The
+envelope alone would give only a rough estimate of $\dr$ because
+the envelope is so flat in the neighbourhood of $\r=\dr$.  The
+cosinusoidal modulation alone is not suitable for estimating $\dr$
+because there is no way of knowing which of the closely spaced local extrema
+locates $\dr$.  But by multiplying the envelope and the modulation
+together, the modulation's high frequency ensures that the global minimum 
+can be located accurately, and the envelope ensures that there is no 
+ambiguity in choosing which of the local minima is the global minimum.
+
+$J(\r)$ is plotted for a number of simulations and real targets in 
+figure~\ref{ml fig:J(r) pictures}.  Figure~\ref{ml fig:J(r) pictures}(a) is 
+$J(\r)$ for the simple target in equation (\ref{ml eqn:J(r) for flat target}).  
+The nearly solid mass of black inside the envelope indicates that the local 
+minima of $J(\r)$ are very closely spaced.  The region surrounding the global 
+minimum is enlarged in \ref{ml fig:J(r) pictures}(b), clearly showing how 
+closely spaced the local extrema of $J(\r)$ are.  $J(\r)$ for a simulated 
+aircraft and a real aircraft are presented in 
+figures~\ref{ml fig:J(r) pictures}(c) and (d).  
+
+The consistency of the overall shape of the three different cost function curves
+in figure~\ref{ml fig:J(r) pictures} shows how the general form of $J(\r)$ is 
+maintained, even in the presence of noise for the
+real aircraft in \ref{ml fig:J(r) pictures}(d).  Note that in 
+\ref{ml fig:J(r) pictures}(d), the maximum likelihood estimate of the 
+signal-to-noise ratio is given by the amplitude of $J(\r)$ at the 
+global minimum.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Uniqueness of $J(\r)$'s Global Minimum}
+\label{ml sec:J(r)'s period}
+
+The existence of the maximum likelihood estimator $\rML$ requires that the 
+cost function $J(\r)$ has a unique global minimum.  This is because if
+$J(\r)$ has a number of equally deep local minima  but no unique global 
+minimum, there is no way of telling which of the local minima should be
+chosen as $\rML$.
+
+By considering stepped-frequency ISAR with uniformly spaced frequency
+steps, it will be shown that $J(\r)$ is periodic, which would seem to deny
+the existence of the maximum likelihood estimator.  However, the period of
+$J(\r)$ is equal to the size of the ISAR range ambiguity window so the
+periodicity of $J(\r)$ may be neglected and the global minimum is considered
+unique.
+
+If the frequency responses are sampled at discrete evenly-spaced
+frequencies\footnote{A uniformly spaced stepped-frequency waveform is only
+required for this periodicity proof and for some of the efficient ways of
+evaluating the maximum likelihood estimator in chapter 
+\protect\ref{ee chp}.}, $J(\r)$ is periodic.  To find the period explicitly, 
+consider a target with frequency response $s_n$ at frequency $f_n$ moving a
+radial distance $\dr$ between $t=0$ and $t=T$ in the absence of noise. Then
+\begin{eqnarray}
+a_n&=&s_n\nn\\
+b_n&=&s_n\e{-j\fpc f_n\dr}\label{ml eqn:general target}
+\end{eqnarray}
+From this noiseless model, $J(\r)$ is
+\begin{eqnarray}
+J(\r)&=&2\left(\sum_{n=0}^{N-1}|s_n|^2\right)-2\real{
+\e{-j\fpc f_0(\dr-\r)}\sum_{n=0}^{N-1}\left|s_n\right|^2
+\e{-j\frac{4\pi}{c}(f_n-f_0)(\dr-\r)}}
+\end{eqnarray}
+Because $f_n-f_0=n\Delta f$ for stepped-frequency ISAR,
+\begin{equation}
+J(\r)=2\left(\sum_{n=0}^{N-1}\left|s_n\right|^2\right)
+-2\real{m(\r)\overline{e(\r)}}
+\end{equation}
+where the high frequency complex modulation is
+\begin{equation}
+m(\r)=\e{-j\fpc f_0(\dr-\r)}
+\end{equation}
+and the low frequency complex envelope is
+\begin{equation}\label{ml eqn:e(r)}
+e(\r)=\sum_{n=0}^{N-1}\left|s_n\right|^2\e{j\frac{4\pi}{c}n\Delta f(\dr-\r)}
+\end{equation}
+So $J(\r)$ is minimized when the magnitude of $e(\r)$ is greatest and $e(\r)$ and
+$m(\r)$ have the same phase modulo $2\pi$.
+
+For $e(\r)$ to attain its greatest magnitude, each term in the summation 
+of (\ref{ml eqn:e(r)}) must have the same phase modulo $2\pi$
+\begin{equation}
+\frac{4\pi}{c}n\Delta f(\dr-\r)=2u_n\pi +\phi
+\end{equation}
+where each of the $u_n$ is integral.  Since this has to hold for every $n$
+from $0$ to $N-1$, $u_n=un$ for some integer $u$. Putting $n=0$ shows 
+that $\phi=0$.  Therefore $e(\r)$'s magnitude is greatest if
+\begin{equation}\label{ml eqn:kcondit}
+\dr-\r=\frac{uc}{2\Delta f}
+\end{equation}
+
+Whenever this is satisfied, $m(\r)$'s phase must also be an integral multiple
+of $2\pi$.  Therefore
+\begin{equation}\label{ml eqn:lcondit}
+uf_0(\dr-\r)=2v\pi
+\end{equation}
+where $v$ is integral.  Putting (\ref{ml eqn:kcondit}) and (\ref{ml eqn:lcondit}) 
+together gives the condition
+\begin{equation}
+uf_0=v\Delta f
+\end{equation}
+on $u$ and $v$.  The first solution, $u=v=0$, occurs when $\dr=\r$.
+At worst, the next solution is $u=\pm 1$ when $\Delta f$ is a factor of
+$f_0$.  Therefore the period of $J(\r)$ is a multiple of
+$$\frac{c}{2\Delta f}$$
+This is exactly the size of the range ambiguity window in stepped-frequency
+ISAR.  Since radial movements of exact multiples of the range ambiguity
+window do not affect the final ISAR image, this shows that the 
+periodic nature of $J(\r)$ can be ignored for motion estimation for 
+ISAR imaging.
+
+Therefore $\rML$ found by minimizing $J(\r)$ is indeed the maximum
+likelihood estimate of $\dr$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Summary of Maximum Likelihood Motion Estimation}
+
+To summarize the results of this chapter, applying maximum likelihood 
+estimation to the problem of estimating the unknown parameters of a 
+target moving during an interval $[0,T]$ shows that
+\begin{itemize}
+\item The maximum likelihood estimator of the radial distance the target
+has moved during the time interval is 
+$$\rML=\arg\,\min_{\r}\,J(\r)$$
+where the cost function is
+$$J(\r)=\sum_{n=0}^{N-1} \left|a_n-b_n\e{jk_n\r}\right|^2$$
+\item The maximum likelihood estimator of the noise variance is $1/4N$ 
+times the value of $J(\rML)$
+$$\nvML=\frac{1}{4N}\min_{\r}\,J(\r)$$
+\item The maximum likelihood estimator of the target's frequency response is
+the average of the noisy measurements at times $t=0$ and $t=T$ once the 
+measurements at $t=T$ have been phase-shifted to move the target back a 
+radial distance of $\rML$
+$$\sML{n}=\frac{1}{2}\left(a_n+b_n\e{jk_n\rML}\right)$$
+\end{itemize}

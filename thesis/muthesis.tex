@@ -1,0 +1,14 @@
+% First copy PSTRICKS.CO_ to PSTRICKS.CON.
+% Then run "tex386 -i &lplain muthesis" to generate the muthesis.fmt file.
+% Delete the PSTRICKS.CON
+% Finally make a batch file "mtex.cmd" with "tex386 ^&muthesis %1 %2 %3 %4 %5"
+% for a fast-loading version of the thesis style.  
+%
+% Comment out the equivalent forms of the following lines in the document file.
+% Then "mtex file" will process things much more quickly.
+\documentstyle[muthesis,12pt,epsf]{book}
+\input{pstricks}
+%\input{pst-node}          <-- These are loaded in the modified PSTRICKS.CON
+%\input{pst-plot}
+%\input{pstricks.bug}
+\dump

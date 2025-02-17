@@ -1,0 +1,961 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%			INVERSE SYNTHETIC APERTURE RADAR
+%
+%				  PhD Thesis
+%
+%		Stephen Simmons		simmons@ee.mu.oz.au
+%
+%	    Department of Electrical and Electronic Engineering
+%	    University of Melbourne, Parkville, 3052, Australia
+%
+% Chapter 5:	Motion Estimation and Motion Compensation 
+%
+%		started first draft:	31 Dec 1994
+%		finished first draft:	 4 Jan 1995
+%		submitted:		
+%
+%%%%%%%%%%%%%%%%%%%%% Copyright (C) 1995 Stephen Simmons %%%%%%%%%%%%%%%%%%
+
+\chapter{Motion Estimation and Motion Compensation}
+\label{mc chp}
+
+
+\typeout{Something about stepped-frequency ISAR}
+
+\bigletter Since the target's motion creates the synthetic aperture in ISAR
+imaging, a high cross-range resolution can only be obtained if the position
+and orientation of the target matches that assumed by the ISAR inversion
+algorithm.  Furthermore, the ISAR inversion can be implemented efficiently
+only if the target moves in one of two basic ways; either rotating with
+uniform angular velocity a fixed distance from the radar, or moving along a
+straight line at constant speed.  If the target deviates by even a small
+fraction of a wavelength from its presumed position, the ISAR image becomes
+badly blurred in the cross-range direction.  
+
+Consequently, the first and most delicate part of ISAR imaging is motion
+estimation, the process of measuring the target's position and orientation
+at all times from its radar reflections.  Once the inversion algorithm has
+been chosen, motion compensation is performed.  This adjusts the radar
+measurements to compensate for deviations from the target's presumed
+location and aspect angle.  Finally, the compensated radar measurements
+match those expected by the ISAR inversion algorithm and the ISAR image can
+be formed.
+
+In this chapter, these ideas about motion estimation and motion compensation
+are explored in detail.  After describing how to apply motion compensation
+to correct for deviations in the target's range and aspect angle, various
+methods of motion estimation suitable for ISAR are discussed.   
+
+In chapter \ref{ml chp}, a general model for radial motion estimation is
+developed and this is used to find the maximum likelihood solution of the
+ISAR motion estimation problem. After chapter \ref{ee chp} constructs
+efficient algorithms for evaluating the maximum likelihood motion
+estimator, and chapter \ref{sp chp} analyses the estimator's statistical
+properties, chapter \ref{do chp} shows how some of the radial motion
+estimators in this chapter are related to the maximum likelihood radial
+motion estimator.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Motion Errors}
+
+When an ISAR inversion algorithm estimates a target's spatial radar 
+reflectivity, $g(x,y)$, from a set of radar measurements 
+\begin{equation}
+s(k_n,t_m)\quad\mbox{for $n=0,1,\ldots,N-1$ and $m=0,1,\ldots,M-1$}
+\end{equation}
+the measurements are related to the target's unknown reflectivity $g(x,y)$ 
+according to the model in equation (\ref{ii eqn:s(k,t) II})
+\begin{equation}
+s(k,t)=\int\!\!\int g(x,y)\,e^{-jkr_{xy}(t)}\,dx\,dy
+\end{equation}
+where $r_{xy}(t)$ is the distance between a scatterer at $(x,y)$ on the
+target and the radar at time $t$.  The inversion algorithm assumes a 
+certain form for $r_{xy}(t)$, and if the target's motion deviates from this,
+the resulting ISAR image will be blurred.
+
+If at time $t$, the target's centre is located a radial distance $r(t)$ from
+the radar and is oriented so that its $x$ axis is at an angle $\theta(t)$
+to the line between the target and the radar antenna, $r_{xy}(t)$ is
+\begin{equation}\label{mc eqn:rxy(t)}
+r_{xy}(t)=\sqrt{\left(r(t)+x\cos\theta(t)-y\sin\theta(t)\right)^2
++\left(x\sin\theta(t)+y\cos\theta(t)\right)^2}
+\end{equation}
+This shows that $r(t)$ and $\theta(t)$ are the important factors in ensuring
+that the target's motion corresponds to the model.  
+
+Suppose an ISAR inversion algorithm requires a target moving in such a way
+that its radial position and orientation are $r_0(t)$ and $\theta_0(t)$ 
+respectively.  But as the target may be moving slightly differently, its
+actual radial position and orientation are given by the functions $r(t)$
+and $\theta(t)$.  
+
+The problem now is to estimate $r(t)$ and $\theta(t)$ sufficiently
+accurately that $r_{xy}(t)$, the range of any point on the target at any
+time, can be calculated with an accuracy of a fraction of a wavelength, and
+then to adjust the radar measurements to account for any differences between
+$r(t)$ and $r_0(t)$ and between $\theta(t)$ and $\theta_0(t)$.
+
+The second part of this problem, that of motion compensation, is discussed
+first because it is considerably simpler than motion estimation.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Motion Compensation}
+
+
+Motion compensation has to adjust the radar measurements $s(k,t)$ to
+compensate for the target being a distance $r(t)$ from the radar when it
+should be a distance $r_0(t)$ away, and having an orientation $\theta(t)$
+rather than the $\theta_0(t)$ expected by the inversion algorithm.  
+
+The corrections are made in two stages; first radial motion compensation is
+used to correct for deviations in the target's range, then angular motion
+compensation is used to correct for deviations in the target's aspect
+angle.\footnote{Sometimes these stages are called translational motion
+compensation (TMC) and rotational motion compensation (RMC)
+\protect\cite{Boc91}.  These names are slightly misleading when the target
+is moving in a straight line at constant speed because a deviation in the
+target's translational motion changes both its range and aspect angle.  TMC
+corrects errors in the target's range and RMC corrects errors in the
+target's aspect angle.  However TMC's name suggests that it can correct
+errors in the target's translational motion, which involves corrections  
+both in range and in aspect angle.}
+
+For radar imaging at X-band, radial motion compensation is mandatory because
+a moving target's range is almost guaranteed to deviate from the ideal by
+more than $\lambda/10=3$~mm.  Angular motion compensation will probably not
+be necessary if the target is small and the ISAR image has a low enough
+cross-range resolution that polar reformatting can be left out of the
+inversion algorithm.  This is fortunate because radial motion affects the
+whole target in the same way and is comparatively easy to estimate.  On the
+other hand, the target's angular motion affects different parts of the
+target in different ways and is much harder to estimate.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Radial Compensation}
+\label{mc sec:rc}
+
+At first glance, $r_{xy}(t)$ in (\ref{mc eqn:rxy(t)}) is a complicated
+function of $r(t)$ and $\theta(t)$, so correcting deviations from both
+$r_0(t)$ and $\theta_0(t)$ appears very difficult.  However, using the 
+simple assumptions that the size of the target is small in comparison to its 
+range
+\begin{equation}
+\sqrt{x^2+y^2}\ll r(t)
+\end{equation}
+and that deviations from the assumed radial position are also relatively
+small
+\begin{equation}
+\left|r_0(t)-r(t)\right|\ll r_0(t)
+\end{equation}
+the range to a scatterer at $(x,y)$ can be written in terms of $r_0(t)$ 
+\begin{eqnarray}
+r_{xy}(t)
+&=&\sqrt{\left(r(t)+x\cos\theta(t)-y\sin\theta(t)\right)^2
++\left(x\sin\theta(t)+y\cos\theta(t)\right)^2}			   \nn\\
+&\approx&\left[r(t)-r_0(t)\right]				   \\
+&&\mbox{}+\sqrt{\left(r_0(t)+x\cos\theta(t)-y\sin\theta(t)\right)^2
++\left(x\sin\theta(t)+y\cos\theta(t)\right)^2}			   \nn
+\end{eqnarray}
+This means that when the target moves a small radial distance,
+the ranges of all points on the target change by the same amount.
+
+Since the reflection from a scatterer at $(x,y)$ undergoes a phase change of
+$-kr_{xy}(t)$, a radial deviation of
+\begin{equation}
+\Delta r(t)=r(t)-r_0(t)
+\end{equation}
+causes an extra phase shift of $-k\Delta r(t)$.  This phase error is
+common to the reflections from all scatterers on the target, so the 
+measurement $s(k,t)$ at frequency $k$ has suffered an additional phase shift
+of $-k\Delta r(t)$.  This can be corrected by multiplying $s(k,t)$ by
+$e^{jk\Delta r(t)}$ to give
+\begin{equation}
+s'(k,t)=e^{jk\Delta r(t)}\,s(k,t)
+\label{mc eqn:rmc}
+\end{equation}
+where $s'(k,t)$ is $s(k,t)$ with radial motion compensation applied.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Angular Compensation}
+
+
+Once radial motion compensation has been applied to the radar measurements,
+they have to be corrected for deviations in the target's aspect angle.
+The measurement $s(k,t)$ with radial motion compensation applied, $s'(k,t)$, 
+is given by
+\begin{equation}
+s'(k,t)=\int\!\!\int g(x,y)\,e^{-jkr'_{xy}(t)}\,dx\,dy
+\end{equation}
+where $r'_{xy}(t)$ is $r_{xy}$ with radial motion compensation
+\begin{eqnarray}
+r'_{xy}(t)
+&=&r_{xy}(t)-\Delta r(t)			\nn\\
+&=&\sqrt{\left(r_0(t)+x\cos\theta(t)-y\sin\theta(t)\right)^2
++\left(x\sin\theta(t)+y\sin\theta(t)\right)^2}\qquad
+% The quad at the end should move the equ. marginally to the left
+\label{mc eqn:rrxy(t)}
+\end{eqnarray}
+Correcting the measurements so that the target's actual aspect angle 
+$\theta(t)$ in (\ref{mc eqn:rrxy(t)}) becomes the presumed aspect angle 
+$\theta_0(t)$ is more complicated because the dependence of $r'_{xy}(t)$ 
+on $\theta(t)$ varies with $x$ and $y$.
+  
+The only way of rotating the target so that its aspect angle changes from 
+$\theta(t)$ to $\theta_0(t)$ is to warp the time axis.  Then when the
+inversion algorithm requires the target's frequency response at time $t$,
+the actual frequency response used is $s'(k,t')$ where the target's aspect
+angle at $t'$ is equal to the desired aspect angle at time $t$
+\begin{equation}
+\theta(t')=\theta_0(t)
+\end{equation}
+So $t'$ is related to $t$ by a function $t'=\tau(t)$ which accomplishes the
+time-warping
+\begin{equation}
+\tau(t)=\theta^{-1}\left(\theta_0(t)\right)
+\end{equation}
+
+Therefore the radar measurements with both radial and angular motion
+compensation are
+\begin{equation}
+s_0(k,t)=s'(k,\tau(t))
+\end{equation}
+Since the radar measurements $s(k,t)$ are only made at discrete times $t_m$,
+the radially-compensated measurements $s'(k,t_m)$ generally have to be 
+resampled in the time domain to give the fully motion-compensated $s_0(k,t)$.
+
+For range-Doppler ISAR inversions, the angular coordinate of $s'(k,t)$ in
+$(k_x,k_y)$-space is given by the orientation of the target at time $t$.  
+Therefore angular motion compensation is the same as moving the angular
+coordinates of each measurement $s'(k,t)$ by $\theta_0(t)-\theta(t)$.
+This shows that angular motion compensation and polar reformatting are very
+similar operations, so they can be performed together during the polar
+reformatting stage of range-Doppler ISAR inversions.\footnote{Angular motion
+compensation must be performed before ISAR inversions using wavenumber
+processing because step 2 of the wavenumber inversion (algorithm 
+\protect\ref{ii alg:w-k} on page \protect\pageref{ii alg:w-k}) is a Fourier
+transform of $s(k,t)$ with respect to time.  This requires that the target
+have the correct orientation $\theta_0(t)$ at each time.}
+
+One slight complication arises from angular motion compensation because
+radial motion compensation moves $s(k,t)$ to a range of $r_0(t)$.  However,
+angular motion compensation pretends that $s(k,t)$ was actually sampled at
+time $\tau^{-1}(t)$ so the measurement should have had its range adjusted to
+$r_0(\tau^{-1}(t))$.  
+When the radial motion compensation's phase correction is combined with 
+angular motion compensation's time-warping, the desired measurements at time
+$t$, $s_0(k,t)$, are found from the actual measurements, $s(k,t)$, according
+to
+\begin{equation}
+s_0\left(k,t\right)=e^{jk\Delta r(t)}\,s\left(k,\tau(t)\right)
+\end{equation}
+where $\Delta r(t)$ has been modified to take into account the time-warping
+\begin{equation}
+\Delta r(t)=r(\tau(t))-r_0(t)
+\end{equation}
+This complication does not arise when the inversion algorithm presumes that
+the target is rotating uniformly a fixed distance from the radar, but it is
+important for the alternative model of a target moving in a straight line at
+constant speed.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Motion Estimation in the Range and Frequency Domains}
+
+Motion estimation methods are classified as frequency domain or range domain 
+methods depending on whether the target's frequency responses $s(k,t)$ or its
+range profiles $s(r,t)$ are used.  As shown later in this section, range
+profiles are the inverse Fourier transforms of the frequency responses with
+respect to $k$ 
+\begin{equation}
+s(r,t)={\cal F}^{-1}_k\left\{s(k,t)\right\}
+\end{equation}
+
+This section introduces the terminology of radial motion estimation and
+shows how a target's frequency responses and range profiles change as its
+range from the radar changes.  The relationships developed in equations 
+(\ref{mc eqn:fr change}) and (\ref{mc eqn:rp change}) are the basis for
+the radial motion estimation algorithms which are described in detail in
+section \ref{mc sec:me algs}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Frequency Domain Motion Estimation}
+
+At each one of the $M$ discrete times $t_m$ during the ISAR imaging period
+$[-T/2,T/2]$, the target's radar reflectivity $s(k_n,t_m)$ is measured at
+the $N$ frequencies $k_n=4\pi f_n/c$ in the stepped-frequency waveform. 
+These $N$ measurements, sometimes collectively called a sweep, constitute
+one sample of the target's frequency response over the frequency range
+$[k_0,k_{N-1}]$.
+
+The goal of motion estimation is to measure the target's range $r(t)$
+during $[-T/2,T/2]$.  The target's average range during this period only
+needs to be known approximately but changes in its range must be known
+within a small fraction of a wavelength.  So any motion estimation method
+must be capable of estimating changes in range this accurately.  
+
+From the discussion of radial motion compensation in section \ref{mc sec:rc}, 
+a measurement $s(k,t)$ has a phase shift $e^{-jk\Delta r}$ if the target
+moves a radial distance $\Delta r$.  This phase shift can be used for
+estimating the radial distance an ISAR target moves over a period of time
+providing the target rotates a negligible amount during this
+period.\footnote{From here until section \protect\ref{rmc sec:me}, where
+this assumption is properly tested, the target's rotation will be assumed 
+negligible.}  If the moving target is rotating slowly enough,
+\begin{equation}\label{mc eqn:fr change}
+s(k,t_1)\approx e^{-jk[r(t_2)-r(t_1)]}\,s(k,t_2)
+\end{equation}
+and the target's radial motion can be detected via the phase shift in its
+frequency responses measured at different times.
+
+Motion estimation methods using the frequency responses like this to measure
+$r(t_2)-r(t_1)$ are said to be operating in the frequency domain.  
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Range Domain Motion Estimation}
+
+Motion estimation can also be performed using Fourier transforms of the
+frequency responses and such methods of motion estimation are called
+range domain methods.  This is because the inverse Fourier transform of
+$s(k,t)$ with respect to $k$ gives $s(r,t)$, a one-dimensional image of the
+target called a range profile.  
+
+Each measurement $s(k,t)$ in the frequency response is related to the
+target's spatial reflectivity $g(x,y)$ according to equation (\ref{ii
+eqn:s(k,t) II}), which is an integral representation of $s(k,t)$ in terms of
+the $(x,y)$ coordinates of scatterers on the target.  Radial motion
+estimation is concerned with the radial position of the target, so $s(k,t)$
+is more usefully expressed as an integral over $r$, the radial distance 
+from the radar
+\begin{equation}\label{mc eqn:s(k,t) via g(r,t)}
+s(k,t)=\int g(r,t)\,e^{-jkr}\,dr
+\end{equation}
+Here $g(r,t)$ is the target's reflectivity at time $t$ as a function of 
+radial position
+\begin{equation}\label{mc eqn:g(r,t)}
+g(r,t)=\int\!\!\int g(x,y)\,\delta(r_{xy}(t)-r)\,dx\,dy
+\end{equation}
+where the delta function $\delta(r_{xy}(t)-r)$ selects those points on the
+target that are a radial distance $r$ from the radar.
+
+From equation (\ref{mc eqn:s(k,t) via g(r,t)}), $s(k,t)$ is the Fourier 
+transform with respect to $r$ of $g(r,t)$ so $g(r,t)$ can be recovered by 
+taking the inverse Fourier transform with respect to $k$ of the $s(k,t)$. 
+However, $s(k,t)$ is only known for the $N$ discrete frequencies in the
+stepped-frequency waveform so $s(r,t)$, the inverse Fourier transform of
+$s(k,t)$, is different from $g(r,t)$.
+\begin{eqnarray}
+s(r,t)
+&=&\frac{1}{N}\sum_{n=0}^{N-1} s(k_n,t)\, e^{jk_nr}		  \nn\\
+&=&\int g(r',t)\,\left[\frac{1}{N}\sum_{n=0}^{N-1} e^{jk_n(r-r')}\right]
+	\,dr'  \nn\\
+&=&\int g(r',t)\,h(r-r')\,dr'	\nn\\
+&=&g(r',t)\,\conv\, h(r')
+\label{mc eqn:s(r,t)}
+\end{eqnarray}
+which is a convolution with kernel $h(r)$ 
+\begin{eqnarray}
+h(r)&=&\frac{1}{N}\sum_{n=0}^{N-1} e^{jk_nr} 		\nn\\
+    &=&e^{j\overline{k}r}\,\frac{\ds\sin\left(\frac{N\Delta kr}{2}\right)}
+		{\ds N\sin\left(\frac{\Delta kr}{2}\right)}		
+\end{eqnarray}
+where $\overline{k}=(k_0+k_{N-1})/2$ is the average frequency of the
+stepped-frequency waveform.  This shows that $s(r,t)$ is $g(r,t)$ smoothed
+with a resolution equal to the stepped-frequency waveform's range resolution
+\begin{equation}
+\Delta r_r=\frac{2\pi}{N\Delta k}=\frac{c}{2N\Delta f}
+\end{equation}
+For efficiency, range profiles are usually calculated from their 
+corresponding frequency responses using an inverse fast Fourier transform
+(FFT).  This gives $s(r,t)$ sampled at $N$ discrete ranges $r_n$ 
+\begin{equation}
+r_n=r_0+n\Delta r_r
+\end{equation}
+where each discrete range is called a range cell or a range bin.
+The range profiles $s(r_n,t)$ are cyclic because the FFT on which they are
+based have a period of $N\Delta r_r=c/2\Delta f$.   The length of each range
+profile is $W_r$, the length of what is called the range ambiguity window 
+\begin{equation}
+W_r=N\Delta r_r=\frac{c}{2\df}
+\end{equation}
+because scatterers separated in range by multiples of $W_r$ appear
+at the same position in the range profile.  Because of this, the origin of
+the range profile $r_0$ is arbitrary.  This usually does not matter because
+motion estimation and motion compensation are concerned with estimating
+changes in radial position, not absolute ranges.
+
+This detailed examination of range profiles will now be used to show how
+range profiles can be used for radial motion estimation.  If a target's 
+range changes from $r(t_1)$ to $r(t_2)$ between times $t_1$ and $t_2$ 
+respectively, its radial reflectivities at $t_1$ and $t_2$ are 
+\begin{equation}
+g(r+r(t_2),t_2)\approx g(r+r(t_1),t_1)
+\end{equation}
+provided its aspect angle changes by a negligible amount between $t_1$
+and $t_2$.  Therefore, from equation (\ref{mc eqn:s(r,t)}), the two range 
+profiles $s(r,t_1)$ and $s(r,t_2)$ are related by
+\begin{equation}\label{mc eqn:rp change}
+s(r,t_2)\approx e^{-j\overline{k}[r(t_2)-r(t_1)]}\,s(r-[r(t_2)-r(t_1)],t_1)
+\end{equation}
+Motion estimation methods based on differences between $s(r,t_1)$ and
+$s(r,t_2)$ like this are called range domain motion estimators.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Radial Motion Estimation}
+\label{mc sec:me algs}
+
+This section is a detailed examination of some radial motion estimation
+algorithms that have been used for ISAR imaging.  They are described from
+the perspective of a stepped-frequency radar, so the measurements for one
+ISAR image takes the form of $M$ sets of frequency responses, one measured 
+at each of 
+$M$ uniformly spaced times $t_m$ during $[-T/2,T/2]$.  Each frequency
+response contains $s(k_n,t_m)$ sampled at the $N$ frequencies $k_n$ in the
+stepped-frequency waveform.\footnote{If the radar uses a chirp instead of a
+stepped-frequency waveform, the measurements consist of $M$ sets of range
+profiles $s(r_n,t_m)$, where each profile consists of $N$ discrete range bins
+separated by $\Delta r_r$.}
+
+None of the methods presented here is designed to estimate changes in a
+target's radial position with an accuracy better than $\lambda/10$. 
+Generally, radial motion estimators can be divided into coarse estimators,
+which tend to have an accuracy of one range bin $\Delta r_r$, and fine
+estimators, that are capable of measuring the fractional part of the number
+of wavelengths that the target moves.  For reasons that will shortly become
+apparent, motion compensation using the coarse estimators is often described 
+as range profile alignment and motion compensation using the fine estimators is
+called phase compensation.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Range Profile Alignment and Phase Compensation}
+
+From equation (\ref{mc eqn:rmc}), the measurement $s(k,t)$ with a radial
+motion of $\Delta r(t)$ corrected is
+\begin{equation}
+s'(k,t)=e^{jk\Delta r(t)}\,s(k,t)
+\end{equation}
+When $k_n$ is written as $k_0+n\dk$, this equation becomes
+\begin{equation}
+s'(k_n,t)=e^{jk_0\Delta r(t)}\,e^{jn\dk\Delta r(t)}\,s(k_n,t)
+\end{equation}
+Since the radar has a small relative bandwidth, 
+$k_0\gg n\dk$ for all frequencies in the stepped-frequency waveform 
+and $e^{jn\dk\Delta r(t)}$ varies only a very small amount for $\Delta r(t)$
+less than $\Delta r_r$, the size of one range bin.  On the other hand, 
+$e^{jk_0\Delta r(t)}$ varies rapidly for changes in $\Delta r(t)$ that are 
+less than a wavelength and is only sensitive to $\Delta r(t)$ modulo
+$\lambda/2$.
+
+This suggests that radial motion estimation needs to be able to estimate
+changes in the target's position at the scale of a range bin and at the
+scale of a fraction of a wavelength.  If motion compensation leaves a
+residual motion error that is smaller than a range bin and an exact
+half-integral multiple of a wavelength, this is probably sufficient for
+ISAR imaging.\footnote{This assumption, one of the many ``self-evident''
+truths of ISAR imaging, is tested properly in section \protect\ref{rmc
+sec:ma}.}
+
+On this basis, most radial motion estimators can be classified as either a
+method of range profile alignment or a method of phase compensation
+depending on whether they are accurate to the nearest multiple of a range
+bin or accurate within a fraction of a wavelength.
+
+Most methods of range profile alignment are unable to use the target's 
+frequency responses directly but convert the frequency responses to range
+profiles (or if the ISAR uses a chirp instead of a stepped-frequency
+waveform, the range profiles are obtained directly) and measure the radial
+motion using 
+\begin{equation}
+\left|s(r,t_2)\right|\approx 
+\left|s(r-\dr,t_1)\right|
+\end{equation}
+which is the magnitude of equation (\ref{mc eqn:rp change}).  Therefore the
+offset between the magnitudes of two range profiles at different times is 
+equal to the radial distance moved by the target.  Range profile alignment in
+the frequency domain is more difficult because $s(k_n,t_1)$ and $s(k_n,t_2)$
+differ by $e^{jk_n\dr}$.  If $\dr>\lambda/2$, the phase changes are greater
+than $2\pi$ and cannot be measured without potential ambiguities.
+
+Phase compensation methods can operate equally well in the frequency domain
+\begin{equation}
+s(k_n,t_2)\approx e^{-jk_n\dr} s(k_n,t_1)
+\end{equation}
+or in the range domain
+\begin{equation}
+s(r,t_2)\approx e^{-j\overline{k}\dr} s(r-\dr,t_1)
+\end{equation}
+because $\left|s(r-\dr,t_1)\right|$ is approximately equal to 
+$\left|s(r,t_1)\right|$ when $\dr<\lambda/2\ll\Delta r_r$.  
+
+The following sections analyse two methods of range profile alignment,
+cross-correlation and image feedback control, and two methods of phase
+compensation, adaptive beamforming and the phase gradient
+autofocus.\footnote{Of course there is also the possibility of ISAR imaging
+without having to do any motion estimation or motion compensation.  Zhao
+\protect\cite{Zha92} tried ISAR imaging using only the magnitude of the
+target's frequency response.  Certainly this removes the phase shift due to
+the target's radial motion but it also removes most of the information used
+to resolve scatterers in the cross-range direction.  Zhao's examples were
+only $8\times 8$ and $16\times 16$ pixels so it is hard to tell anything
+meaningful from them.  However, common sense suggests that it would be more
+sensible to develop effective motion estimation methods and then use the
+target's phase information.}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Cross-Correlation}
+\label{mc sec:cc}
+
+Cross-correlation is a simple method of estimating the radial offset between
+range profiles at different times, hence estimating the radial distance that
+the target moves.  This was first used by Chen and Andrews \cite{Che80a} and
+later by Wehner \cite{Weh87}.  They noted that because
+\begin{equation}
+\left|s(r,t_2)\right|\approx\left|s(r-\dr,t_1)\right|
+\end{equation}
+$\dr$ could be estimated by cross-correlating the magnitudes of the two
+range profiles
+\begin{equation}
+R_{12}(r)=\int\left|s(r',t_1)\right|\,\left|s(r'+r,t_2)\right|\,dr'
+\end{equation}
+Then by the Cauchy-Schwartz inequality,
+\begin{equation}
+R_{12}(r)\leq R_{12}(\dr)
+\end{equation}
+if there is no noise, so the location of the peak of the cross-correlation 
+gives an estimate of $\dr$.
+
+Since the range profiles are discrete, the cross-correlation is also
+discrete with a resolution of $\Delta r_r$, or one ISAR range bin.  The
+discrete correlation is usually implemented as a fast correlation via a fast
+Fourier transform.  The correlations implemented in this way are cyclic, but
+this is appropriate because the discrete range profiles themselves are
+cyclic as they have been formed by transforming the target's frequency
+responses.
+
+The inherent resolution of the correlation is $\Delta r_r$ because this is
+the spacing between samples of the discrete range profiles, but
+interpolation can be used to give estimates of $\dr$ that lie 
+between the discrete points at which the correlation is available.  Two
+methods have been suggested by Xu {\em et al.\/} \cite{Xu89,Xu90a,Xu90b}.
+One is interpolation by padding the range profiles with zeros before
+applying the fast correlation.  Another is to measure the cross-correlation
+at the discrete range bin where it is maximum, and at the range bins either
+side of the maximum.  By fitting a quadratic curve between the value of the
+cross-correlation at these three points, the location of the maximum of the 
+quadratic curve
+can be used as a better estimate of $\dr$.\footnote{It is surprising that
+the chirp-Z transform (CZT) has not been used to zoom into any portion of the
+cross-correlation between range profiles.  This approach is taken in 
+algorithm \protect\ref{ee alg:min using CZT} in chapter \protect\ref{ee chp} 
+to accomplish essentially the same task.}
+
+Like any method of motion estimation, cross-correlating range profiles has 
+advantages and drawbacks.  It is quick and simple and usually works well. 
+However, the amplitude of the response from strong scatterers can vary
+considerably with time if they are affected by scintillation or their
+response varies as they move between resolution cells.  This may cause the
+cross-correlation to match a prominant scatterer in one profile with a
+different prominant scatterer in another profile, giving estimates
+of $\dr$ with very large errors.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Image Feedback Control}
+\label{mc sec:en}
+
+In \cite{Ste83}, Steinberg proposed using image feedback control, a
+combination of motion estimation and motion compensation which uses the
+sharpness of the resulting radar image as a measure of how well the
+target's motion has been estimated.  Steinberg mentioned a number of
+techniques that might potentially be useful for ISAR imaging, but concluded
+that ``none has yet been satisfactorily developed for radarlike waveforms.''
+
+Bocker {\em et al.\/} have proposed a similar method of ISAR motion
+estimation that uses the quality of the resulting ISAR image to gauge the
+target's motion \cite{Boc91}.  The target is assumed to be moving in such a
+way that its range can be described by a low-degree polynomial such as
+\begin{equation}
+r_0(t)=r_0+v_0t+\frac{1}{2}a_0t^2+\frac{1}{6}j_0t^3
+\end{equation}
+where $r_0$, $v_0$ and $a_0$ are the target's radial position, velocity and
+acceleration at time $t=0$.  The third derivative of the target's position
+is given by $j_0$, which is sometimes called the jerk component.
+
+Bocker's method tries to find the set of parameters $(v_0,a_0,j_0)$
+describing the target's motion by choosing some $(v,a,j)$ and
+reconstructing the ISAR image using those $(v,a,j)$ as the parameters of
+the target's motion for motion compensation.  The best estimate of the
+target's motion is found by searching over the three-dimensional $(v,a,j)$
+parameter space for the values which give the highest quality ISAR image.
+
+The quality measure used by Bocker was
+\begin{equation}
+\label{mc eqn:ent}
+H(v,a,j)=-\int\!\!\int \left|\widehat{g}(x,y)\right|^2
+\log\left|\widehat{g}(x,y)\right|^2\,dx\,dy
+\end{equation}
+where $\widehat{g}(x,y)$ is the ISAR image of the target reconstructed with
+the specified velocity, acceleration and jerk.  The target's position $r_0$
+cannot be estimated in this way because the quality of the image is
+independent of its position.  The same measure was also used by Flores
+\cite{Flo90} in an investigation of some of the ideas in Bocker's
+paper.\footnote{Bocker and Flores call this an entropy-based method, but
+this is a bit of a misnomer. 
+It is true that (\protect\ref{mc eqn:ent}) has the mathematical form for
+differential entropy
+$$H(X,Y)=-\int\!\!\int f(x,y)\,\log f(x,y)\, dx\, dy$$
+but in this context, $f(x,y)$ is the joint probability density function of
+the random variables $X$ and $Y$.  
+
+The ``entropy'' in (\protect\ref{mc eqn:ent}) is just one of many non-linear
+functions that could have been used to measure the ISAR image's quality,
+where the notion of quality is determined by the particular non-linear 
+function used.}
+
+While this method of motion estimation seems attractive, it has three
+serious difficulties:
+\begin{itemize}
+\item The conditions under which the search converges to the correct 
+value of $(v,a,j)$ have not been established. The few examples of motion
+estimation using entropy methods in the ISAR literature use simple targets
+composed of a few point scatterers where the target's radial motion is
+precisely a cubic polynomial.
+\item Because the multidimensional search through $(v,a,j)$ parameter
+space requires that an ISAR image be formed and its entropy measured
+for each estimate, this is a very slow method of motion estimation and
+motion compensation.  
+\item The algorithm makes no use of the information about the target's
+radial motion that can be obtained much more efficiently by more direct 
+methods of motion estimation.
+\end{itemize}
+In view of these problems, such entropy-based methods are not yet suitable
+for motion estimation and motion compensation in ISAR imaging.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Adaptive Beamforming}
+\label{mc sec:ab}
+
+Adaptive beamforming is a range-domain method of phase compensation.  Using
+a number of range profiles that have been motion-compensated using some method of range
+profile alignment, adaptive beamforming can correct for residual radial motions
+of fractions of a wavelength. 
+
+Once the range profiles have been aligned so that the target is at
+essentially the same radial position in each range profile, the main
+difference between range profiles is a phase shift due to small residual
+errors in the target's corrected radial position or due to atmospheric
+turbulence.  From equation (\ref{mc eqn:rp change}), range profiles at
+times $t_m$ and $t_{M/2}$ (the range profile at $t_{M/2}$ is used as a
+reference range profile) differ by a phase shift, $\phi_m$, that is common
+to all pairs of range bins at time $t_m$
+\begin{equation}
+s(r_n,t_m)= e^{-j\phi_m}\,s(r_n,t_{M/2})\qquad\forall m,n
+\end{equation}
+
+Adaptive beamforming measures each $\phi_m$ by finding a range
+resolution cell containing a single strong scatterer that can be used as a
+phase reference.  With this reference range bin at $r_d$, for some $0\leq
+d\leq N-1$, the phase shift of each range profile is estimated using
+\begin{equation}
+\widehat{\phi}_m=\arg\left(\frac{s(r_d,t_{M/2})}{s(r_d,t_m)}\right)
+\end{equation}
+Finally, each range profile's phase shift is corrected by multiplying
+$s(r_n,t_m)$ in each range bin by $e^{-j\widehat{\phi}_m}$ to give
+\begin{equation}
+s'(r_n,t_m)=e^{-j\widehat{\phi}_m}\,s(r_n,t_m)
+\end{equation}
+
+The particular algorithm described here is that developed by
+Steinberg \cite{Ste81,Ste83b} for focusing his radio camera \cite{Ste83}.
+Sometimes the algorithm is called the dominant scatterer algorithm (DSA)
+because the strongest scatterer is used to establish the phase reference.
+Sometimes the algorithm is called the minium variance algorithm (MVA)
+because the range bin containing the dominant scatterer is determined by
+finding the range bin whose amplitude has the least variance over all range
+profiles.  A similar form of phase compensation using the first strong
+scatterer, such as an aircraft's leading wingtip, as the phase reference,
+was described by Chen and Andrews in \cite{Che80a}.  
+
+A slightly modified dominant scatterer algorithm has been used by Haywood
+for phase compensation in ISAR imaging \cite{Hay89,Hay92a}.  Haywood
+changed the criterion for finding the range bin containing the
+dominant scatterer so that it is the range bin with the smallest
+variance of all range bins whose average amplitudes are above a threshold.  The
+addition of the threshold helps prevent the algorithm from selecting a
+reference range bin that is not part of the target.
+
+Adaptive beamforming methods of phase compensation are widely used in ISAR
+imaging, but they do have some drawbacks.  One disadvantage is that there is
+no guarantee that the reference range bin is suitable for use as a phase
+reference.
+
+A more serious disadvantage of adaptive beamforming is that it assumes that
+the measured responses in the reference range bin have identical phases in
+all range profiles.  Since the reference range bin is selected because its
+magnitude has a low variance, the responses in this range bin after
+beamforming are approximately constant across all range profiles.
+
+Information for the target's cross-range profile is contained in both
+the phases and the magnitudes of the evolution of each range bin over time.
+By finding the range bin whose magnitude has the smallest variance, adaptive 
+beamforming selects as its reference the range bin whose magnitude
+contains the least information.  Then by removing all of the phase
+information in the reference range bin, the result is no variation in phase
+and minimal variation in magnitude.  
+
+When the cross-range profile of the target is formed by taking the
+Fourier transform of each range bin across all range profiles, the
+cross-range profile in the reference range bin is nearly a delta function. 
+While adaptive beamforming focusses the rest of the target, it artificially
+increases the power of the dominant scatterer by suppressing other
+scatterers in that range bin.\footnote{Distortions such as this may
+unwittingly make adaptive beamforming appear to perform better than it
+actually does.  ISAR images are often displayed with a fixed dynamic range
+relative to the brightest scatterer in the image.  Because adaptive
+beamforming increases the power of the dominant scatterer, the powers of
+other scatterers and of the background noise decrease relative to that of
+the dominant scatterer.  This makes the image appear sharper when really it
+is just being displayed with an offset intensity scale.}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Phase Gradient Autofocus}
+\label{mc sec:pga}
+
+The phase gradient autofocus (PGA) is an effective method of phase
+compensation that has been developed for SAR imaging by Eichel, Ghiglia and
+Jakowatz \cite{Eic89,Eic89b,Jak89}.  It estimates the modulo-$2\pi$
+variation with time of phase errors due to slight residual errors in the
+corrected position of the SAR antenna.
+
+The basis of the phase gradient autofocus is the observation that if
+$s_n(t)=s(r_n,t)$ is the time-history of the response in the $n^{\rm th}$
+range bin,
+\begin{equation}
+s_n(t)=e^{j\phi(t)}\,g_n(t)
+\end{equation}
+where $\phi(t)$ is the time-varying phase error which affects all range bins
+in a range profile in the same way.  $g_n(t)$ is the range bin's time-history whose Fourier
+transform gives the cross-range profile $g_n(\omega)$ in the $n^{\rm th}$ 
+range bin
+\begin{equation}
+g_n(\omega)={\cal F}\{g_n(t)\}
+\end{equation}
+If each range bin contains a single point scatterer, then
+\begin{equation}
+s_n(t)=A_ne^{j\omega_nt}\,e^{j\phi(t)}
+\end{equation}
+where $A_n$ is the scatterer's amplitude and $\omega_n$ determines its
+cross-range position.  Therefore, the time-derivative of the phase of
+$s_n(t)$ is
+\begin{equation}\label{mc eqn:ddt arg sn(t) I}
+\frac{d}{dt}\,\arg\left(s_n(t)\right)=\omega_n+\dot{\phi}(t)
+\end{equation}
+where $\dot{\phi}(t)$ is the derivative of the phase error.  This derivative
+can be implemented using the identity
+\begin{equation}\label{mc eqn:ddt arg sn(t) II}
+\frac{d}{dt}\,\arg\left(s_n(t)\right)=
+\frac{\imag{\dot{s}_n(t)\overline{s_n(t)}}}{\left|s_n(t)\right|^2}
+\end{equation}
+Using this, the non-constant part of (\ref{mc eqn:ddt arg sn(t) II}) can be
+used to estimate $\dot{\phi}(t)$ within a constant.  Integrating this
+gives an estimate of $\phi(t)$ within a linear term
+\begin{equation}
+\widehat{\phi}(t)=\int\widehat{\dot{\phi}}(t)\,dt\approx \phi(t)+at+b
+\end{equation}
+The linear term $at+b$ does not affect the SAR image's focus, only its
+position.
+
+This only uses the information contained in one range bin to estimate
+$\phi(t)$, so a more accurate estimate can be obtained by using all range
+bins.  From (\ref{mc eqn:ddt arg sn(t) I}), the time-derivative of $s_n(t)$
+has a constant term of $\omega_n$, which is different for each range bin.
+These can be removed by preprocessing each $s_n(t)$.  First, the scatterer's
+location is found by forming the cross-range profile (which is slightly
+blurred due to $\phi(t)$), and the cross-range profile is shifted so that
+the scatterer is at the origin.  When the shifted cross-range profile is
+transformed back to the time-domain, $s'_n(t)$, the preprocessed $s_n(t)$,
+is just $s_n(t)$ with the linear shift due to the scatterer at $\omega_n$
+removed.  Thus 
+\begin{equation}
+s'_n(t)=A_n\,e^{j\phi(t)}
+\end{equation}
+and $\dot{\phi}(t)$ may be estimated using
+\begin{equation}\label{mc eqn:phidot sum}
+\frac{d}{dt}\,\arg\left(s'_n(t)\right)=
+\frac{\ds\sum_n\imag{\dot{s}'_n(t)\overline{s'_n(t)}}}
+{\ds\sum_n\left|s'_n(t)\right|^2}
+\end{equation}
+
+The full phase gradient autofocus algorithm is more complicated than this
+because SAR images contain more than  a single scatterer in each range
+bin.  The actual time-history of each range bin is 
+\begin{equation}
+s_n(t)=\sum_pA_{pn}e^{j\omega_{pn}t}\,e^{j\phi(t)}
+\end{equation}
+where the scatterers in the range bin at $r_n$ have amplitudes $A_{pn}$ and
+cross-range positions determined by $\omega_{pn}$.  Now the derivative of
+the argument of $s_n(t)$ is
+\begin{equation}\label{mc eqn:ddt arg sn(t) III}
+\frac{d}{dt}\,\arg\left(s_n(t)\right)=\dot{\phi}(t)+
+\frac{d}{dt}\,\arg\left(\sum_pA_{pn}e^{j\omega_{pn}t}\right)
+\end{equation}
+The second term of this is no longer constant, so it cannot be removed so
+simply from $\dot{\phi}(t)$.  This problem is resolved by preprocessing
+$s_n(t)$ slightly differently.  The cross-range profile is formed and the
+scatterer with the greatest amplitude is moved to the origin (once again
+this can only be done approximately because the phase error blurs the
+cross-range profile).  The shifted cross-range profile is windowed so that
+only the portion of the cross-range profile close to the origin is retained. 
+Finally the windowed and shifted cross-range profile is transformed back to
+the time domain to give $s'_n(t)$.
+
+The combination of shifting and windowing is the crucial part of this
+process because this changes the second term of (\ref{mc eqn:ddt arg sn(t)
+III}) to
+\begin{equation}
+\frac{d}{dt}\,\arg\left(\sum_{p:|\omega_{pn}-\omega_n|<W}
+A_{pn}e^{j(\omega_{pn}-\omega_n)t}\right)
+\end{equation}
+where $\omega_n$ is the cross-range position $\omega_{pn}$ of the dominant 
+scatterer in the $n^{\rm th}$ range bin and $W$ is half the width of the 
+window.
+
+The width of the window has to be chosen carefully.  If the window is
+too wide, the estimate of $\dot{\phi}(t)$ will be badly affected by the
+second term of (\ref{mc eqn:ddt arg sn(t) III}).  If the window is too
+narrow, the second term of (\ref{mc eqn:ddt arg sn(t) III}) will be small
+but the high frequency content of $\phi(t)$ will also be lost.
+
+A compromise between using a large and a small window is reached by running
+the phase gradient autofocus as an iterative algorithm.  The window is
+initially large.  At each successive iteration, the size of the window
+is decreased and the estimate of $\phi(t)$ at that iteration used to correct
+the phase of the range profiles before the next iteration.  Typically five
+to ten iterations are required to focus the SAR image.
+
+Therefore, the full phase gradient autofocus algorithm is:
+
+%============================================================================
+\begin{algorithm}[Phase Gradient Autofocus]
+\label{mc alg:PGA}\mbox{}\par
+
+To correct for a phase error $e^{j\phi(t)}$ affecting range profiles
+$s(r_n,t)$:
+\begin{enumerate}
+\item Set $i$, the iteration counter, to 1 and set the initial width of
+the window $W$ to $W_1$.
+
+\item For each range bin at $r_n$, take the Fourier transform of $s(r_n,t)$
+with respect to $t$ to give the cross-range profile $s(r_n,\omega)$.
+
+\item In each range bin, $r_n$, locate the strongest scatterer at
+$\omega=\omega_n$ and shift the cross-range profile so that the strongest
+scatterer is at the origin, giving
+\begin{equation}
+s'(r_n,\omega)=s(r_n,\omega-\omega_n)
+\end{equation}
+
+\item Window each $s'(r_n,\omega)$, keeping only the portion of the shifted
+profile with $\left|\omega\right|<W_i$, and transform back to the time
+domain to give $s'(r_n,t)$.
+
+\item Estimate the derivative of the remaining phase error using
+\begin{equation}
+\widehat{\dot{\phi}}_i(t)=
+\frac{\ds\sum_n\imag{\dot{s'}(r_n,t)\overline{s'(r_n,t)}}}
+{\ds\sum_n\left|s'(r_n,t)\right|^2}
+\end{equation}
+
+\item Integrate $\widehat{\dot{\phi}}_i(t)$ and remove any bias or linear
+trend to give this iteration's estimate of the remaining phase error,
+$\widehat{\phi}_i(t)$.
+
+\item Correct for $\widehat{\phi}_i(t)$ in the range profiles, replacing
+$s(r_n,t)$ by $e^{-j\widehat{\phi}_i(t)}s(r_n,t)$.
+
+\item Decrease the size of the window from $W_i$ to $W_{i+1}$ and, after
+incrementing $i$ for the next iteration, return to step 2.
+\end{enumerate}
+\end{algorithm}
+%============================================================================
+
+
+Examples of phase gradient autofocus's performance on SAR data are given in
+the papers cited earlier and in \cite{Wah94}.  These seem to indicate that
+the phase gradient autofocus works very well for autofocussing SAR images.
+
+The phase gradient autofocus has also been applied to ISAR imaging by
+Robertson and Munson \cite{Rob93}.  Their simulations were of a target 
+composed of a few point scatterers, so the results are not necessarily
+representative of what would happen with real ISAR data.  
+
+The success that phase gradient autofocus has had with SAR suggests that it
+should be considered for ISAR phase compensation, especially as it does not
+suffer from some of the distortions that adaptive beamforming
+introduces.\footnote{It may be that the phase gradient autofocus's shifting
+and windowing can be left out when applied to ISAR targets because they
+have a much narrower cross-range extent than the cross-range extent of a
+SAR image.  This and many other questions about the statistical performance
+and robustness of the phase gradient autofocus can only be answered by a
+rigorous mathematical analysis, something that is currently lacking.}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Angular Motion Estimation}
+
+Angular motion estimation is a much more difficult problem than radial
+motion estimation because each scatterer's phase history depends on its
+location within the target as well as the target's overall rotation.
+
+In \cite{Wer90}, Werness {\em et al.\/} propose an algorithm for imaging
+moving targets in SAR data.  This involves tracking three point scatterers
+on the target.  The first point scatterer is used to compensate for the
+target's radial motion, the second point scatterer is used to detect
+deviations from uniform rotation and the third point scatterer is used to
+estimate the angular velocity to set the cross-range scaling for the whole
+image.
+
+While this is a nice idea, the examples in \cite{Wer90} were of very simple
+simulated point scatterers which indicate little about how the algorithm
+would perform with real radar data.  In \cite{Del94}, Delisle and Wu comment
+that ``selection of multiple reference points and evaluation of the
+quadratic phase component are difficult in practice because of the target's
+scintillation, clutter and trajectory perturbations.'' 
+
+A simpler problem than complete angular motion estimation is the fitting of
+a low-degree polynomial 
+\begin{equation}
+\theta(t)=\omega t+\frac{\alpha t^2}{2}
+\end{equation}
+to the target's aspect angle over time.  Bocker {\em et al.\/} \cite{Boc91}
+proposed a multidimensional search over the two-dimensional
+$(\omega,\alpha)$ parameter space that is essentially the same as their
+entropy method of image feedback control for radial motion estimation. By
+measuring the sharpness of the reconstructed ISAR image for each value of
+$(\omega,\alpha)$, the best estimate of the target's rotational motion is
+given by the image with the least blurring.  A simplification of Bocker's
+idea has been experimentally tested by Flores, who tried to estimate
+$\omega$ for a target composed of three aluminimum cylinders rotating at a
+known angular velocity \cite{Flo90}.  Flores' results indicate that for
+this simple target under very controlled conditions, the rotation rate
+could be measured accurately.
+
+Chuang and Huang \cite{Chu92} used a similar scheme to estimate $\omega$ by
+comparing tomographic inversions with different assumed rotation rates. They
+reasoned that the image reconstructed with the correct value of $\omega$
+should have minimum variance.  Since their experimental results consisted of
+simulations involving a single point scatterer in no noise, few conclusions
+can be drawn from it.
+
+The difficulty of angular motion estimation is indicated by the fact that no
+results have been published for angular motion estimation for real targets
+under uncontrolled conditions.  
+
+Since the subject of this thesis is radial motion estimation rather than 
+angular motion estimation, because angular motion estimation is of
+secondary importance to radial motion estimation in ISAR, and because no
+demonstrably successful angular motion estimators have been published in
+the unclassified literature, none of the angular motion estimators
+mentioned above will be discussed in detail.
+

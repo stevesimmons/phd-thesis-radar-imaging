@@ -1,0 +1,292 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%			INVERSE SYNTHETIC APERTURE RADAR
+%
+%				  PhD Thesis
+%
+%		Stephen Simmons		simmons@ee.mu.oz.au
+%
+%	    Department of Electrical and Electronic Engineering
+%	    University of Melbourne, Parkville, 3052, Australia
+%
+% Chapter 11:	Conclusions
+%
+%		started first draft:	Fri 6 Jan 1995
+%		finished first draft:	Fri 6 Jan 1995
+%		submitted:		Mon 9 Jan 1995
+%
+%%%%%%%%%%%%%%%%%%%%% Copyright (C) 1995 Stephen Simmons %%%%%%%%%%%%%%%%%%
+
+\chapter{Conclusions}
+\label{co chp}
+
+\bigletter This thesis has applied the formal methodology of estimation
+theory to the problem of radial motion estimation for stepped-frequency
+ISAR imaging. The maximum likelihood estimator of the target's radial
+motion was derived, efficient algorithms were developed for evaluating the
+maximum likelihood estimator and its statistical properties were
+examined in detail. The maximum likelihood estimator has been compared with
+other methods of ISAR motion estimation, and the differences and
+similarities discussed. Finally, a number of assumptions made in ISAR
+imaging have been analysed, leading to several new constraints on the
+target's motion and the resolution of the ISAR image.
+
+After discussing the conclusions in more detail, some possible topics for
+further research are suggested.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Conclusions}
+
+This thesis has investigated the use of estimation theory to find optimal
+estimators of a target's radial motion during stepped-frequency ISAR
+imaging and to analyse their statistical performance.  The aim of this was
+two-fold: to apply a rigorously mathematical approach to a problem that 
+has traditionally been solved using more intuitive methods, and to develop
+a unifying framework in whose terms the intuitive methods could be
+reinterpreted and reappraised.
+
+
+The first step of applying estimation theory involved specifying a model
+relating the target's radial motion to measurements of its frequency
+response at two different times.  This model assumed that as the target
+moved, its rotation was negligible.  
+
+The maximum likelihood estimator $\rML$ of the radial distance $\dr$ moved 
+by the target was obtained in two different ways.  The first was the scalar
+maximum likelihood estimator, which assumed that $\dr$ was the only unknown
+parameter.  The second, the vector maximum likelihood estimator, estimated  
+$\dr$ along with the measurement noise variance $\nv$ and the target's 
+frequency response.  Both estimators of $\dr$ took the same form, that of a
+cost function, $J(\r)$, whose global minimum is located at $\rML$.
+
+The cost function $J(\r)$ has a slowly varying envelope modulated by a high
+frequency carrier at twice the stepped-frequency waveform's average
+frequency.  Conventional methods of minimizing a function could not be
+applied because of the closely spaced local extrema of $J(\r)$, so
+algorithms for the approximate global minimization of $J(\r)$ and the exact
+local minimization of $J(\r)$ were developed.  The global algorithms were
+based on the fast Fourier transform and the chirp-Z transform and provided
+efficient ways of finding the approximate value of $\rML$.  The local
+algorithm was iterative, and by proving that it was a contraction mapping
+which converged at a rate equal to the radar's relative bandwidth, it was
+shown that two iterations are usually sufficient to estimate $\rML$ for 
+X-band ISAR. 
+
+The statistical properties of $\rML$ were examined next.  It was shown that
+$\rML$ is an unbiased estimator of $\dr$, and the \CR bound was used to
+establish a lower bound on the estimator's variance.  Some progress was also
+made towards finding the probability density function of $\rML$.
+
+Before comparing the maximum likelihood estimator to conventional methods of
+range profile alignment and phase compensation, it was shown that $\rML$
+could be rewritten as the location of the maximum of the cross-correlation of the complex 
+range profiles formed by Fourier-transforming the two frequency responses.
+The cross-correlation methods of range profile alignment usually
+cross-correlate the magnitudes of the target's range profiles.  It was shown
+that taking the magnitudes of the range profiles makes the cross-correlation
+less sensitive to the target's rotation at the expense of a reduced
+accuracy.  This led to two strategies for range profile alignment.  
+
+The first strategy cross-correlated consecutive pairs of complex range 
+profiles.  This would be used if the cross-correlation has a high 
+resolution (implemented, for example, using the chirp-Z transform).  This is 
+justified because the target's rotation is negligible in the period
+between the consecutive profiles.
+
+The alternative strategy cross-correlated the magnitude of each range
+profile with the magnitude of a reference profile.  This was appropriate 
+when a cross-correlation with a low resolution was used 
+(implemented, for example, using a fast Fourier transform) because
+only radial movements greater than about a range bin
+could be measured.  Correlating the complex profiles is not possible because
+the interval between profiles could be much larger than under the
+first strategy so the target's rotation could no longer be considered
+negligible.
+
+Phase alignment techniques of the phase gradient autofocus and adaptive
+beamforming were also compared to the maximum likelihood estimator.  It was
+shown that the phase gradient part of phase gradient autofocus could be
+implemented using slightly sub-optimal versions of the algorithm for the 
+exact local minimization of the cost function $J(\r)$.  This suggested that
+the performance of the maximum likelihood motion estimator might be
+improved by applying the same shift and windowing stages as the phase
+gradient autofocus, although this is yet to be verified.
+
+Finally, four assumptions commonly made during ISAR imaging were analysed. 
+Constraints under which the assumptions are valid were derived by
+considering the magnitude of the phase errors they cause to samples of the
+target's reflectivity in the $(k_x,k_y)$-plane immediately before the ISAR
+inversion.  The first assumption involved the conditions under which the
+plane wave approximation of range-Doppler ISAR is valid.  The second
+assumption was that polar reformatting could be omitted from the ISAR
+inversion algorithm.  The constraints resulting from this assumption were
+found to be identical to the constraints obtained by restricting the movement
+of scatterers on the target through range and cross-range resolution cells.
+
+The third assumption questioned whether the target's rotation during ISAR
+imaging could be considered negligible for the purposes of motion
+estimation.  It was found that the target's rotation caused acceptably small
+phase errors between consecutive frequency responses provided the target
+filled no more than one-quarter of the ISAR cross-range ambiguity window.
+The term rotation-induced noise was used to describe the phase errors during
+motion estimation caused by the target's motion and it was verified
+experimentally how sensitive rotation-induced noise is to the target's
+rotation rate.
+
+The fourth assumption questioned whether the ISAR image would be degraded
+if the small radial motion errors were only corrected using phase
+alignment. It was found that if phase alignment completely corrected for
+the fractional number of half-wavelengths moved by the target, the residual
+radial motion error could be up to one-quarter of an ISAR range bin.
+
+To conclude, this work has illustrated how a mathematical approach using
+estimation theory can be used to obtain useful ISAR motion estimators and
+provide valuable insights into other motion estimators whose derivations
+otherwise could not be justified so easily.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Future Research}
+
+As is often the case, this research has prompted just as many questions as
+it has resolved.  Here is a brief description of some unresolved issues and
+some suggestions for related future research.  They are loosely divided
+into those concerned with radar imaging and those concerned with estimation
+theory.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Radar Imaging}
+
+
+\begin{itemize}
+\item Test the maximum likelihood motion estimators of chapter \ref{ml chp}
+and the efficient algorithms of chapter \ref{ee chp} on real radar data and
+ISAR simulations to determine their effectiveness under a wide range of
+conditions.
+
+\item Perform proper theoretical analyses of the methods of range profile
+alignment and phase compensation described in chapter \ref{mc chp}.  Some
+theoretical results concerning their performance in noise and their
+robustness to the target's rotation are long overdue.
+
+\item As discussed in chapter \ref{do chp}, modify Steinberg's dominant scatterer
+algorithm to use more than one reference range bin for phase compensation
+without losing the ability to correct phase errors of rotating targets.
+
+\item Restate the motion estimation model for chirp waveforms and derive 
+the equivalent maximum likelihood motion estimator in the range domain.
+
+\item Extend the model used to derive the maximum likelihood motion
+estimator to include the effects of the target's rotation implicitly.  From
+this, derive new maximum likelihood motion estimators that are better able
+to deal with the target's rotation.
+
+\item Define a measure of a motion estimator's performance that is better
+than variance at describing the quality of the resulting ISAR image. 
+Section \ref{rmc sec:ma} shows how motion estimation errors may extend for a
+significant fraction of a range bin if they are clustered enough around
+multiples of half a wavelength.  Therefore any performance measure must take into
+account the total range of errors and how tightly they are clustered.
+
+\item Consider applying the maximum likelihood motion estimators to SAR
+imaging.  This would have to use many of the elements of the phase
+gradient autofocus method as SAR images have strong scatterers over a much
+broader cross-range extent than does ISAR.  The end result would probably
+be much like the phase gradient autofocus, but able to detect errors 
+between range profiles of more than half a wavelength without ambiguities.
+
+\item Perform proper statistical analyses of the phase gradient autofocus,
+and in particular, prove that it converges to a focussed SAR image.  Figure
+4 of \cite{Wah94} suggests that the phase gradient autofocus converges even
+for SAR scenes with very low dynamic ranges and few strong point-like
+scatterers.  If this is the case, the way it converges must be much more
+complicated that the simple explanation given in \cite{Eic89},
+\cite{Eic89b} and \cite{Jak89}.
+
+\item Look at the problem of angular motion estimation.
+
+\item Consider adaptive ISAR waveforms which achieve an optimal balance
+between the needs of accurate motion estimation and collecting enough data
+for a high resolution image.  Because ISAR motion estimation requires lower
+rotation rates than ISAR imaging, perhaps some form of interleaved 
+stepped-frequency waveforms could be used.  One stepped-frequency waveform
+would be used for imaging and the other for motion estimation.  Depending on
+the target's rotation rate, the signal-to-noise ratio and the desired resolution of
+the ISAR image, the parameters of the two stepped-frequency waveforms could
+be adjusted to match the accuracy of the motion estimation with that needed
+for the particular ISAR image.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Estimation Theory}
+\label{co sec:et}
+
+\begin{itemize}
+\item Work out more of the non-asymptotic properties of the maximum
+likelihood motion estimator, especially the probability density function.
+
+\item Generalizing the previous topic suggests the following problem, 
+related to the probability density function of a maximum likelihood 
+estimator:
+
+%============================================================================
+\begin{problem}[Maximum of a Bandlimited Function I]
+\label{co prb:blf I}\mbox{}\par
+
+Given a bandlimited function $f(t)$ whose values are known on an interval
+$[0,T]$ and a bandlimited Gaussian noise process $\noise(t)$, determine the
+probability density function $p(t,\nv)$ of the location of the maximum of
+$f(t)+\noise(t)$ on $[0,T]$ as a function of the noise's variance $\nv$.
+\end{problem}
+%============================================================================
+
+This problem is very simply stated, but the solution is probably not at all
+simple.  When the noise process's variance is zero, $p(t,0)=\delta(t-t_0)$ 
+where $t_0$ is the location of the global maximum of $f(t)$ on $[0,T]$.  As
+$\nv\to\infty$, $p(t,\nv)\to 1/T$.  For some values of $\nv$ between these
+two extremes, $p(t,\nv)$ will have a shape that is similar to $f(t)$
+itself, in that the peaks of the probability density function will occur at
+the location of the peaks of $f(t)$, and similarly for the troughs.
+
+\item Problem \ref{co prb:blf I} leads to a more abstract problem:
+
+%============================================================================
+\begin{problem}[Maximum of a Bandlimited Function II]
+\label{co prb:blf II}\mbox{}\par
+
+Define $f(t)$ and $p(t,\nv)$ as in problem \ref{co prb:blf I}.  Determine 
+the set $B$ which contains all bandlimited functions $f(t)$ such that 
+\begin{equation}
+p(t,\nv)=f(t)
+\end{equation}
+for all $t\in[0,T]$ and for some $\nv$ dependent on $f$.
+
+Clearly $f(t)=1/T$ is a member of $B$.  Are there any non-trivial
+members?
+\end{problem}
+%============================================================================
+
+\item Or yet another:
+
+%============================================================================
+\begin{problem}[Maximum of a Bandlimited Function III]
+\label{co prb:blf III}\mbox{}\par
+
+Define $f(t)$ and $p(t,\nv)$ as in problem \ref{co prb:blf I}.  Is
+$p(t,\nv)$ bandlimited?
+\end{problem}
+%============================================================================
+
+These problems are similar to the questions considered by the branch of
+statistics called extreme value theory.  However, extreme value theory has
+many results about expected numbers of local extrema, expected frequencies
+of level crossings, and other asymptotic properties of local phenomena, but
+few about non-asymptotic properties of global phenomena.
+
+Some of the early work of Rice \cite{Ric39,Ric44,Ric45,Ric48} and of
+Middleton \cite{Mid48} concerned extreme values of random waveforms, but
+they considered nothing quite like these three problems.  Surveys of extreme
+value theory such as \cite{Bla73} and \cite{Wei73} do not indicate any
+comparable results either.  
+\end{itemize}
+
+

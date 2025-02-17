@@ -1,0 +1,1414 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%			INVERSE SYNTHETIC APERTURE RADAR
+%
+%				  PhD Thesis
+%
+%		Stephen Simmons		simmons@ee.mu.oz.au
+%
+%	    Department of Electrical and Electronic Engineering
+%	    University of Melbourne, Parkville, 3052, Australia
+%
+% Chapter 8:	Statistical Properties of the ML Motion Estimator
+%
+%		started first draft:	6 Nov 1994
+%		finished first draft:	12 Nov 1994
+%		started second draft:	Fri 6 Jan 1995
+%		submitted:		Mon 9 Jan 1995
+%
+%%%%%%%%%%%%%%%%%%%%% Copyright (C) 1995 Stephen Simmons %%%%%%%%%%%%%%%%%%
+
+\chapter[Statistical Properties of the ML Motion Estimator]{Statistical
+Properties of the Maximum Likelihood Motion Estimator}
+\label{sp chp}
+
+\bigletter Broadly speaking, estimators may be divided into two classes,
+{\em simple\/} and {\em complex\/}.  If simple estimators are defined as
+those which can be expressed as an explicit function of the measurements,
+$\upWH=f(\md)$, then complex estimators may be defined as the remainder that
+are not simple. Typically, complex estimators can only be expressed as
+implicit functions $f(\upWH,\md)=0$ which require numerical, rather than
+analytical, solutions.
+
+When analysing the performance of simple estimators, the mean and variance
+may be calculated exactly from the explicit functions giving the estimator in
+terms of the measurements.  Complex estimators, by their very nature,
+usually do not allow such exact performance analyses.  In such cases, 
+approximate or asymptotic results for large samples are often calculated.
+
+Since the definition of a maximum likelihood estimator takes the form of
+the location of the maximum of the likelihood function, many maximum
+likelihood estimators fall into the class of complex estimators.  This
+makes exact analyses of their performance quite difficult.  Nevertheless,
+because maximum likelihood estimators are asymptotically efficient under
+fairly general regularity conditions, asymptotic results like the \CR bound
+are very commonly used.
+
+For many maximum likelihood estimators, the asymptotic behaviour is almost
+trivial to derive while the corresponding non-asymptotic results are almost
+impossibly complicated.  As a result, the asymptotic results are often 
+applied to estimators using small data sets without checking how rapidly the
+estimator's behaviour becomes asymptotic.
+
+
+This chapter is a detailed examination of the statistical properties of the
+maximum likelihood motion estimator $\rML$ derived in chapter~\ref{ml chp}.
+The regularity conditions for the estimator's asymptotic normality are
+established.  The Fisher information matrix is used to calculate the \CR
+lower bound on the variance of any unbiased estimator $\rWH$ of $\dr$.  The
+maximum likelihood estimator $\rML$ is shown to be unbiased, hence the \CR
+bound on any $\rWH$ applies to $\rML$.  The analysis of $\rML$ concludes
+with some tentative steps towards non-asymptotic statistical properties, and
+a discussion of why the estimator's variance is not the most important
+criterion for radar imaging.
+
+The chapter concludes with analyses of the statistical properties of the
+maximum likelihood estimators of the noise variance $\nv$ and the target's
+frequency response $\sML{n}$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Conditions for Asymptotic Normality}
+\label{sp sec:normality}
+
+The asymptotic normality of the maximum likelihood estimator of $\dr$ will
+be established using the sufficient but not necessary regularity conditions
+of theorem~\ref{mp thm:normality}.  This requires that the log-likelihood
+function $\ln p(\md;\uvp)$ has well-defined first and second partial
+derivatives, and the expectations of the first partial derivatives be zero.
+
+The first and second partial derivatives of $\ln p(\md;\uvp)$ are given in
+appendix \ref{sp app:FIM} while deriving the Fisher information matrix.
+The expectation of the first partial derivative of $\ln p(\md;\uvp)$ with
+respect to $\dr$ is also zero because
+\begin{eqnarray}
+\E{\frac{\del\ln p(\md;\uvp)}{\del\dr}}
+&=&\E{j\frac{1}{\nv}\sum_{n=0}^{N-1}k_n\left( 
+b_n\conj{s_n}\e{jk_n\dr}-\conj{b_n}s_n\e{-jk_n\dr}\right)}\nn\\
+&=&j\frac{1}{\nv}\sum_{n=0}^{N-1}k_n
+\left(\left|s_n\right|^2-\left|s_n\right|^2\right)\nn\\
+&=&0
+\end{eqnarray}
+
+Since the regularity conditions are satisfied, the maximum likelihood
+estimator $\rML$ of $\dr$ is asymptotically normal.\footnote{Strictly
+speaking, this conclusion is not valid because it has applied Kay's theorem
+about the asymptotic normality of the scalar maximum likelihood estimator
+to a vector estimator.  
+
+Rigorous results concerning the asymptotic normality of the maximum
+likelihood estimator are hard to find in the literature.  Kay states a
+theorem regarding asymptotic normality \cite[thm 7.3]{Kay93} but this
+begins ``If \ldots $p(\md;\uvp)$ \ldots satisfies some `regularity'
+conditions \ldots'', never stating what these conditions might be.  Rao
+\cite[section 5f]{Rao65} considers only the assumptions required for
+asymptotic normality of a scalar maximum likelihood estimator.  Even Stuart
+and Ord in {\em Kendall's Advanced Theory of Statistics\/}
+\protect\cite{Stu91} do not state these regularity conditions; instead the
+reader is referred to a 1943 paper by Wald.
+
+Having said this, there is nothing about $p(\md;\uvp)$ to suggest that
+$\rML$ is not asymptotically normal.  On the other hand, the $\sML{n}$ are
+not asymptotically normal, and the reason for this is discussed at the end
+of the chapter.}  That is, as the number of frequencies sampled in each
+frequency response tends to infinity, the expected value of $\rML$ is $\dr$
+\begin{equation}
+\E{\rML}\to\dr\qquad\hbox{as $N\to\infty$}
+\end{equation}
+and the variance of $\rML$ tends to the \CR bound
+\begin{equation}
+\Var{\rML}\to\left(\invinfmat{\uvp}\right)_{22}\qquad\hbox{as $N\to\infty$}
+\end{equation}
+The \CR bound for $\rML$ is $(\invinfmat{\uvp})_{22}$, the second element 
+on the diagonal of $\invinfmat{\uvp}$, because $\dr$ is the second element 
+of $\uvp$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{\CR Bounds for Unbiased Estimators of $\dr$}
+
+In this section, a lower bound on the variance of any unbiased estimator of
+the radial motion $\rWH$ of a radar target is obtained using the \CR bound. 
+This derivation is done twice, once for the case when $\dr$ is the only
+unknown parameter, and once for the more realistic case when $\dr$ is
+estimated along with the noise variance $\nv$ and the target's
+frequency response $s_n$.  A comparison of the resulting \CR bound illustrates
+why assuming that $\dr$ is the only unknown gives different statistical
+properties for the two estimators.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{The \CR Bound for Estimating $\dr$ Only}
+\label{sp sec:CRB1}
+
+The likelihood function for estimating $\dr$ only when the noise variance
+$\nv$ and the target's reflectivities $s_n$ are known exactly, is given by
+equation (\ref{ml eqn:p(md;dr) with J(r)})
+\begin{equation}
+p(\md;\dr)=\frac{2^N}{\left(\pi\nv\right)^N}\,\exp\left(-\frac{1}{2\nv}
+\ds\sum_{n=0}^{N-1}\left|a_n-b_n\e{jk_n\dr}\right|^2\right)
+\end{equation}
+Since only a single parameter $\dr$ is unknown, the Fisher information matrix
+is scalar, and its inverse is its reciprocal.  The information is
+\begin{eqnarray}
+I(\dr)&=&-\E{\frac{\del^2\ln p(\md;\dr)}{\del\dr^2}}\nn\\
+&=&\frac{1}{\nv}\ds\sum_{n=0}^{N-1}\real{k_n^2\E{a_n\conj{b_n}}\e{-jk_n\dr}}\nn\\
+&=&\frac{1}{\nv}\ds\sum_{n=0}^{N-1}k_n^2\left|s_n\right|^2
+\end{eqnarray}
+so the \CR bound on the variance of any unbiased estimator $\rWH$ of $\dr$
+is
+\begin{equation}
+\Var{\rWH}\geq\frac{1}{I(\dr)}
+=\frac{\nv}{\ds\sum_{n=0}^{N-1}k_n^2\left|s_n\right|^2}
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{The \CR Bound for Estimating $\dr$ With Other Parameters}
+\label{sp sec:CRB2}
+
+
+Chapter~\ref{ml chp} showed that the proper approach to estimating $\dr$
+was to include the noise variance and the target reflectivities along with
+$\dr$ in a vector of unknown parameters
+\begin{equation}\label{sp eqn:uvp}
+\uvp=\left[\nv, \dr, s_0, s_1, \ldots, s_{N-1}\right]^T
+\end{equation}
+As it happens, the expression for $\rML$ in (\ref{ml eqn:J(r) uvp}) is
+independent of $\nv$ and the $s_n$, and is the same estimator as
+(\ref{ml eqn:rML}) where $\dr$ was the only unknown parameter.
+
+Although the estimators of $\dr$ for the two cases are identical, this does
+not mean that their statistical performances are identical.  An estimator's
+performance depends on both the function giving the estimator in terms of
+the measurements and the model from which the estimator is derived.  The
+model involving the multiple unknowns is different from the model involving
+$\dr$ as the only unknown, so the statistical performances of the two $\rML$
+estimators may well be different.  
+
+The \CR bound on the covariance matrix $\covmat{\uvpWH}$ of any unbiased 
+estimator $\uvpWH$ of $\uvp$ requires the Fisher information matrix 
+$\infmat{\uvp}$.  
+The elements of $\infmat{\uvp}$ are calculated in appendix~\ref{sp app:FIM}
+using the rules for complex differentiation summarized in
+section~\ref{mp sec:complex}.  When the elements of $\uvp$ are ordered
+as in (\ref{sp eqn:uvp}), the information matrix is the $(N+2)\times(N+2)$ 
+matrix
+\begingroup
+\def\te#1{-j\frac{1}{2}k_{#1}\conj{s_{#1}}\vphantom{\ds\frac{1}{1}}}
+\def\be#1{j\frac{1}{2}k_{#1}s_{#1}\vphantom{\ds\frac{1}{1}}}
+\def\re{\ds\sum_{n=0}^{N-1}k_n^2\left|s_n\right|^2}
+\begin{equation}
+\infmat{\uvp}=
+\frac{2}{\nv}
+\left[\begin{array}{cccccc}
+N/\nv	&0	&0	&0	&\cdots	&0 	\\
+0	&\re	&\te0	&\te1	&\cdots	&\te{N-1}\\
+0	&\be{0}	&1	&0	&\cdots	&0	\\
+0	&\be{1}	&0	&1	&\cdots	&0	\\
+\vdots	&\vdots	&\vdots	&\vdots	&\ddots	&\vdots \\
+0	&\be{N-1}&0	&0	&\cdots	&1
+\end{array}\right]
+\end{equation}
+\endgroup
+This has the block structure
+\begin{equation}
+\infmat{\uvp}=\frac{2}{\nv}\left[\begin{array}{c|c}
+N/\nv & \vect{0} \\
+\hline
+\vect{0} & \vect{M}
+\end{array}\right]
+\end{equation}
+where $\vect{M}$ is
+\begin{equation}
+\def\z#1{z_{#1}}
+\def\zc#1{\conj{z_{#1}}}
+\def\zt{\ds\sum_{n=0}^{N-1}\left|z_n\right|^2}
+\vect{M}=\left[\begin{array}{ccccc}
+4\zt	&\zc0	&\zc1	&\cdots	&\zc{N-1}\\
+\z0	&1	&0	&\cdots	&0	\\
+\z1	&0	&1	&\cdots	&0	\\
+\vdots	&\vdots	&\vdots	&\ddots	&\vdots \\
+\z{N-1}&0	&0	&\cdots	&1
+\end{array}\right]
+\end{equation}
+with $z_n=j\frac{1}{2}k_ns_n$.
+
+The inverse of $\infmat{\uvp}$ has the form
+\begin{equation}
+\invinfmat{\uvp}=\frac{\nv}{2}\left[\begin{array}{c|c}
+\nv/N & \vect{0} \\
+\hline
+\vect{0} & \vect{M}^{-1}
+\end{array}\right]
+\end{equation}
+It can be shown (in appendix~\ref{sp app:M-1}) that the inverse of $\vect{M}$ 
+is
+\begin{equation}
+\vect{M}^{-1}=\frac{1}{3\ds\sum_{n=0}^{N-1}\left|z_n\right|^2}
+\left[\begin{array}{c} 1 \\ -z_0 \\ -z_1\\ 
+\vdots \\ -z_{N-1} \end{array}\right]
+\left[\begin{array}{c} 1 \\ -z_0 \\ -z_1\\ 
+\vdots \\ -z_{N-1} \end{array}\right]^{H}
++\mathop{\rm diag}\left[0, 1, 1, \ldots, 1\right]
+\end{equation}
+
+In particular, the diagonal elements of $\invinfmat{\uvp}$ are
+\begin{equation}
+\left[
+\frac{\np{4}}{2N}, \frac{2\nv}{s},
+\frac{\nv}{2}\left(1+\frac{k_0^2\left|s_0\right|^2}{s}\right),
+\ldots,\frac{\nv}{2}\left(1+\frac{k_{N-1}^2\left|s_{N-1}\right|^2}{s}\right)
+\right]
+\end{equation}
+where 
+\begin{equation}
+s=3\sum_{n=0}^{N-1}k_n^2\left|s_n\right|^2
+\end{equation}
+The second element on the diagonal of $\invinfmat{\uvp}$ is the \CR lower
+bound on the variance of any unbiased estimator of $\dr$.  Hence
+\begin{equation}
+\Var{\rWH}\geq\frac{2\nv}{3\ds\sum_{n=0}^{N-1}k_n^2\left|s_n\right|^2}
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Comparison of the \CR Bounds}
+
+Section~\ref{sp sec:CRB1} gave the \CR bound on any unbiased estimator of
+$\dr$ as
+\begin{equation}\label{sp eqn:CRB1}
+\Var{\rWH}\geq\frac{1}{I(\dr)}
+=\frac{\nv}{\ds\sum_{n=0}^{N-1}k_n^2\left|s_n\right|^2}
+\end{equation}
+which applies if $\dr$ is the only unknown parameter.  
+Section~\ref{sp sec:CRB2} gave a different \CR bound 
+\begin{equation}\label{sp eqn:CRB2}
+\Var{\rWH}\geq (\invinfmat{\uvp})_{22}
+=\frac{2\nv}{3\ds\sum_{n=0}^{N-1}k_n^2\left|s_n\right|^2}
+\end{equation}
+which applies if $\dr$ is part of the vector $\uvp$ of unknowns in 
+(\ref{sp eqn:uvp}).  
+
+Ordinarily, the \CR bound for estimating $\dr$ would be smaller 
+when $\dr$ is the only unknown than when $\dr$ is merely one of a whole
+vector of unknowns.  There is a simple reason why this is not the case, and
+that is that the two \CR bounds are for different models.   Eliminating the
+$s_n$ from (\ref{ml eqn:std model}) to give (\ref{ml eqn:comb model})
+changes the model because if the $s_n$ were genuinely known {\em a
+priori\/}, there would be no need use two measurements to eliminate them. 
+Using two measurements means twice the noise, hence a doubling of the \CR
+bound.
+
+If $\dr$ really were the only unknown parameter, the \CR bound for estimating
+$\dr$ alone could be found using by using the likelihood function from the
+standard model in (\ref{ml eqn:std model}) and assuming that every parameter
+but $\dr$ was known perfectly.  The \CR bound is given by the
+reciprocal of $(\infmat{\uvp})_{22}$
+\begin{equation}\label{sp eqn:CRB3}
+\Var{\rWH}\geq \frac{1}{(\infmat{\uvp})_{22}}
+=\frac{\nv}{2\ds\sum_{n=0}^{N-1}k_n^2\left|s_n\right|^2}
+\end{equation}
+Now, as expected, this bound is less than the bound in (\ref{sp eqn:CRB2})
+where $\dr$ was only one of many unknowns, and exactly half the bound in
+(\ref{sp eqn:CRB1}) where twice as many noisy measurements as necessary were
+used to estimate $\dr$.
+
+This comparison of the \CR bounds has indicated that the scalar $\rML$ is
+estimating $\dr$ based on (\ref{ml eqn:comb model}) rather than the proper
+model in (\ref{ml eqn:std model}).  Therefore, from this point on, any
+reference to $\rML$ is assumed to refer to $\rML$ found using vector
+maximum likelihood estimation, and the appropriate \CR bound is that in
+(\ref{sp eqn:CRB2}).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Performance of $\rML$}
+
+This section presents a performance analysis of $\rML$.  The estimator is
+shown to be unbiased independently of the number of measurements, so the \CR
+bound calculated in (\ref{sp eqn:CRB2}) gives a lower bound on the variance
+of $\rML$.  This is followed by a brief outline of some non-asymptotic
+results.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Asymptotic Normality of $\rML$}
+
+In section~\ref{sp sec:normality}, the regularity conditions for asymptotic 
+normality of $\rML$ were established before the \CR bound had been
+calculated.  Now that the \CR bound has been found in (\ref{sp eqn:CRB2}),
+the asymptotic distribution of $\rML$ is normal with mean $\dr$ and variance
+equal to the \CR bound
+\begin{equation}
+\rML\stackrel{d}{\sim}{\cal N}\left(\dr,
+\frac{2\nv}{3\ds\sum_{n=0}^{N-1}k_n^2\left|s_n\right|^2}\right)
+\end{equation}
+as $N\to\infty$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Bias of $\rML$}
+
+$\rML$ is found by locating the maximum of $J(\r)$.  Since $J(\r)$ is a
+function whose period is equal to the ISAR range ambiguity window
+\begin{equation}
+J\left(\r\right)=J\left(\r+k\frac{c}{2\Delta f}\right)
+\qquad\mbox{for any integer $k$}
+\end{equation}
+the support of $\r$ must be restricted to some subinterval of the real line
+centred at $\r_0$ of length $c/2\Delta f$.  
+
+The following theorem shows that $\rML$ is an unbiased estimator of $\dr$.  
+The proof assumes that the support of $J(\r)$ has been located so that the
+centre of the ISAR range ambiguity window $\r_0$ is at $\r=\dr$.  
+
+%============================================================================
+\begin{theorem}
+The maximum likelihood estimator $\rML$ of the target's radial motion found
+using (\ref{ml eqn:J(r)}) and (\ref{ml eqn:rML})
+\begin{equation}
+\rML=\arg\min_{\r}\,J(\r)
+\end{equation}
+where
+\begin{equation}\label{sp eqn:J(r)}
+J(\r)=\sum_{n=0}^{N-1} \left|a_n-b_n\e{jk_n\r}\right|^2
+\end{equation}
+is an unbiased estimator of $\dr$ when the support of $J(\r)$ is
+centred at $\r_0=\dr$ and has length $c/2\Delta f$.
+\end{theorem}
+%============================================================================
+
+%============================================================================
+\begin{proof}
+This proof shows that the probability density function of $J(\r)$ is
+symmetric about $\r=\dr$, so that the probability density function of
+$\rML$ is also symmetric about $\r=\dr$.  From this, the expectation of
+$\rML$ is shown to be $\dr$.
+
+Using (\ref{ml eqn:std model}) to write $J(\r)$ in terms of
+\begin{eqnarray}
+a_n&=&s_n+\na{n}\nn\\
+b_n&=&s_n\e{-jk_n\dr}+\nb{n}    
+\label{sp eqn:std model}
+\end{eqnarray}
+where $\na{n}$ and $\nb{n}$ are zero mean additive white Gaussian noise,
+shows that
+\begin{equation}
+J(\r)=\sum_{n=0}^{N-1} \left|s_n\left(1-\e{-jk_n(\dr-\r)}\right)
++\left(\na{n}-\nb{n}\e{jk_n\r}\right)\right|^2
+\end{equation}
+When $\r$ is written as $\dr+\r$ to make the symmetry about $\r=\dr$ more
+apparent,
+\begin{equation}
+\label{sp eqn:J(dr+r)}
+J(\dr+\r)=\sum_{n=0}^{N-1} \left|s_n\left(1-\e{jk_n\r}\right)
++\left(\na{n}-\nb{n}\e{jk_n(\dr+\r)}\right)\right|^2
+\end{equation}
+At the point $\r$ from $\dr$ in the opposite direction,
+\begin{eqnarray}
+J(\dr-\r)
+&=&\sum_{n=0}^{N-1} \left|s_n\left(1-\e{-jk_n\r}\right)
++\left(\na{n}-\nb{n}\e{jk_n(\dr-\r)}\right)\right|^2\nn\\
+&=&\sum_{n=0}^{N-1} \left|s_n\left(1-\e{jk_n\r}\right)
+-\e{jk_n\r}\left(\na{n}-\nb{n}\e{jk_n(\dr-\r)}\right)\right|^2\nn\\
+&=&\sum_{n=0}^{N-1} \left|s_n\left(1-\e{jk_n\r}\right)
++\left(\nb{n}\e{jk_n\dr}-\na{n}\e{jk_n\r}\right)\right|^2\nn\\
+&=&\sum_{n=0}^{N-1} \left|s_n\left(1-\e{jk_n\r}\right)
++\left(\na{n}'-\nb{n}'\e{jk_n(\dr+\r)}\right)\right|^2
+\label{sp eqn:J(dr-r)}
+\end{eqnarray}
+where
+\begin{equation}
+\na{n}'=\nb{n}\e{jk_n\dr}
+\end{equation}
+and
+\begin{equation}
+\nb{n}'=\na{n}\e{-jk_n\dr}
+\end{equation}
+Multiplying $\na{n}$ by the constant phase shift $\e{-jk_n\dr}$ does not
+change the statistical properties of $\na{n}$ because its probability
+density function is independent of phase angle.  Therefore $\nb{n}'$ is
+equivalent, statistically, to $\na{n}$.  Similarly, $\na{n}'$ is equivalent
+to $\nb{n}$.  Since $\na{n}$ and $\nb{n}$ have identical statistical
+properties, so do $\na{n}'$ and $\nb{n}'$.  
+
+Comparing equations (\ref{sp eqn:J(dr+r)}) and (\ref{sp eqn:J(dr-r)}) shows
+that they have identical statistical properties.  Therefore the probability
+density function of $J(\dr+\r)$ is equal to the probability density
+function of $J(\dr-\r)$.
+
+Because $\rML$ is the location of the maximum of $J(\r)$ and the probability
+density function of $J(\r)$ is symmetric about $\r=\dr$, the probability
+density function of $\rML$ is also symmetric about $\r=\dr$.  Writing
+$p_{\r}(\r)$ for the probability density function of $\rML$, this means
+that
+\begin{equation}
+p_{\r}(\dr+\r)=p_{\r}(\dr-\r)
+\end{equation}
+Now the support of $p_{\r}(\r)$ is not the whole real line
+$(-\infty,\infty)$, but the ISAR range ambiguity window 
+$\left(\dr-\frac{c}{4\df},\dr+\frac{c}{4\df}\right)$.
+Therefore the expectation of $\rML$ is
+\begin{eqnarray}
+\E{\rML}
+&=&\int_{\dr-\frac{c}{4\df}}^{\dr+\frac{c}{4\df}} \r\,p_{\r}(\r)\,d\r\nn\\
+&=&\int_{\dr-\frac{c}{4\df}}^{\dr+\frac{c}{4\df}} \dr\,p_{\r}(\r)\,d\r
++\int_{\dr-\frac{c}{4\df}}^{\dr+\frac{c}{4\df}} (\r-\dr)\,p_{\r}(\r)\,d\r\nn\\
+&=&\dr\int_{\dr-\frac{c}{4\df}}^{\dr+\frac{c}{4\df}} \,p_{\r}(\r)\,d\r
++\int_{-\frac{c}{4\df}}^{\frac{c}{4\df}} \r\,p_{\r}(\dr+\r)\,d\r\nn\\
+&=&\dr\cdot 1+0\nn\\
+&=&\dr
+\end{eqnarray}
+Here the integral of $\r\,p_{\r}(\dr+\r)$ is zero because the integrand is
+odd, being the product of an even function $p_{\r}(\dr+\r)$ and an odd 
+function $\r$.
+\end{proof}
+
+This proof shows that $\rML$ is an unbiased estimator of $\dr$ when the ISAR
+range ambiguity window is centred on $\dr$.  If the window were moved so that
+$\dr$ was no longer at the centre, $\rML$ would appear biased.  However this
+bias is the result of artificially constraining the support of $J(\r)$ when
+taking the expectation of $\rML$.  The correct approach is to join the ends
+of the range ambiguity window together to form a cylinder.  Then with
+the expectation modified to make it suitable for periodic functions,
+$\rML$ is always unbiased.
+
+Finally, because $\rML$ is an unbiased estimator of $\dr$, the variance of 
+$\rML$ is greater than the \CR bound in (\ref{sp eqn:CRB2})
+\begin{equation}
+\Var{\rML}\geq\frac{2\nv}{3\ds\sum_{n=0}^{N-1}k_n^2\left|s_n\right|^2}
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Non-Asymptotic Results}
+
+Non-asymptotic results for the statistical performance of $\rML$
+are much harder to obtain than the asymptotic results.  The basic result
+needed is the probability density function of $\rML$ because the variance
+and other properties can be derived from it.
+
+If $J(\r)$ is expressed in complex form as in appendix \ref{ee app:min
+using DFT}, it may be possible to derive one expression for the probability
+density function of the location of the maximum of the magnitude of
+$J(\r)$, and another for the probability density function of the locations
+of the points where the phase is a multiple of $2\pi$.  Then by combining
+the two separate probability density functions, it may be possible to
+obtain at least an approximate probability density function for $\rML$.
+
+Expressions for the probability density function of the location of the
+maximum likelihood frequency estimator based on a fast Fourier transform
+have been obtained by Ritcey \cite{Rit87}.  This gives a discrete form of
+the probability density function of $\rML$ at intervals of an ISAR range
+bin, although it is not in a form that can be used
+conveniently.\footnote{This suggests the general problem of finding the
+probability density function of the location of the maximum of a known
+bandlimited function in bandlimited noise.  See \protect\ref{co prb:blf I}
+on page \protect\pageref{co prb:blf I} for a longer discussion of this.}
+
+The other end of the scale is the probability density function of estimates
+of the location of each local minimum of the cost function $J(\r)$.  This
+can be used to see how clustered the estimates of $\dr$ are around
+multiples of half a wavelength.  An approximate solution of this is derived
+in appendix \ref{sp app:phase est}.
+
+These results are not sufficiently complete to discuss further, except to
+say that the variance of $\rML$ is not a good guide to the performance of
+the radial motion estimator for radar imaging.  The variance of $\rML$
+measures the total spread of estimates of $\dr$, ignoring the clustering of
+the errors at intervals of half a wavelength.  But as long as the total
+spread is not too wide, the clustering is more important for focusing
+ISAR images than the total spread.\footnote{This is analyses in section
+\protect\ref{rmc sec:ma}.}  Therefore some better measure than
+variance is needed for comparing different motion estimators.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Performance of $\nvML$}
+
+The maximum likelihood estimator of the noise variance is given in 
+(\ref{ml eqn:nvML}) as $1/4N$ times the minimum of $J(\r)$, or
+\begin{equation}
+\nvML=\frac{1}{4N}\sum_{n=0}^{N-1} \left|a_n-b_n\e{jk_n\rML}\right|^2
+\end{equation}
+
+If $\rML$ were known exactly, then substituting in the expressions for $a_n$
+and $b_n$ in terms of the target's noisy frequency responses would show that
+\begin{equation}
+\E{\nvML}=\nv
+\end{equation}
+
+However, $\rML$ has to be estimated, so the actual expectation of $\nvML$
+turns out to be
+\begin{equation}
+\E{\nvML}=\frac{\nv}{2}
+\end{equation}
+This is a consequence of $\rML$ being estimated from two sets of 
+frequency responses.  If $\rML$ were estimated from $M$ frequency responses,
+the expectation would be
+\begin{equation}
+\E{\nvML}=\nv\,\frac{M-1}{M}
+\end{equation}
+which is similar to the bias of the standard deviation of a sample.  If
+$M\to\infty$, then $\nvML$ would become unbiased.  However, the averaging
+does not work like this as $M$ is fixed at $2$ and the expectation of
+$\nvML$ is always half the true noise variance.
+
+Since the bias is a constant factor, an unbiased estimator of the noise
+variance is given by
+\begin{equation}
+\widehat{\nv}=2\nvML
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Performance of $\sML{n}$}
+
+The maximum likelihood estimators $\sML{n}$ of the target's frequency
+response $s_n$ at each of the $N$ frequencies are biased.  Their expectation is
+\begin{eqnarray}
+\E{\sML{n}}
+&=&\E{\frac{1}{2}\left(a_n+b_n\e{jk_n\rML}\right)}\nn\\
+&=&\E{\frac{1}{2}\left(s_n+s_n\e{-jk_n\dr}\e{jk_n\rML}\right)}\nn\\
+&=&s_n\cdot\frac{1}{2}\left(1+\E{\e{-jk_n(\dr-\rML)}}\right)
+\end{eqnarray}
+If the motion estimator $\rML$ were exact, $\sML{n}$ would be unbiased
+\begin{equation}
+\E{\sML{n}}=s_n
+\end{equation}
+Working out the exact bias requires 
+\begin{equation}
+\E{\e{-jk_n(\dr-\rML)}}=\int \e{-jk_n(\dr-\r)}\,p_r(\r)\,d\r
+\end{equation}
+to be evaluated, where $p_r(\r)$ is the probability density function of $\rML$.  
+
+At this stage, the probability density function of $\rML$ is unknown.  But if it is assumed that
+$\rML$ is Gaussian (since it is asymptotically Gaussian) with variance
+$\rMLV$, the identity \cite[7.4.6--7]{Abr65}
+\begin{equation}
+\infint \e{-at^2}\,\e{j2xt}\,dt=\frac{1}{2}\sqrt{\frac{\pi}{a}}\e{-x^2/a^2}
+\end{equation}
+shows that
+\begin{equation}
+\E{\sML{n}}=s_n\,\frac{1+\e{-k_n^2\rMLV/2}}{2}
+\end{equation}
+So when there is little noise, $\rMLV$ is close to zero and $\sML{n}$ is
+nearly unbiased.  As the noise level increases, $\sML{n}$ gets more and more
+biased, until at extremely high noise levels, the expected value of
+$\sML{n}$ is half the true value $s_n$.
+
+In practice, the bias of $\sML{n}$ does not matter because estimating $\rML$
+does not require estimates of the $s_n$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix{Elements of the Fisher Information Matrix}
+\label{sp app:FIM}
+
+\begingroup
+\def\FIM#1#2{-\E{\frac{\del^2\ln p(\md;\uvp)}{\del\conj{#1}\del #2}}}
+\def\FPD#1{\frac{\del\ln p(\md;\uvp)}{\del #1}}
+
+The Fisher information matrix $\infmat{\uvp}=(I_{ij})$ has elements
+\begin{equation}
+I_{ij}=\FIM{\ui{i}}{\ui{j}}
+\end{equation}
+where the vector of parameters being estimated, $\uvp$, is given in 
+(\ref{sp eqn:uvp}) and the likelihood function is
+\begin{equation}
+p(\md;\uvp)=\frac{1}{\left(\pi\nv\right)^{2N}}\,\exp\left(
+-\frac{1}{\nv}\sum_{n=0}^{N-1}
+\left|\vphantom{\e{k}}a_n-s_n\right|^2+\left|b_n-s_n\e{-jk_n\dr}\right|^2
+\right)
+\end{equation}
+
+
+The first partial derivatives of the likelihood function are
+\begin{eqnarray}
+\FPD{\nv}&=&-\frac{2N}{\nv}+\frac{1}{\np{4}}\sum_{n=0}^{N-1}
+\left|a_n-s_n\right|^2+\left|b_n-s_n\e{-jk_n\dr}\right|^2 \\
+\FPD{\dr}&=&-j\frac{1}{\nv}\sum_{n=0}^{N-1}k_n\left( 
+b_n\conj{s_n}\e{jk_n\dr}-\conj{b_n}s_n\e{-jk_n\dr}\right) \\
+\FPD{s_n}&=&-\frac{1}{\nv}\left[\left(\conj{s_n}-\conj{a_n}\right)
++\left(\conj{s_n}-\conj{b_n}\e{-jk_n\dr}\right)\right] \\
+\FPD{\conj{s_n}}&=&-\frac{1}{\nv}\left[\left(s_n-a_n\right)
++\left(s_n-b_n\e{jk_n\dr}\right)\right] 
+\end{eqnarray}
+
+The elements on the diagonal of $\infmat{\uvp}$ are
+\begin{eqnarray}
+\FIM{\nv}{\nv}&=&-\E{\frac{2N}{\np{4}}-\frac{2}{\np{6}}\sum_{n=0}^{N-1}
+\left|a_n-s_n\right|^2+\left|b_n-s_n\e{-jk_n\dr}\right|^2}  \nn\\
+&=&-\frac{2N}{\np{4}}+\frac{2}{\np{6}}\sum_{n=0}^{N-1}\E{
+\left|\na{n}\right|^2+\left|\nb{n}\right|^2}  \nn\\
+&=&-\frac{2N}{\np{4}}+\frac{4N}{\np{4}} \nn\\
+&=&\frac{2N}{\np{4}} \\
+&&\nn\\
+\FIM{\dr}{\dr}&=&\E{\frac{2}{\nv}\real{\sum_{n=0}^{N-1}
+k_nb_n\conj{s_n}\e{jk_n\dr}}}  \nn\\
+&=&\frac{2}{\nv}\real{\sum_{n=0}^{N-1}k_n^2\E{b_n}\conj{s_n}\e{jk_n\dr}} \nn\\
+&=&\frac{2}{\nv}\sum_{n=0}^{N-1}k_n^2\left|s_n\right|^2 \\
+&&\nn\\
+\FIM{s_n}{s_n}&=&\E{\frac{2}{\nv}}\nn\\
+&=&\frac{2}{\nv} 
+\end{eqnarray}
+
+The elements of $\infmat{\uvp}$ whose partial derivatives involve $\nv$ are
+zero, as the following shows:
+\begin{eqnarray}
+\FIM{\nv}{\dr}&=&\E{\frac{2N}{\np{4}}\imag{
+\sum_{n=0}^{N-1} k_nb_n\conj{s_n}\e{jk_n\dr}}}  \nn\\
+&=&\frac{2N}{\np{4}}\imag{\sum_{n=0}^{N-1} k_n\left|s_n\right|^2}  \nn\\
+&=&0 \\
+&&\nn\\
+\FIM{\nv}{s_n}&=&-\E{\frac{1}{\np{4}}\left[\left(\conj{s_n}-\conj{a_n}\right)
++\left(\conj{s_n}-\conj{b_n}\e{-jk_n\dr}\right)\right]} \nn\\
+&=&-\frac{1}{\np{4}}\left[\E{\conj{\na{n}}}+\E{\conj{\nb{n}}}\e{-jk_n\dr}
+\right] \nn\\
+&=&0
+\end{eqnarray}
+
+The elements of $\infmat{\uvp}$ whose partial derivatives involve $\dr$ and
+$s_n$ are
+\begin{eqnarray}
+\FIM{\dr}{s_n}&=&\E{-j\frac{1}{\nv} k_n\conj{b_n}\e{-jk_n\dr}} \nn\\
+&=&-j\frac{k_n\conj{s_n}}{\nv} \nn\\
+&&\\
+\FIM{\dr}{s_n}&=&\conj{\FIM{s_n}{\dr}} \nn \\
+&=&j\frac{k_ns_n}{\nv}
+\end{eqnarray}
+
+This leaves the elements whose partial derivatives involve $s_m$ and $s_n$
+where $m\neq n$.  All $N^2-N$ of these are zero.
+\begin{equation}
+\FIM{s_m}{s_n}=0
+\end{equation}
+\endgroup
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix{Inverse of Fisher's Information Matrix}
+\label{sp app:M-1}
+
+Taking the inverse of $\infmat{\uvp}$ involves inverting the submatrix
+which is left when $\infmat{\uvp}$ has its first row and column removed.
+The general inverse for matrices of this form is the subject of the
+following theorem.
+
+\begin{theorem} The inverse of the matrix
+\begin{equation}
+\vect{M}=
+\left[\begin{array}{ccccc}
+c		&\conj{z_0}	&\conj{z_1}	&\cdots	&\conj{z_{N-1}}\\
+z_0	&1	&0	&\cdots	&0	\\
+z_1	&0	&1	&\cdots	&0	\\
+\vdots		&\vdots	&\vdots	&\ddots	&\vdots	\\
+z_{N-1}	&0	&0	&\cdots	&1	
+\end{array}\right]
+\end{equation}
+where 
+\begin{equation}
+c=4\sum_{n=0}^{N-1} \left|z_n\right|^2
+\end{equation}
+is
+\begin{equation}
+\vect{M}^{-1}=\frac{1}{3\ds\sum_{n=0}^{N-1} 
+\left|z_n\right|^2}\vect{v}\,\vect{v}^H+\vect{D}
+\label{sp eqn:M-1 in app}
+\end{equation}
+where $\vect{v}$ is
+\begin{equation}
+\vect{v}=\left[\begin{array}{c}
+1\\ -z_0 \\-z_1\\\vdots\\-z_{N-1}\end{array}\right]
+\end{equation}
+and $\vect{D}$ is the diagonal matrix
+\begin{equation}
+\vect{D}=\mathop{\rm diag}\left[0, 1, 1, \ldots, 1\right]
+\end{equation}
+\end{theorem}
+
+
+\begin{proof}
+Note that 
+\begin{equation}
+\vect{M}\vect{v}\vect{v}^H=
+\left(c-\sum_{n=0}^{N-1}\left|z_n\right|^2\right)
+\left[\begin{array}{ccccc} 
+1	&-\conj{z_0}	&-\conj{z_1}	&\cdots	&-\conj{z_{N-1}}\\
+0	&0	&0	&\cdots	&0	\\
+0	&0	&0	&\cdots	&0	\\
+\vdots	&\vdots	&\vdots	&\ddots	&\vdots	\\
+0	&0	&0	&\cdots	&0	
+\end{array}\right]
+\end{equation}
+and that
+\begin{equation}
+\vect{M}\vect{D}=
+\left[\begin{array}{ccccc} 
+0	&\conj{z_0}	&\conj{z_1}	&\cdots	&\conj{z_{N-1}}\\
+0	&1	&0	&\cdots	&0	\\
+0	&0	&1	&\cdots	&0	\\
+\vdots	&\vdots	&\vdots	&\ddots	&\vdots	\\
+0	&0	&0	&\cdots	&1	
+\end{array}\right]
+\end{equation}
+Therefore
+\begin{equation}
+\vect{M}\left(
+\frac{1}{3\ds\sum_{n=0}^{N-1}\left|z_n\right|^2}\vect{v}\vect{v}^H+\vect{D}
+\right)=\vect{I}
+\end{equation}
+This shows that $\vect{M}\vect{M}^{-1}=\vect{I}$.
+
+To show that $\vect{M}^{-1}\vect{M}=\vect{I}$ --- the other condition 
+needed for $\vect{M}^{-1}$ to be the inverse of $\vect{M}$ --- note that 
+both $\vect{M}$ and $\vect{M}^{-1}$ are 
+Hermitian. Then
+\begin{eqnarray}
+\vect{M}^{-1}\vect{M}
+&=&\left[\left(\vect{M}^{-1}\vect{M}\right)^H\right]^H		\nn\\
+&=&\left[\vect{M}^H\left(\vect{M}^{-1}\right)^H\right]^{H}	\nn\\
+&=&\left[\vect{M}\,\vect{M}^{-1}\right]^{H}			\nn\\
+&=&\vect{I}^H							\nn\\
+&=&\vect{I}
+\end{eqnarray}
+Therefore $\vect{M}^{-1}$ in (\ref{sp eqn:M-1 in app}) is the inverse of 
+$\vect{M}$.
+\end{proof}
+
+This result can also be obtained by applying the Sherman-Morrison 
+formula~\cite{Gol83}
+\begin{equation}
+(\vect{A}+\vect{u}\vect{v}^H)^{-1}=
+\vect{A}^{-1}-\frac{\vect{A}^{-1}\vect{u}\vect{v}^H\vect{A}^{-1}}
+{1+\vect{v}^H\vect{A}^{-1}\vect{u}}
+\end{equation}
+two times in succession to
+\begin{equation}
+\vect{M}=\vect{I}+\vect{u}\vect{v}^H+\vect{v}\vect{u}^H
+\end{equation}
+where
+\begin{equation}
+\vect{u}=\left[\frac{c-1}{2},z_0,z_1,\ldots,z_{N-1}\right]^H
+\end{equation}
+and 
+\begin{equation}
+\vect{v}=\left[1,0,0,\ldots,0\right]^H
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix[PDF of Each Local Minimum of $J(\r)$]{Probability Density
+Function of Each Local Minimum of $J(\r)$}
+\label{sp app:phase est}
+
+This appendix derives an approximate expression for the probability density 
+function of estimates of the location of each local minimum of the cost
+function $J(\r)$.  The variance and other properties of the estimates of
+$\dr$ given by algorithm \ref{ee alg:min with cm} can be calculated
+numerically from this probability density function.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Conditions for a Local Minimum of $J(\r)$}
+
+Suppose that $\r=\ro$ is the location of a local minimum of $J(\r)$ when
+noise is not present.  When noise is added to the frequency responses, the
+location of the local minimum of $J(\r)$ closest to $\ro$ is now $\ro+\dro$
+where $\dro$ is the error caused by the presence of noise. Then
+\begin{equation}
+\left.\frac{\del J(\r)}{\del \r}\right|_{\r=\ro+\dro}=0
+\end{equation}
+Differentiating the cost function $J(\r)$ in (\ref{ml eqn:J(r) uvp}) gives
+the equation
+\begin{equation}
+\imag{\sum_{n=0}^{N-1} k_na_n\conj{b_n}\e{-jk_n(\ro+\dro)}}=0
+\end{equation}
+Substituting the noisy frequency responses in (\ref{ml eqn:std model}) into 
+this gives
+\begin{equation}
+\imag{\sum_{n=0}^{N-1} k_n(s_n+\na{n})
+(\conj{s_n}\e{jk_n\dr}+\conj{\nb{n}})\e{-jk_n(\ro+\dro)}}=0
+\end{equation}
+which can be expressed as
+\begin{equation}
+\imag{\sum_{n=0}^{N-1} k_n(s_n+\na{n})
+(\conj{s_n}+\conj{\nb{n}}\e{-jk_n\dr})\e{-jk_n(\ro+\dro-\dr)}}=0
+\end{equation}
+This can be simplified by noting that each of the $\nb{n}$ noise terms is
+the realization of a complex Gaussian random process, so the probability
+density function of their phases is uniform over $\left[0,2\pi\right)$. 
+Therefore shifting the phase of each $\nb{n}$ by $-k_n\dr$ gives random
+variables with identical probability density functions to the original random variables.
+So each $\nb{n}\e{jk_n\dr}$ can be replaced by $\nb{n}$ for notational
+convenience without altering the statistical properties of $J(\r)$.  Hence
+\begin{equation}
+\imag{\sum_{n=0}^{N-1} k_n(s_n+\na{n})
+(\conj{s_n}+\conj{\nb{n}})\e{-jk_n(\ro+\dro-\dr)}}=0
+\end{equation}
+Separating the initial frequency $k_0$ from the frequency steps gives
+\begin{equation}\label{sp app eqn:2nd exp}
+\imag{\e{-jk_0(\ro+\dro-\dr)}\sum_{n=0}^{N-1} k_n(s_n+\na{n})
+(\conj{s_n}+\conj{\nb{n}})\e{-jn\dk(\ro+\dro-\dr)}}=0
+\end{equation}
+Since this can only be solved unambiguously for $\dro$ over an interval
+containing $\ro$ whose extent is half the carrier wavelength, the magnitude
+of $\dro$ is limited by
+\begin{equation} 
+\left|\dro\right|<\frac{c}{8f_0}
+\end{equation}
+Over this interval, the phase of $\e{-jn\dk\dro}$ varies 
+negligibly in comparison to the phase of $\e{-jk_0\dro}$
+for all values of $n$ because of the narrow relative bandwidth.
+Therefore the $\dro$ term can be omitted from the second complex
+exponential in (\ref{sp app eqn:2nd exp}) to give the very good approximation
+\begin{equation}
+\imag{\e{-jk_0(\ro+\dro-\dr)}\sum_{n=0}^{N-1} k_n(s_n+\na{n})
+(\conj{s_n}+\conj{\nb{n}})\e{-jn\dk(\ro-\dr)}}=0
+\end{equation}
+This can be written
+\begin{equation}\label{sp app eqn:d and dro}
+\imag{d\,\e{-jk_0\dro}}=0
+\end{equation}
+where $d$ is the random variable
+\begin{equation}\label{sp app eqn:d}
+d=\sum_{n=0}^{N-1} k_n(s_n+\na{n})(\conj{s_n}+\conj{\nb{n}})
+\e{-jk_n(\ro-\dr)}
+\end{equation}
+From this, if the phase of $d$ varies by $\delta\phi$, the phase of
+$\e{-jk_0\dro}$ must vary by $-\delta\phi$ to keep the imaginary part of
+(\ref{sp app eqn:d and dro}) zero.  So the probability density function of the
+angle of $d$ completely determines the probability density function of
+$\dro$.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Statistical Characteristics of $d$}
+
+Since the noise processes $\na{n}$ and $\nb{n}$ are independent zero-mean
+complex Gaussians with variance $\nv$, their expectations, variances and 
+covariances are given by
+\begin{eqnarray}
+\E{\na{n}}=\E{\nb{n}}&=&0 \nn \\
+\E{\na{m}\conj{\na{n}}}=\E{\nb{m}\conj{\nb{n}}}&=&\nv\delta_{m,n}\nn \\
+\E{\na{m}\na{n}}=\E{\nb{m}\nb{n}}&=&0\nn \\
+\E{\na{m}\nb{n}}=\E{\na{m}\conj{\nb{n}}}=
+  \E{\conj{\na{m}}\na{n}}=\E{\conj{\nb{m}}\conj{\nb{n}}}&=&0
+\end{eqnarray}
+Using these, the expected value of the random variable $d$ given by
+(\ref{sp app eqn:d}) is
+\begin{equation}
+\mu_d=\E{d}=\sum_{n=0}^{N-1} k_n\left|s_n\right|^2\e{-jk_n(\ro-\dr)}
+\end{equation}
+and the variance is
+\begin{equation}
+\sigma_d^2=\E{\left|d-\E{d}\right|^2}=\sum_{n=0}^{N-1} k_n^2 \nv \left[
+2\left|s_n\right|^2 +\nv\right]
+\end{equation}
+
+$d$ can be broken into two parts $d_g$ and $d_c$, which respectively are the
+Gaussian components of $d$
+\begin{equation}
+d_g=\sum_{n=0}^{N-1} k_n(\left|s_n\right|^2+\conj{s_n}\na{n}+s_n\conj{\nb{n}})
+\e{-jk_n(\ro-\dr)}
+\end{equation}
+and the non-Gaussian components
+\begin{equation}
+d_c=\sum_{n=0}^{N-1} k_n\na{n}\conj{\nb{n}}\e{-jk_n(\ro-\dr)}
+\end{equation}
+It is shown in appendix \ref{sp app:Gaussians} that 
+$\na{n}\conj{\nb{n}}\e{-jk_n(\ro-\dr)}$ has the probability density function 
+$p_{\noise}(z)$ where
+\begin{equation}
+p_{\noise}(z)=\frac{2}{\pi\np{4}}{\rm K_0}\left(
+\frac{2|z|}{\nv}\right)
+\end{equation}
+Here ${\rm K_0}(x)$ is the modified Bessel function defined in 
+(\ref{sp app eqn:K0 def}).
+
+Now, the $N$ terms of $d_c$ are independent and approximately identically
+distributed, so by the central limit theorem, $d_c/N$ tends to a Gaussian
+random variable as $N\rightarrow\infty$.  For stepped-frequency waveforms,
+$N$ does not tend to infinity.  However, for adequate range resolution for
+radar imaging, $N$ has to be sufficiently large that the Gaussian random
+variable approximation is very good.
+
+Since $d_g$ is Gaussian and $d_c$ is approximately Gaussian,
+$d$ is approximately a Gaussian random variable with mean
+and variance
+\begin{equation}
+\mu_d=\sum_{n=0}^{N-1} k_n\left|s_n\right|^2\e{-jk_n(\ro-\dr)}
+\end{equation}
+and 
+\begin{equation}
+\sigma_d^2=\sum_{n=0}^{N-1} k_n^2 \nv \left[2\left|s_n\right|^2 +\nv\right]
+\end{equation}
+respectively.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{The Probability Density Function of $\dro$}
+
+The probability density function of $d$, $p_d(z)$, is approximately that of a
+complex Gaussian process with mean $\mu_d$ and variance $\sigma_d^2$
+\begin{equation}
+p_d(z)=\frac{1}{\pi\sigma_d^2}
+	\e{-|z-\mu_d|^2/\sigma_d^2}
+\end{equation}
+This can be converted to the probability density function of $\theta$, the
+angle of $d$, by changing variables to polar coordinates and integrating
+over magnitudes from $0$ to $\infty$
+\begin{eqnarray}
+p_{\Theta}(\theta)
+&=&\int_0^{\infty} p_d(r\e{j\theta}) \,r\,dr \nn \\
+&=&\frac{1}{\pi\sigma_d^2}\int_0^{\infty} 
+  \e{-\left|r\e{j\theta}-\mu_d\right|^2/\sigma_d^2} \,r\,dr 
+\end{eqnarray}
+The exponent $\left|r\e{j\theta}-\mu_d\right|^2$ can be written in a more
+tractable form using
+\begin{eqnarray}
+\left|r\e{j\theta}-\mu_d\right|^2&=&\left|r-\mu_d\e{-j\theta}\right|^2 \nn\\
+&=&\left(r-a(\theta)\right)^2+b^2(\theta)
+\end{eqnarray}
+where $a(\theta)$ and $b(\theta)$ are
+\begin{eqnarray}
+a(\theta)&=&\real{\mu_d\e{-j\theta}}\\
+b(\theta)&=&\imag{\mu_d\e{-j\theta}}
+\end{eqnarray}
+Then
+\begin{equation}\label{sp app eqn:pr(theta) 2}
+p_{\Theta}(\theta)
+=\frac{1}{\pi\sigma_d^2} \e{-b^2(\theta)/\sigma_d^2} 
+\int_0^{\infty} r\e{-\left(r-a(\theta)\right)^2/\sigma_d^2}\,dr 
+\end{equation}
+Now 
+\begin{eqnarray}
+\lefteqn{\int_0^{\infty}r\e{-\left(r-a(\theta)\right)^2/\sigma_d^2}\,dr}
+\qquad\nn\\
+&=&\int_0^{\infty}\left(r-a(\theta)\right)
+\e{-\left(r-a(\theta)\right)^2/\sigma_d^2}\,dr
++a(\theta)\int_0^{\infty}\e{-\left(r-a(\theta)\right)^2/\sigma_d^2}\,dr\nn\\
+&=&\sigma_d^2\e{-a^2(\theta)/\sigma_d^2}+\frac{\sqrt{\pi}\,\sigma_d
+a(\theta)}{2}\,\erfc{-\frac{a(\theta)}{\sigma_d}}
+\end{eqnarray}
+Putting these back into (\ref{sp app eqn:pr(theta) 2}) gives the probability
+density function of $\theta$ as
+\begin{equation}\label{sp app eqn:pr(theta) 3}
+p_{\Theta}(\theta)
+=\frac{1}{\pi} \e{-b^2(\theta)/\sigma_d^2} 
+\left[\e{-a^2(\theta)/\sigma_d^2}+\frac{\sqrt{\pi}\,\sigma_d a(\theta)}{2}
+\,\erfc{-\frac{a(\theta)}{\sqrt{2}\sigma_d}}\right]
+\end{equation}
+for $\theta\in\left(-\pi,\pi\right]$.
+
+Finally, from (\ref{sp app eqn:d and dro}), 
+\begin{equation}
+p_{\dro}(\dro)=\frac{1}{k_0}\,p_{\Theta}\left(-\frac{\dro}{k_0}\right)
+\end{equation}
+which gives the probability density function of the error in finding the
+local minimum due to the noise.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Conditions for $\dro$ Being Unbiased}
+
+In general, $\dro$ is a biased estimator.  But in the special case of
+$\ro=\dr$, $\dro$ is unbiased.  To see this, note that a sufficient 
+condition for $\dro$ being unbiased is that 
+\begin{equation}
+p_{\dro}(x)=p_{\dro}(-x)
+\end{equation}
+When $\ro=\dro$, $\mu_d$ is real and
+\begin{eqnarray}
+a(\theta)&=&\mu_d\cos\theta\\
+b(\theta)&=&-\mu_d\sin\theta
+\end{eqnarray}
+$p_{\Theta}(\theta)$ can be written as a function of functions of $\theta$
+in the form
+\begin{eqnarray}
+p_{\Theta}(\theta)=F\left(\cos\theta,\sin^2\theta,\mu_d,\sigma_d\right)
+\end{eqnarray}
+Both $\cos\theta$ and $\sin^2\theta$ are even functions of $\theta$ so
+$p_{\Theta}(\theta)$ is an even function of $\theta$, and
+$p_{\dro}(\dro)$ is an even function of $\dro$.  Therefore $\dro$ is an
+unbiased estimator when $\ro=\dr$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix[Product of Two IID Complex Gaussian Processes]{Probability 
+Density Function of the Product of Two Independent and Identically 
+Distributed Zero Mean Complex Gaussian Random Variables}
+\label{sp app:Gaussians}
+
+% This uses slightly different definitions, so the whole appendix is
+% enclosed in a begingroup/endgroup pair
+\begingroup
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\np{{w}}				% Product of the noises
+\def\na{{w_1}}				% Noise term 1
+\def\nb{{w_2}}				% Noise term 2
+\def\nv{{\sigma^2}}			% Noise variance
+\def\ni#1{{\sigma^{#1}}}		% Noise s.d.to power i
+\def\nsd{{\sigma}}			% Noise s.d.
+\def\e#1{{e^{#1}}}			% Exponential
+\def\conj#1{\overline{#1}}		% Complex conjuagete
+\def\pr{{p}}		    		% Probability density function
+\def\conv{{\,\star\,}}			% Convolution operator
+\def\E#1{{\mathop{\rm E}\nolimits\left\{#1\right\}}}	 % Expectation
+\def\Var#1{{\mathop{\rm Var}\nolimits\left\{#1\right\}}} % Variance
+\def\Ko#1{{\mathop{\rm K_0}\nolimits\left(#1\right)}} % Bessel function K_0
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+It is well known that the sum of independent Gaussian random variables 
+is a Gaussian random variable whose mean is the sum of the individual means
+and whose variance is the sum of the individual variances.
+This follows from the probability density function of the sum of two 
+independent random variables being the convolution of their respective
+probability density functions. 
+
+In this appendix, the probability density function of the product of two
+independent and identically distributed zero-mean complex Gaussian random
+variables is derived.  The mean and variance of the product is obtained,
+along with expressions for the higher order moments.\footnote{This is such a
+straightforward result in the theory of noise processes that it must have
+been obtained before by someone such as Rice or Middleton.  Nevertheless, no
+references to this result in the signal processing literature could be
+found.}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Problem Definition}
+
+Let $\na$ and $\nb$ be independent and identically distributed complex
+Gaussian random variables with zero mean and variance $\nv$.  Define the 
+random variable $\np$ as the product of $\na$ and $\nb$
+\begin{equation}
+\np=\na\nb
+\end{equation}
+The probability density functions of $\na$ and $\nb$ are 
+\begin{equation}
+\pr_{\na}(z)=\pr_{\nb}(z)=\frac{1}{\pi\nv}\e{-|z|^2/\nv}
+\end{equation}
+which can be written in polar coordinates as
+\begin{eqnarray}
+\pr_{\na}(r_1,\theta_1)=\pr_r(r_1)\pr_{\theta}(\theta_1) \\
+\pr_{\nb}(r_2,\theta_2)=\pr_r(r_2)\pr_{\theta}(\theta_2) 
+\end{eqnarray}
+where the magnitudes have a Rayleigh distribution on $[0,\infty)$
+\begin{equation}
+\pr_r(r)=\frac{2r}{\nv}\e{-r^2/\nv}
+\end{equation}
+and the phases have a uniform distribution on $[0,2\pi)$
+\begin{equation}
+\pr_{\theta}(\theta)=\frac{1}{2\pi}	
+\end{equation}
+By writing $\np=\na\nb$ in polar form as $\np=s\e{j\phi}$, 
+\begin{eqnarray}
+\phi&=&\theta_1+\theta_2 \bmod 2\pi\\
+s&=&r_1r_2
+\end{eqnarray}
+The polar random variables $s$ and $\phi$ are independent because 
+$r_1$ and $r_2$ are independent of $\theta_1$ and $\theta_2$.  The polar
+probability density function of $\np$ can be written in the form 
+\begin{equation}
+\pr_{\np}(s,\phi)=\pr_s(s)\pr_{\phi}(\phi)
+\end{equation}
+When expressed in Cartesian coordinates, this becomes
+\begin{equation}
+\pr_{\np}(z)=\frac{1}{|z|}\,\pr_s(|z|)\,\pr_{\phi}(\arg z)
+\end{equation}
+where the scale factor $1/|z|$ is the Jacobian for changing variables from
+polar to Cartesian coordinates.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Probability Density Function of the Phase of the $w_1w_2$}
+
+The probability density function of $\phi=\arg(\na\nb)=\theta_1+\theta_2\bmod2\pi$ will be derived
+here in two ways.  The first is a simple application of the principle
+of insufficient reason, while the second uses mathematics to do it properly.
+
+\subsubsection{Intuitive Proof}
+
+$\na$ and $\nb$ are random phasors which may be pointing in any direction
+in the complex plane with uniform probability.  So choose a reference phasor
+$\alpha$ pointing in an arbitrary direction and express all angles with
+respect to this phasor.  Since the probability density functions of $\theta_1$ and $\theta_2$ are 
+uniform when the angles are expressed relative to $\alpha$, the probability density function of 
+$\phi$ with respect to $\alpha$ must be independent of $\alpha$. This is only
+possible if the probability density function of $\phi$ is constant.  So that the total probability
+sums to unity, this constant must be $1/2\pi$.  Therefore
+\begin{equation}
+\pr_{\phi}(\phi)=\frac{1}{2\pi}
+\end{equation}
+
+
+\subsubsection{Rigorous Proof}
+
+A proper proof of this uses the fact that the probability density function of the sum of two
+random variables is the convolution of the two random variables' respective
+probability density functions \cite[p. 37]{Dav58}.  In this case, $\pr_{\phi}(\phi)$ is the
+convolution of two functions that are constant on $[0,2\pi)$ and zero
+elsewhere.  Write $\pr_{\theta}(\theta)$ as
+\begin{equation}
+\pr_{\theta}(\theta)=\frac{1}{2\pi}\,\chi_{[0,2\pi)}(\theta)
+\end{equation}
+where the characteristic function $\chi_A(x)$ of a set $A$ is
+\begin{equation}
+\chi_A(x)=\cases{ 1 & if $x\in A$ \cr 0& if $x\not\in A$}
+\end{equation}
+Then $\pr_{\phi}(\phi)$ is the convolution 
+\begin{eqnarray}
+\pr_{\phi}(\phi)&=&\pr_{\theta}(\theta_1)\conv\pr_{\theta}(\theta_2) \nn\\
+&=&\int_0^{2\pi} \pr_{\theta}(\theta)\pr_{\theta}(\phi-\theta)\,d\theta\nn\\
+&=&\int_0^{2\pi} \frac{1}{4\pi^2}\chi_{[0,2\pi)}(\theta)
+	\chi_{[0,2\pi)}(\phi-\theta)\,d\theta\nn\\
+&=&\cases{\ds\frac{1}{4\pi^2}
+\left(2\pi-|2\pi-\phi|\right) & if $\phi\in [0,4\pi)$\cr
+0& otherwise}
+\end{eqnarray}
+This result is slightly incorrect because $\pr_{\phi}(\phi)$ is non-zero for
+some $\phi$ outside $[0,2\pi)$.  The correct answer is found by adding
+the probabilities for $\phi\in[2\pi,4\pi)$ to the probabilities for 
+$\phi\in[0,2\pi)$ and then restricting $\phi$ to the interval $[0,2\pi)$. 
+Essentially, this makes the convolution a circular convolution on
+$[0,2\pi)$. Therefore
+\begin{eqnarray}
+\pr_{\phi}(\phi)&=&\frac{1}{4\pi^2}\left(
+2\pi-|2\pi-\phi|+2\pi-|2\pi-(\phi+2\pi)|\right) \nn\\
+&=&\frac{1}{4\pi^2}\left(\phi+2\pi-\phi\right) \nn\\
+&=&\frac{1}{2\pi}\label{sp app eqn:pr(phi)}
+\end{eqnarray}
+for $\phi\in[0,2\pi)$.
+
+This is the same answer as that obtained via the intuitive proof, but with 
+the added respectability provided by a veneer of mathematics.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Probability Density Function of the Magnitude of $w_1w_2$}
+
+The probability density function of $s=|\na\nb|=r_1r_2$ will be obtained here in two different
+ways which fortunately give the same answer, which is
+\begin{equation}
+\pr_s(s)=\frac{4s}{\ni{4}}\Ko{\frac{2s}{\nv}}
+\end{equation}
+where $\Ko{x}$ is a modified Bessel function \cite[eq. 9.6.24]{Abr65}.
+This has an integral representation
+\begin{equation}\label{sp app eqn:K0 def}
+\Ko{x}=\int_0^{\infty} \e{-x\cosh u}\,du
+\end{equation}
+
+
+\subsubsection{First Proof using Jacobians}
+
+If a second random variable $t=t(r_1,r_2)$ is defined so that the pairs
+$(r_1,r_2)$ and $(s,t)$ uniquely determine one another, the joint
+probability density functions $\pr(s,t)$ and $\pr(r_1,r_2)$ are related by
+\begin{equation}
+\pr(s,t)=|J|\,\pr\left(r_1(s,t),r_2(s,t)\right)
+\end{equation}
+where the Jacobian $J$ is
+\begin{equation}
+J=\frac{\del(r_1,r_2)}{\del(s,t)}
+=\left[\frac{\del(s,t)}{\del(r_1,r_2)}\right]^{-1}
+\end{equation}
+Then the probability density function of $s$ is
+\begin{eqnarray}
+\pr_s(s)&=&\int_T \pr(s,t)\,dt \nn\\
+&=&\int_T |J|\,\pr\left(r_1(s,t),r_2(s,t)\right)\,dt\label{sp app eqn:int1}
+\end{eqnarray}
+where the set $T$ is the support of $t$.
+
+This integration may be easy or difficult depending on the choice of
+$t(r_1,r_2)$.  Also $t(r_1,r_2)$ must be chosen so that the Jacobian does 
+not change sign over the domain of integration.
+Note that the inverse of the Jacobian
+\begin{eqnarray}
+J^{-1}&=&\frac{\del(s,t)}{\del(r_1,r_2)} \nn\\
+&=&\left|\begin{array}{cc}
+\ds\frac{\del s}{\del r_1} & 
+\ds\frac{\del s}{\del r_2} \\ 
+\ds\frac{\del t}{\del r_1} & 
+\ds\frac{\del t}{\del r_2}  
+\end{array}\right|	\nn\\
+&=& r_2\frac{\del t}{\del r_1}-r_1\frac{\del t}{\del r_2} 
+\end{eqnarray}
+is always non-negative when
+\begin{equation}
+\frac{\del t}{\del r_1}=1
+\end{equation}
+and
+\begin{equation}
+\frac{\del t}{\del r_2}=-1
+\end{equation}
+These conditions are satisfied when $t$ is
+\begin{equation}
+t(r_1,r_2)=r_1-r_2
+\end{equation}
+Since $r_1$ and $r_2$ are defined on $[0,\infty)$, the support of $t$ is
+$T=(-\infty,\infty)$.  When $r_1$ and $r_2$ are written in terms of $s$ 
+and $t$, they become
+\begin{eqnarray}
+r_1(s,t)&=&\frac{1}{2}\left[t+\sqrt{t^2+4s}\right]\\
+r_2(s,t)&=&\frac{1}{2}\left[-t+\sqrt{t^2+4s}\right]
+\end{eqnarray}
+from which the Jacobian is
+\begin{equation}
+J=\frac{1}{r_1+r_2}=\frac{1}{\sqrt{t^2+4s}}
+\end{equation}
+and $r_1^2+r_2^2$ is
+\begin{equation}
+r_1^2+r_2^2=(r_1-r_2)^2+2r_1r_2=t^2+2s
+\end{equation}
+
+Before the integral in (\ref{sp app eqn:int1}) is evaluated, note
+that because $r_1$ and $r_2$ are independent,
+\begin{eqnarray}
+\pr(r_1,r_2)&=&\pr_r(r_1)\pr_r(r_2)\nn\\
+&=&\frac{4}{\ni{4}}r_1r_2\e{-(r_1^2+r_2^2)/\nv}\nn\\
+&=&\frac{4}{\ni{4}}s\e{-(t^2+2s)/\nv}
+\end{eqnarray}
+Therefore
+\begin{eqnarray}
+\pr_s(s)&=&\int_{-\infty}^{\infty} |J|\,\pr(r_1(s,t),r_2(s,t))\,dt\nn\\
+&=&\frac{4s}{\ni{4}}\int_{-\infty}^{\infty}\frac{1}{\sqrt{t^2+4s}}
+\e{-(t^2+2s)/\nv} \,dt\nn\\
+&=&\frac{8s}{\ni{4}}\int_0^{\infty}\frac{1}{\sqrt{t^2+4s}}
+\e{-(t^2+2s)/\nv} \,dt
+\end{eqnarray}
+Now make the substitution $2s\cosh u=t^2+2s$.  From this,
+\begin{equation}
+\sqrt{t^2+4s}=2\sqrt{s}\cosh \frac{u}{2}=2\frac{dt}{du}
+\end{equation}
+so $\pr_s(s)$ becomes
+\begin{equation}\label{sp app eqn:pr(s) 1st}
+\pr_s(s)=\frac{4s}{\ni{4}}\int_0^{\infty}\e{-(2s/\nv)\cosh u} \,du
+\end{equation}
+which in terms of the modified Bessel function is
+\begin{eqnarray}
+\pr_s(s)&=&\frac{4s}{\ni{4}}\Ko{\frac{2s}{\nv}}
+\end{eqnarray}
+
+
+\subsubsection{Second Proof using Convolutions}
+
+The probability density function of $s$ can be obtained more directly by noting that 
+\begin{equation}
+\ln s = \ln r_1+\ln r_2
+\end{equation}
+When $a=\ln s$, $b_1=\ln r_1$ and $b_2=\ln r_2$, $a=b_1+b_2$ so the probability density function
+of $a$ is the convolution of the probability density functions of $b_1$ and $b_2$.  Then with 
+$b=\ln r$,
+\begin{eqnarray}
+\pr_b(b)&=&\pr_r(r(b))\frac{dr}{db}\nn\\
+&=&e^b\pr_r\left(e^b\right)
+\end{eqnarray}
+Therefore
+\begin{eqnarray}
+\pr_a(a)&=&\pr_b(b)\conv\pr_b(b)\nn\\
+&=&\int_{-\infty}^{\infty} \pr_b(b)\pr_b(a-b)\,db\nn\\
+&=&\int_{-\infty}^{\infty} \frac{4}{\ni{4}}
+\e{2b}\e{-\e{2b}/\nv}\e{2(a-b)}\e{-\e{2(a-b)}/\nv}\,db\nn\\
+&=&\frac{4}{\ni{4}}\e{2a}\int_{-\infty}^{\infty}
+\e{-\left(\e{2b}+\e{2(a-b)}\right)/\nv}\,db
+\end{eqnarray}
+Convert $\pr_a(a)$ back to a probability density function with respect to $s$, giving
+\begin{eqnarray}
+\pr_s(s)&=&\pr_a(a(s))\frac{da}{ds}\nn\\
+&=&\frac{1}{s}\pr_a(a(s))\nn\\
+&=&\frac{4s}{\ni{4}}\int_{-\infty}^{\infty}
+\e{-\left(\e{2b}+s^2\e{-2b}\right)/\nv}\,db
+\end{eqnarray}
+Now make the substitution
+\begin{equation}
+u=2b-\ln s
+\end{equation}
+so that $\e{2b}+s^2\e{-2b}$ becomes $2s\cosh u$ and $du=2db$.
+Therefore
+\begin{eqnarray}
+\pr_s(s)&=&\frac{2s}{\ni{4}}\int_{-\infty}^{\infty}
+\e{-(2s/\nv)\cosh u}\,du\nn\\
+&=&\frac{4s}{\ni{4}}\int_0^{\infty}\e{-(2s/\nv)\cosh u}\,du\nn\\
+&=&\frac{4s}{\ni{4}}\Ko{\frac{2s}{\nv}}\label{sp app eqn:pr(s)}
+\end{eqnarray}
+which agrees with (\ref{sp app eqn:pr(s) 1st}).
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Probability Density Function of $w_1w_2$}
+
+Putting equations (\ref{sp app eqn:pr(phi)}) and (\ref{sp app eqn:pr(s)})
+together gives the result
+\begin{equation}
+\pr_{\np}(z)=\frac{1}{|z|}\cdot\frac{4|z|}{\ni{4}}\Ko{\frac{2|z|}{\nv}}\cdot
+\frac{1}{2\pi}
+\end{equation}
+from which it is concluded that
+\begin{equation}
+\pr_{\np}(z)=\frac{2}{\pi\ni{4}}\Ko{\frac{2|z|}{\nv}}
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Mean, Variance and Higher-Order Moments}
+
+The mean $\mu_{\np}$ and variance $\sigma_{\np}^2$ of $\np=\na\nb$ are given 
+by
+\begin{equation}
+\mu_{\np}=\E{\np}=\int z\pr_{\np}(z)\,dz
+\end{equation}
+and
+\begin{equation}
+\sigma_{\np}^2=\E{|\np-\mu_{\np}|^2}=\int |z-\mu_{\np}|^2\pr_{\np}(z)\,dz
+\end{equation}
+These are particular cases of the $n$th moment.  With real random variables,
+the $n$th moment is $\E{x^n}$.  Here the random variables are complex and it
+is not clear which of $\E{\np^n\conj{\np}^m}$ should be chosen as the $(n+m)$th
+moment.  So define all of the $\E{\np^n\conj{\np}^m}$ as the $(n+m)$th
+moments, and work out a general expression applicable for any $n$ and $m$
+that are positive integers or zero.  In fact, the domain of allowable $n$
+and $m$ can be broadened by insisting only that $n+m$ be a positive integer
+or zero and that $n-m$ be integral.  This obtains $\E{|\np|^k}$ at the
+same time for odd $k$ (put $n=m=k/2$).  So
+\begin{eqnarray}
+\E{\np^n\conj{\np}^m}&=&\int z^n\conj{z}^m\,\pr_{\np}(z)\,dz \nn\\
+&=&\int \frac{2}{\pi\ni{4}}z^n\conj{z}^m\Ko{\frac{2|z|}{\nv}}\,dz \nn\\
+&=&\int_0^{\infty}\int_0^{2\pi}\frac{2}{\pi\ni{4}}
+s^{n+m+1}\e{j(n-m)\phi}\Ko{\frac{2s}{\nv}}\,d\phi ds \nn\\
+&=&\left(\frac{1}{2\pi}\int_0^{2\pi}\e{j(n-m)\phi}\,d\phi\right)
+\left(\frac{4}{\ni{4}}\int_0^{\infty}s^{n+m+1}\Ko{\frac{2s}{\nv}}\,ds\right)
+\end{eqnarray}
+Because of the condition that $n-m$ be integral, the integral with respect 
+to $\phi$ is unity if $n=m$, otherwise zero.  Therefore 
+\begin{equation}
+\E{\np^n\conj{\np}^m}=0\;\;\;\;\forall\,n\neq m
+\end{equation}
+Note that this means that $\mu_{\np}=0$ so each of the moments is a central
+moment.
+
+If the moment has any chance of being non-zero, $n$ must equal $m$, so put $k=n+m$ and
+consider $\E{|\np|^k}$.
+\begin{eqnarray}
+\E{|\np|^k}&=&\frac{4}{\ni{4}}\int_0^{\infty}r^{k+1}\Ko{\frac{2r}{\nv}}\,dr\nn\\
+&=&\frac{\ni{2k}}{2^k}\int_0^{\infty}u^{k+1}\Ko{u}\,du\nn\\
+&=&\ni{2k}\Gamma^2\left(1+\frac{k}{2}\right)
+\label{sp app eqn:Ezk}
+\end{eqnarray}
+This last step uses the identity \cite[eq. 11.4.22]{Abr65}
+\begin{equation}
+\int_0^{\infty}u^{k+1}\Ko{u}\,du=2^k\Gamma^2\left(1+\frac{k}{2}\right)
+\end{equation}
+Using (\ref{sp app eqn:Ezk}), $\E{1}=\Gamma^2(1)=1$ as expected, and the
+variance of $w$ is
+\begin{eqnarray}
+\Var{\na\nb}&=&\E{|\np|^2}\nn\\
+&=&\ni{4}\Gamma^2(2)\nn\\
+&=&\ni{4}
+\end{eqnarray}
+This is not unexpected because for any two independent random variables
+$z_1$ and $z_2$ with zero mean and identical variances $\sigma^2$
+\begin{eqnarray}
+\Var{z_1z_2}&=&\int\!\!\int |z_1z_2|^2\pr_{z_1,z_2}(z_1,z_2)\,dz_1dz_2\nn\\
+&=&\int\!\!\int |z_1|^2|z_2|^2\pr_{z_1}(z_1)\,\pr_{z_2}(z_2)\,dz_1dz_2\nn\\
+&=&\left(\int |z_1|^2\pr_{z_1}(z_1)\,dz_1\right)
+\left(\int |z_2|^2\pr_{z_2}(z_2)\,dz_2\right)\nn\\
+&=&\Var{z_1}\Var{z_2}\nn\\
+&=&\sigma^4
+\end{eqnarray}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Summary}
+
+Let $\na$ and $\nb$ be independent and identically distributed complex
+Gaussian random variables with zero mean and variance $\sigma^2$.  
+Then $\na\nb$ has probability density function
+\begin{equation}
+\pr_{\np}(z)=\frac{2}{\pi\ni{4}}\Ko{\frac{2|z|}{\nv}}
+\end{equation}
+The mean of $\na\nb$ is zero and the variance is $\ni{4}$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\endgroup
+% This finishes off the appendix because of the different definitions

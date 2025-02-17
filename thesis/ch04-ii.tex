@@ -1,0 +1,1390 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%			INVERSE SYNTHETIC APERTURE RADAR
+%
+%				  PhD Thesis
+%
+%		Stephen Simmons		simmons@ee.mu.oz.au
+%
+%	    Department of Electrical and Electronic Engineering
+%	    University of Melbourne, Parkville, 3052, Australia
+%
+% Chapter 4:	ISAR Imaging
+%
+%		started first draft:	13 Dec 1994
+%		finished first draft:	22 Dec 1994
+%		submitted:		
+%
+%%%%%%%%%%%%%%%%%%%%% Copyright (C) 1994 Stephen Simmons %%%%%%%%%%%%%%%%%%
+
+\chapter{ISAR Imaging}
+\label{ii chp}
+
+\bigletter The analysis in chapter~\ref{hrr chp} of radar reflections from a
+moving target concluded with the simple model in equation 
+(\ref{hrr eqn:s(f,t)}).  This expressed the target's frequency response at
+any time as a function of its motion and its spatial radar reflectivity.  In
+ISAR, the frequency responses are known but the target's motion and
+reflectivity are not.  An inversion algorithm is needed to specify how to
+estimate a target's reflectivity from measurements of its frequency
+responses over a period of time.  Because the target's motion creates the
+synthetic aperture that ISAR needs, the complexity of an ISAR algorithm is
+directly related to the complexity of the target's motion.  
+
+In this chapter, some efficient ISAR inversion algorithms are derived for
+certain assumptions about the form of the target's motion.  Constraining the
+target's motion allows approximations based on Fourier transforms, which can
+be evaluated efficiently using the fast Fourier transform. Range-Doppler
+ISAR processing is derived for uniformly rotating targets, and for targets
+moving in a straight line at constant speed.  A more recent method of ISAR
+inversion, called wavenumber processing, is derived for targets moving in a
+straight line.  Some other approaches to ISAR, and imaging using 
+superresolution spectral estimators, are briefly discussed.
+
+As the motion of a target may not exactly match the assumptions built into
+the ISAR inversion algorithm, motion estimation is needed to measure how the
+target moves and compensate for it.  A number of methods for motion
+estimation are discussed in chapter~\ref{mc chp} and a new method of motion
+estimation, the subject of this thesis, is derived in chapters \ref{ml chp}
+to \ref{sp chp}.  
+
+Traditionally, ISAR has been described in terms of the Doppler effect.  This
+gives a misleading view of the ISAR imaging mechanism, and should be
+rejected in favour of the modern signal processing approach which allows a
+more complete model of the ISAR imaging process and explicitly states the 
+approximations that have been made.  The Doppler description is so common in
+the ISAR literature, however, that it has been included for the sake of
+completeness.  Its proper place in the modern view of ISAR is reflected in
+its location, appendix \ref{ii app:dop} at the end of the chapter.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The ISAR Imaging Model}
+
+The model for a moving target's frequency response, developed in 
+chapter~\ref{hrr chp}, is
+\begin{equation}\label{ii eqn:s(f,t)}
+s(f,t)=\int\!\!\int\frac{g(x,y)}{r_{xy}^2(t)}\,e^{-j\fpc f r_{xy}(t)}\,dx\,dy
+\end{equation}
+where $g(x,y)$ is the target's unknown radar reflectivity, measured in 
+a Cartesian coordinate system which moves with the target.  $r_{xy}(t)$ is
+the distance from the radar to the point $(x,y)$ on the target at time $t$. 
+For convenience, the coordinate system's origin is usually taken to be the
+centre of the target.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Simplifying the Model}
+
+Writing the frequency response in terms of $f$ leads to a factor of $4\pi/c$
+in the argument of the complex exponential.  The notation may be simplified
+slightly by using the wavenumber $k$ instead of the frequency $f$.  This
+still leaves a factor of $2$ because ranges are measured as round-trip 
+distances.  When this factor of $2$ is also included in the wavenumber,
+\begin{equation}
+k=\fpc f
+\end{equation}
+and the frequency response becomes
+\begin{equation}\label{ii eqn:s(k,t) I}
+s(k,t)=\int\!\!\int\frac{g(x,y)}{r_{xy}^2(t)}\,e^{-jkr_{xy}(t)}\,dx\,dy
+\end{equation}
+To emphasize this point, the wavenumber is $2\pi/\lambda=2\pi f/c$, but
+throughout this thesis, the symbol $k$ is used to represent twice the
+wavenumber, so $k=4\pi f/c$.  This is equivalent to pretending that the
+scatterers on the target are radar sources and that the frequency has 
+doubled or the speed of light has halved.\footnote{\protect\label{ii ftn:rr}
+Cafforio {\em et al.\/} describe this as the ``radiating reflector'' 
+model \protect\cite{Caf91}.  Its counterpart in seismic imaging is the
+``exploding reflector'' model which sounds much more exciting (see the
+footnote on page \pageref{ii ftn:er}).}  For convenience, both $f$ and
+$k=4\pi f/c$ will be called frequencies; the context will determine which is
+intended.
+
+ISAR is designed for high-resolution imaging of small targets that are a
+long way from the radar, so the $r_{xy}^2(t)$ term in the denominator of the
+integrand of (\ref{ii eqn:s(k,t) I}) varies little over the whole of the 
+target.  Therefore, $r_{xy}(t)$ may be regarded as a constant, $r_0$, which
+is the distance between the radar and the centre of the target at time
+$t=0$. Being a constant, the $1/r_0^2$ can be included with $g(x,y)$ to give
+an alternative model
+\begin{equation}\label{ii eqn:s(k,t) II}
+s(k,t)=\int\!\!\int g(x,y)\,e^{-jkr_{xy}(t)}\,dx\,dy
+\end{equation}
+In extreme cases where the target's range changes appreciably during the 
+imaging period, this approximation may not be appropriate.  But if the 
+target's size is still small compared with its minimum range, the $r_{xy}(t)$
+in the denominator may be replaced by $r_0(t)$, the range of the target's
+centre at time $t$.  This gives a third form of the target's frequency 
+response 
+\begin{equation}\label{ii eqn:s(k,t) III}
+s(k,t)=\frac{1}{r_0^2(t)}\int\!\!\int g(x,y)\,e^{-jkr_{xy}(t)}\,dx\,dy
+\end{equation}
+Note that similar approximations cannot be made for the $r_{xy}(t)$ in the
+argument of the complex exponential because the complex exponential is
+sensitive to $kr_{xy}(t)$ modulo $2\pi$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Measurements for the ISAR Inversion}
+
+When a stepped-frequency waveform containing $N$ evenly spaced frequencies
+\begin{equation}
+f_n=f_0+n\Delta f\qquad\mbox{for $n=0,1,\ldots,N-1$}
+\end{equation}
+is transmitted at a time $t$ and the backscattererd signal sampled, the 
+target's frequency response $s(k,t)$ is measured for the $N$ uniformly spaced 
+values of $k$ in the stepped-frequency waveform
+\begin{equation}
+k_n=k_0+n\,\Delta k\qquad n=0,1,\ldots, N-1
+\end{equation}
+This is repeated at each of $M$ uniformly spaced times $t_m$ over the time 
+interval $[-T/2,T/2]$ 
+\begin{equation}
+t_m=\left(\frac{m}{M-1}-\frac{1}{2}\right)T\qquad\mbox{for $m=0,1,\ldots,
+M-1$}
+\end{equation}
+to give the full set of measurements used for ISAR imaging
+\begin{equation}
+s(k_n,t_m)\qquad\mbox{for $n=0,1,\ldots,N-1$ and $m=0,1,\ldots,M-1$}
+\end{equation}
+
+Some ISAR inversion algorithms that use this set of measurements will now be
+derived.  The two methods examined are range-Doppler processing, where
+$r_{xy}(t)$ is approximated using a linear function of $x$ and $y$, and
+wavenumber processing, where the circular nature of the radar's wavefront is
+exploited to give a more exact inversion.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Range-Doppler Processing}
+\label{ii sec:rdp}
+
+The simplest formulation of ISAR is range-Doppler processing.  This uses the
+first-order Taylor series for $r_{xy}(t)$ expanded about the centre of the
+target  to show that the measured $s(k,t)$ are samples of the Fourier
+transform of the target's reflectivity $g(x,y)$.  
+
+The points in the spatial frequency domain at which the Fourier transform of
+$g(x,y)$ is sampled depend on the target's motion.  Consequently, any
+range-Doppler ISAR inversion depends on the way the target moves.  This is
+analysed for two types of target motion; first for a uniformly rotating
+target, then for a target moving in a straight line with constant speed.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Uniformly Rotating Target}
+
+Consider a target, such as an object mounted on a turntable in a radar test
+range \cite{Che80b} or a ship pitching and rolling at anchor, which rotates
+with a uniform angular velocity a fixed distance from the radar.
+
+%============================================================================
+\begin{figure}\centering
+\caption[Imaging geometry for range-Doppler ISAR with a rotating 
+target.]{Imaging geometry for range-Doppler ISAR with a target rotating at
+an angular speed $\omega$ situated a fixed distance $r_0$ from the radar.}
+\label{ii fig:rotating target}
+\setlength{\unitlength}{1cm}
+\psset{unit=1cm}
+\begin{pspicture}(-0.625,-2.5)(12,3)
+% Dotted lines to indicate the axes
+\psline[linecolor=lightgray,linewidth=1pt]{-}(0,0)(12,0)
+\psline[linecolor=lightgray,linewidth=1pt]{-}(10,-2)(10,2)
+\psline[linecolor=lightgray,linewidth=1pt]{-}(0,-2)(0,0.5)
+% The target 
+% This is a little messy because EPSF makes the box zero height.
+% Note that from the unit=1cm at the start, 2.5cm/1cm=2.5
+\rput{25}(10,0){\put(0,-1.25){\makebox(0,2.5)[t]{
+	\epsfysize=2.5cm\epsffile{../pics/plane.eps}
+}}}
+% The target's axes
+\rput{25}(10,0){
+	% Solid lines to indicate the target's axes
+	\psline[linecolor=black,linewidth=1.5pt]{->}(-2,0)(2,0)
+	\uput[r](2,0){$x$}
+	\psline[linecolor=black,linewidth=1.5pt]{->}(0,-2)(0,2)
+	\uput[u](0,2){$y$}
+}
+% An arrow and a label to indicate the total rotation
+\psarc[linecolor=black,linewidth=1pt]{->}(10,0){1}{0}{25}
+\uput[r](11,0.2){$\omega t$}
+% Finally the arrows and their labels
+\pcline[linecolor=black,linewidth=1pt]{<->}(0,-1.5)(10,-1.5)
+\lput*{:U}{$r_0$}
+\cnode*(9,0.8){2pt}{Ntar}
+\uput[ul](9,0.8){$(x,y)$}
+\pnode(0,0){Nrad}
+\ncline[linecolor=black,linewidth=1pt]{<->}{Nrad}{Ntar}
+\lput*{:U}{$r_{xy}(t)$}
+% This is a little fiddle to cover up a gap in the LOS caused by the
+% $r_{xy(t)} label
+\psline[linecolor=lightgray,linewidth=1pt]{-}(3,0)(6,0)
+% Now something for the radar at the left
+\psarc*[fillcolor=darkgray](0,0){0.625}{128}{232}
+\psellipse[fillstyle=solid,fillcolor=gray](-0.375,0)(0.15,0.5)
+\psline{cc-cc}(-0.375,-0.475)(0,0)
+\psline{cc-cc}(-0.5,0.25)(0,0)
+\psline{cc-cc}(-0.25,0.25)(0,0)
+\end{pspicture}
+\end{figure}
+%============================================================================
+
+The imaging geometry is shown in figure~\ref{ii fig:rotating target}, where
+the target is located on the radar's boresight axis a distance $r_0$ from
+the radar antenna.  The target rotates at constant angular velocity
+$\omega$.  The target's coordinate system has its origin at the centre of
+rotation and it rotates with the target.  At time $t=0$, the target's $x$ 
+axis is aligned with the boresight axis.  
+
+The angle at time $t$ between the target's $x$ axis and the boresight axis 
+is $\omega t$.  Using Pythagoras' theorem, the distance at time $t$ 
+from the radar to a scatterer at $(x,y)$ is
+\begin{equation}\label{ii eqn:rxy(t) rot}
+r_{xy}(t)=\sqrt{(r_0+x\cos\omega t-y\sin\omega t)^2
++(x\sin\omega t+y\cos\omega t)^2}
+\end{equation}
+If the size of the target is very small in comparison to its distance from
+the radar, so that
+\begin{equation}\label{ii eqn:size condition}
+\sqrt{x^2+y^2}\ll r_0
+\end{equation}
+for all points $(x,y)$ on the target, $r_{xy}(t)$ may be approximated by a
+first order Taylor series in $x$ and $y$, expanded about the centre of the 
+target at $(0,0)$
+\begin{equation}\label{ii eqn:rot approx}
+r_{xy}(t)\approx r_0+x\cos\omega t-y\sin\omega t
+\end{equation}
+Substituting this Taylor series into the measurement model in
+(\ref{ii eqn:s(k,t) II}) shows that
+\begin{equation}
+\label{ii eqn:rot meas}
+s(k,t)=e^{-jkr_0}\int\!\!\int g(x,y)\,
+	e^{-jk(x\cos\omega t-y\sin\omega t)}\,dx\,dy
+\end{equation}
+is approximately $G(k_x,k_y)$, the two-dimensional Fourier transform 
+of $g(x,y)$ given by
+\begin{equation}\label{ii eqn:G(kx,ky)}
+G(k_x,k_y)=\int\!\!\int g(x,y)\,e^{-j(xk_x+yk_y)}\,dx\,dy
+\end{equation}
+Make a transformation in (\ref{ii eqn:rot meas}) from the $(k,t)$ measurement
+space to the spatial frequency $(k_x,k_y)$-space where
+\begin{eqnarray}
+k_x&=&k\cos\omega t \\
+k_y&=&-k\sin\omega t 
+\end{eqnarray}
+to show that $s(k,t)$ is $G(k_x,k_y)$ sampled at points on a polar grid
+in $(k_x,k_y)$-space according to
+\begin{equation}
+s(k,t)=e^{-jkr_0}G(k\cos\omega t,-k\sin\omega t)
+\end{equation}
+This is illustrated in figure \ref{ii fig:RD rot grid}.  
+
+The inverse Fourier transform required to obtain $g(x,y)$ from $G(k_x,k_y)$
+can be implemented efficiently using a fast Fourier transform (FFT) only if
+the points at which $G(k_x,k_y)$ is known lie on a rectangular grid.  The
+grid in figure \ref{ii fig:RD rot grid} is approximately rectangular because
+the radar has a narrow relative bandwidth.  However, for an accurate ISAR
+image of the target, the samples of $G(k_x,k_y)$ have to be resampled so
+that the grid on which the resampled points lie is rectangular.  
+
+%============================================================================
+\begin{figure}\centering
+\caption[The points at which $G(k_x,k_y)$ is known for range-Doppler ISAR 
+with a uniformly rotating target.]{The points at which $G(k_x,k_y)$ is known
+for range-Doppler ISAR with a uniformly rotating target lie on a small
+segment of a polar grid.  They lie at the intersection of concentric circles
+(whose radii are the $k_n$ of the stepped-frequency waveform) and straight
+lines (whose orientations are those of the target at each time $t_m$).}
+\label{ii fig:RD rot grid}
+
+\setlength{\unitlength}{0.8cm}
+\psset{unit=0.8cm}
+\begin{pspicture}(-6.5,-3.2)(6.5,4)
+% Allow polar coordinates
+\SpecialCoor	
+% First the axes and their labels
+\psline[linecolor=black,linewidth=1.5pt]{->}(-6,0)(6,0)
+\psline[linecolor=black,linewidth=1.5pt]{->}(0,-3)(0,3)
+\uput[r](6,0){$k_x$}
+\uput[u](0,3){$k_y$}
+% First the lines
+\multido{\nang=339+6}{8}{%
+  \psline[linecolor=gray,linewidth=0.75pt]{-}(3.5;\nang)(5.75;\nang)
+}
+% Now the circles
+\multido{\nr=3.8+0.3}{7}{%
+  \psarc[linecolor=gray,linewidth=0.75pt]{-}{\nr}{336}{384}
+}
+% Finally all the dots.
+\multido{\nang=339+6}{8}{\multido{\nr=3.8+0.3}{7}{\qdisk(\nr;\nang){2pt}}}
+\NormalCoor
+\end{pspicture}
+\end{figure}
+%============================================================================
+
+The $e^{-jkr_0}$ phase term centres the target's image in the range direction
+and may be neglected.  This gives the following algorithm for range-Doppler
+processing applied to a uniformly rotating target:
+
+%============================================================================
+\begin{algorithm}[Range-Doppler ISAR---uniformly rotating target]
+\label{ii alg:RD rotating}\mbox{}\par
+
+To obtain a uniformly rotating target's spatial radar reflectivity $g(x,y)$
+from uniformly spaced measurements of the target's frequency response
+$s(k,t)$ over a period of time:
+\begin{enumerate}
+\item Use the radar data or {\em a priori\/} information to estimate the 
+target's angular speed $\omega$.
+
+\item Associate the measurements $s(k,t)$ with samples of the target's
+reflectivity $G(k_x,k_y)$ using
+\begin{equation}
+G(k\cos\omega t,-k\sin\omega t)=s(k,t)
+\end{equation}
+
+\item Resample the $G(k\cos\omega t,-k\sin\omega t)$ from the polar grid of
+figure~\ref{ii fig:RD rot grid} to give $G(k_x,k_y)$ uniformly sampled on a 
+rectangular grid.
+
+\item Take the two-dimensional inverse Fourier transform of the
+rectangularly-sampled $G(k_x,k_y)$ to give an estimate $\widehat{g}(x,y)$
+of the target's spatial reflectivity $g(x,y)$
+\begin{equation}
+\widehat{g}(x,y)={\cal F}^{-1}\left\{G(k_x,k_y)\right\}
+\end{equation}
+
+\item Display $\log\left|\widehat{g}(x,y)\right|$ as the target's ISAR image.
+
+\end{enumerate}
+\end{algorithm}
+%============================================================================
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Target Moving in a Straight Line}
+
+The second basic motion that has an efficient inversion using 
+range-Doppler processing is that of a target moving at uniform speed along a
+straight line at an angle to the boresight axis.  
+
+The geometry of the radar and target is shown in figure 
+\ref{ii fig:moving target}.  The target moves at constant speed
+$v$ along a straight line at an angle $\theta$ to the boresight
+axis.  $\theta$ must not be close to $0^o$ or $180^o$ because the
+cross-range component of the target's motion is needed to change its aspect
+angle and so generate the synthetic aperture.   The target is observed for
+the time interval $[-T/2,T/2]$, and at $t=0$ the target lies a distance
+$r_0$ from the radar on the boresight axis.  The coordinate system for
+$g(x,y)$ has its origin at the target's geometric centre and the $x$ axis
+points in the direction the target is moving.
+
+%============================================================================
+\begin{figure}\centering
+\caption[Imaging geometry for range-Doppler ISAR with a target moving in a
+straight line.]{Imaging geometry for range-Doppler ISAR with a target moving
+in a straight line at constant speed $v$.  The target crosses the boresight
+axis at $t=0$ at an angle $\theta$ and a distance $r_0$ from the radar.}
+\label{ii fig:moving target}
+
+\setlength{\unitlength}{1cm}
+\psset{unit=1cm}
+\begin{pspicture}(-0.625,-1.5)(12,5.5)
+\SpecialCoor
+% Dotted lines to indicate the axes
+\psline[linecolor=lightgray,linewidth=1pt]{-}(0,0)(12,0)
+\psline[linecolor=lightgray,linewidth=1pt]{-}(10,-1)(10,0)
+\psline[linecolor=lightgray,linewidth=1pt]{-}(0,-1)(0,0.5)
+% The target and its axes
+\rput{100}(10,0){
+	\psline[linecolor=lightgray,linewidth=1pt]{-}(0,0)(3,0)
+	\psline[linecolor=lightgray,linewidth=1pt]{-}(0,-2)(0,0)
+	% This is a little messy because EPSF makes the box zero height.
+	% Note that from the unit=1cm at the start, 2.5cm/1cm=2.5
+	\put(3,-1.25){\makebox(0,2.5)[t]{
+		\epsfysize=2.5cm\epsffile{../pics/plane.eps}
+	}}
+	% Solid lines to indicate the target's axes
+	\psline[linecolor=black,linewidth=1.5pt]{->}(1,0)(5,0)
+	\uput[r](5,0){$x$}
+	\psline[linecolor=black,linewidth=1.5pt]{->}(3,-2)(3,2)
+	\uput[u](3,2){$y$}
+	\pcline[linecolor=black,linewidth=1pt]{|->}(0,-1.5)(3,-1.5)
+	\lput*{:U}{$vt$}
+}
+% An arc and a label to indicate the total rotation
+\psarc[linecolor=black,linewidth=1pt]{-}(10,0){0.5}{0}{100}
+\uput*[r](10.4,0.4){$\theta$}
+% Finally the arrows and their labels
+\pcline[linecolor=black,linewidth=1pt]{<->}(0,-0.5)(10,-0.5)
+\lput*{:U}{$r_0$}
+\pnode(9.48,2.95){Ncentar}
+\cnode*(9.1,1.55){2pt}{Ntar}
+\uput[ul](Ntar){$(x,y)$}
+\pnode(0,0){Nrad}
+\ncline[linecolor=black,linewidth=1pt]{<->}{Nrad}{Ntar}
+\lput*{:U}{$r_{xy}(t)$}
+\ncline[linecolor=black,linewidth=1pt]{<->}{Nrad}{Ncentar}
+\lput*{:U}{$r_0(t)$}
+% Now something for the radar at the left
+\psarc*[fillcolor=darkgray](0,0){0.625}{128}{232}
+\psellipse[fillstyle=solid,fillcolor=gray](-0.375,0)(0.15,0.5)
+\psline{cc-cc}(-0.375,-0.475)(0,0)
+\psline{cc-cc}(-0.5,0.25)(0,0)
+\psline{cc-cc}(-0.25,0.25)(0,0)
+\end{pspicture}
+\end{figure}
+%============================================================================
+
+The distance between the radar and the point at $(x,y)$ on the target at
+time $t$ is
+\begin{equation}\label{ii eqn:str rxy(t)}
+r_{xy}(t)=\sqrt{(x+vt+r_0\cos\theta)^2+(y-r_0\sin\theta)^2}
+\end{equation}
+Let $r_0(t)$ be the distance of the target's centre from the radar at time
+$t$
+\begin{equation}
+r_0(t)=\sqrt{(vt+r_0\cos\theta)^2+r_0^2\sin^2\theta}
+\end{equation}
+so that $r_0=r_0(0)$.
+
+%============================================================================
+\begin{figure}\centering
+\caption[The points at which $G(k_x,k_y)$ is known for range-Doppler ISAR
+with a target moving in a straight line.]{The points at which $G(k_x,k_y)$
+is known for range-Doppler ISAR with a target moving in a straight line at
+constant speed lie on a small segment of a polar grid.  They lie at the
+intersection of concentric circles (whose radii are the $k_n$ of the
+stepped-frequency waveform) and straight lines (whose orientations are those
+of the target at each time $t_m$).}
+\label{ii fig:RD str grid}
+
+\setlength{\unitlength}{0.8cm}
+\psset{unit=0.8cm}
+\begin{pspicture}(-6.5,-1)(6.5,6.8)
+% Allow polar coordinates
+\SpecialCoor	
+% First the axes and their labels
+\psline[linecolor=black,linewidth=1.5pt]{->}(-6,0)(6,0)
+\psline[linecolor=black,linewidth=1.5pt]{->}(0,-1)(0,6)
+\uput[r](6,0){$k_x$}
+\uput[u](0,6){$k_y$}
+% The circles
+\multido{\nr=3.8+0.3}{7}{%
+  \psarc[linecolor=gray,linewidth=0.75pt]{-}{\nr}{27}{76}
+}
+% Then the lines
+\multido{\ntan=0.3+0.2}{8}{%
+\psline[linecolor=gray,linewidth=0.75pt]{-}%
+(!1 \ntan\space atan dup sin exch cos 3.5 mul exch 3.5 mul)%
+(!1 \ntan\space atan dup sin exch cos 5.75 mul exch 5.75 mul)%
+}
+% Finally all the dots.
+\multido{\nt=0.3+0.2}{8}{\multido{\nr=3.8+0.3}{7}{\qdisk(!1 \nt\space 
+atan dup sin exch cos \nr\space mul exch \nr\space mul){2pt}}}
+\NormalCoor
+\end{pspicture}
+\end{figure}
+%============================================================================
+
+Assume as before that the size of the target is very small in comparison to
+$r_0(t)$ for $t\in[-T/2,T/2]$.  This justifies expanding $r_{xy}(t)$ in a 
+first order Taylor series about the centre of the target, giving
+\begin{equation}\label{ii eqn:str approx}
+r_{xy}(t)\approx r_0(t)+\frac{x(r_0\cos\theta+vt)-yr_0\sin\theta}{r_0(t)}
+\end{equation}
+Writing
+\begin{equation}
+\cos\phi(t)=\frac{r_0\cos\theta+vt}{r_0(t)}
+\end{equation}
+and
+\begin{equation}
+\sin\phi(t)=-\frac{r_0\sin\theta}{r_0(t)}
+\end{equation}
+allows $r_{xy}(t)$ to be written as
+\begin{equation}
+r_{xy}(t)=r_0(t)+x\cos\phi(t)+y\sin\phi(t)
+\end{equation}
+
+Substituting this into the measurement model (\ref{ii eqn:s(k,t) II}) shows 
+that
+\begin{equation}
+s(k,t)=e^{-jkr_0(t)}\int\!\!\int g(x,y)\,
+	e^{-jk(x\cos\phi(t)+y\sin\phi(t))}\,dx\,dy
+\end{equation}
+is approximately $G(k_x,k_y)$, the two-dimensional Fourier transform 
+of $g(x,y)$ from (\ref{ii eqn:G(kx,ky)}).  To see this more clearly, make
+a slightly different transformation from the $(k,t)$ measurement space to the 
+spatial frequencies $(k_x,k_y)$
+\begin{eqnarray}
+k_x&=&k\cos\phi(t) \nn\\
+&=&k\frac{r_0\cos\theta+vt}{r_0(t)}\\
+k_y&=&k\sin\phi(t) \nn\\
+&=&-k\frac{r_0\sin\theta}{r_0(t)}
+\end{eqnarray}
+
+This shows that $s(k,t)$ and $G(k_x,k_y)$ are related by
+\begin{equation}
+s(k,t)=e^{-jkr_0(t)}\,G\left(k\frac{r_0\cos\theta+vt}{r_0(t)},
+-k\frac{r_0\sin\theta}{r_0(t)}\right)
+\end{equation}
+Therefore the set of measurements of $s(k,t)$ gives $G(k_x,k_y)$ on a polar
+grid in $(k_x,k_y)$-space that is the intersection of concentric circles of
+radius $k_n$ for $n=0,1,\ldots,N-1$ with radial lines at angles of
+$\phi(t_m)$, which is the target's aspect angle at time $t_m$. This is
+illustrated in figure \ref{ii fig:RD str grid}, where the cotangents of the
+angles of the radial lines are evenly spaced.
+
+So except for differences in the polar reformatting and a phase function 
+$e^{-jkr_0(t)}$ which cannot be neglected because it is not a linear 
+function of time, the inversion algorithm for targets moving in a straight
+line is identical to the inversion in algorithm \ref{ii alg:RD rotating}.
+
+%============================================================================
+\begin{algorithm}[Range-Doppler ISAR---straight line motion]
+\label{ii alg:RD straight line}\mbox{}\par
+
+To obtain the spatial radar reflectivity $g(x,y)$ of a target with constant
+velocity from uniformly spaced measurements of the target's frequency
+response $s(k,t)$ over a period of time:
+\begin{enumerate}
+\item Use the radar data or {\em a priori\/} information to estimate the 
+target's speed $v$ and heading $\theta$.
+
+\item Associate the measurements $s(k,t)$ with samples of the target's
+reflectivity $G(k_x,k_y)$ using
+\begin{equation}
+G\left(k\frac{r_0\cos\theta+vt}{r_0(t)},-k\frac{r_0\sin\theta}{r_0(t)}\right)
+=e^{jkr_0(t)}\,s(k,t)
+\end{equation}
+where
+\begin{equation}
+r_0(t)=\sqrt{(vt+r_0\cos\theta)^2+r_0^2\sin^2\theta}
+\end{equation}
+
+\item Resample the $G\left(k\frac{r_0\cos\theta+vt}{r_0(t)},
+-k\frac{r_0\sin\theta}{r_0(t)}\right)$ from the grid of
+figure~\ref{ii fig:RD str grid} to give $G(k_x,k_y)$ uniformly 
+sampled on a rectangular grid.
+
+\item Take the two-dimensional inverse Fourier transform of the
+rectangularly-sampled $G(k_x,k_y)$ to give an estimate $\widehat{g}(x,y)$
+of the target's spatial reflectivity $g(x,y)$
+\begin{equation}
+\widehat{g}(x,y)={\cal F}^{-1}\left\{G(k_x,k_y)\right\}
+\end{equation}
+
+\item Display $\log\left|\widehat{g}(x,y)\right|$ as the target's ISAR image.
+
+\end{enumerate}
+\end{algorithm}
+%============================================================================
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Resolution of Range-Doppler Processing}
+
+The resolution of the resulting ISAR image using range-Doppler processing
+depends on the spacing of the known values of $G(k_x,k_y)$ after
+polar reformatting so exact expressions for the range and cross-range resolution
+can only be calculated once the resampling scheme has been specified.
+
+Nevertheless, since the stepped-frequency waveform has a narrow relative
+bandwidth and the change in the target's aspect angle is slight, the grids
+in $(k_x,k_y)$-space are nearly rectangular and simple approximate range and
+cross-range resolutions can be derived.
+
+The resolution in range and cross-range, $\Delta r_r$ and $\Delta r_c$
+respectively, are related to the radial and transverse extents, $\Delta k_r$
+and $\Delta k_t$ respectively, of the polar grid in $(k_x,k_y)$ space 
+according to the formula for the resolution of a Fourier transform
+\begin{eqnarray}
+\Delta r_r&=&\frac{2\pi}{\Delta k_r}\\
+\Delta r_c&=&\frac{2\pi}{\Delta k_t}
+\end{eqnarray}
+
+For both types of target motions considered, the radial extent of the
+$(k,t)$ polar grid is from $k_0$ to $k_{N-1}$, which suggests $\Delta
+k_r=(N-1)\Delta k$.  However, the Fourier transform is discrete (implemented
+as an FFT for efficiency) so values of $k$ should be taken as extending from
+$k_0-\Delta k/2$ to $k_{N-1}+\Delta k/2$, a total spread of $N\Delta k$. 
+This gives a range resolution of 
+\begin{equation}\label{ii eqn:rd drr}
+\Delta r_r=\frac{2\pi}{N\Delta k}=\frac{c}{2N\Delta f}
+\end{equation}
+
+The transverse extent of the grid is at its narrowest when $k=k_0$.  For the
+uniformly rotating target imaged over the period $[-T/2,T/2]$, the grid
+covers angles from $-\omega T/2$ to $\omega T/2$.  At a radial distance
+$k_0$, this is a transverse extent of
+\begin{equation}
+\Delta k_t=2k_0\sin(\omega T/2)\approx k_0\omega T
+\end{equation}
+giving an approximate cross-range resolution for a uniformly rotating
+target of
+\begin{equation}\label{ii eqn:drc rot}
+\Delta r_c=\frac{2\pi}{\Delta k_t}\approx\frac{c}{2f_0\omega T}
+\end{equation}
+
+For the target moving in a straight line at speed $v$ during the imaging
+period $[-T/2,T/2]$, the grid covered angles whose tangents varied from 
+\begin{equation}
+\tan\phi(-T/2)=-\frac{r_0\sin\theta}{r_0\cos\theta-\frac{1}{2}vT}
+\end{equation}
+to
+\begin{equation}
+\tan\phi(T/2)=\frac{r_0\sin\theta}{r_0\cos\theta+\frac{1}{2}vT}
+\end{equation}
+so the total angular spread is 
+\begin{eqnarray}
+\Delta\phi&=&\phi(T/2)-\phi(-T/2)\nn\\
+&=&\arctan\left(\frac{r_0\sin\theta}{r_0\cos\theta+\frac{1}{2}vT}\right)
++\arctan\left(\frac{r_0\sin\theta}{r_0\cos\theta-\frac{1}{2}vT}\right)
+\end{eqnarray}
+Using the identity
+\begin{equation}
+\tan(x+y)=\frac{\tan x + \tan y}{1-\tan x\,\tan y}
+\end{equation}
+and some algebra shows that
+\begin{equation}
+\Delta\phi=\arctan\left(\frac{r_0vT\sin\theta}{r_0^2-\frac{1}{4}v^2T^2}\right)
+\end{equation}
+If $r_0\gg vT$, this is approximately
+\begin{equation}
+\Delta\phi\approx\arctan\left(\frac{vT\sin\theta}{r_0}\right)
+\approx\frac{vT\sin\theta}{r_0}
+\end{equation}
+from which the approximate cross-range resolution for a target moving at an
+angle $\theta $ to the boresight axis is
+\begin{equation}
+\Delta r_c=\frac{2\pi}{\Delta k_t}\approx\frac{c}{2f_0\frac{vT}{r_0}\sin\theta}
+\end{equation}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Wavenumber Processing}
+
+A relatively recent inversion for SAR and ISAR imaging writes the spherical
+wave $e^{-jkr_{xy}}/r_{xy}$ as the superposition of plane waves
+\begin{equation}\label{ii eqn:pw decomp}
+\frac{\ds e^{-jkr_{xy}}}{r_{xy}}\approx
+-j\sqrt{\frac{k}{2\pi r_{xy}}}\,
+\int_{-k}^k \frac{1}{\sqrt{k^2-k_x^2}}e^{-j(xk_x+y\sqrt{k^2-k_x^2})}\,dk_x
+\end{equation}
+where $r_{xy}=\sqrt{x^2+y^2}$ is the distance from the source to the radar. 
+This expression, derived in appendix \ref{ii app:pw}, assumes that the
+target is more than ten wavelengths from the radar in the $y$ direction. 
+Radar targets are usually tens of thousands of wavelengths away from the
+antenna so this condition is easily met if the $y$ axis is not perpendicular
+to the radar's boresight axis.
+
+For many years, theoretical physicists have used an eigendecomposition of a
+spherical wave into plane wave eigenfunctions to solve scattering
+and diffraction problems \cite[sec. 9.3]{Mor53b}.  In 1978, Stolt analysed
+seismic imaging using range migration%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\footnote{\label{ii ftn:er}Range migration in seismic imaging causes
+reflections from a subsurface layer at an angle to the horizontal to appear
+in an incorrect position.  Seismic imaging may be considered equivalent to
+firing sources located at the subsurface layer and measuring the arrival
+times of the wavefronts at the surface.  Propagating the wavefield measured
+at the surface back in time using the wave equation gives the location of
+the subsurface layer.
+
+This model of imaginary sources at a subsurface layer is called the 
+``exploding reflector'' model \cite[ch. 2]{Hay85b}.  Notice how similar this
+is to radar imaging, where the target is modelled as radiating reflectors,
+as mentioned in the footnote on page~\protect\pageref{ii ftn:rr}.}%%%%%%%%%%
+%%%%%
+and found an equivalent expression to (\ref{ii eqn:pw decomp}) \cite{Sto78}.
+From his work, changing coordinates from $(k_x,k_y)$ to 
+$(k_x,\sqrt{k^2-k_x^2})$ has come to be called the Stolt transformation. 
+Similar inversions have been developed for tomography with diffracting
+sources, such as medical imaging using ultrasound \cite[ch. 6]{Hay85b}.  
+
+In the last few years, radar imaging has been reformulated using this 
+decomposition \cite{Caf91} instead of range-Doppler processing.  A
+comparison of SAR using range-Doppler processing and this new method, called
+wavenumber processing or $\omega-k$ processing, is given in \cite{Bam92}.
+The description of $\omega-k$ processing for ISAR presented here closely
+follows that of Soumekh for SAR and ISAR imaging \cite{Sou94}.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Imaging Geometry}
+
+
+Soumekh's work is primarily concerned with SAR imaging, so his description
+of ISAR is in the context of imaging a slowly moving target against the
+stationary background of a SAR image.  The development of his imaging model
+and inversion in \cite{Yan93} and \cite{Sou94} is presented here in a form
+suitable for ISAR-only imaging.  Consequently, the radar is assumed to be
+stationary.
+
+
+The geometry of the radar and target is the same as that in figure
+\ref{ii fig:moving target} on page \pageref{ii fig:moving target} used for 
+range-Doppler imaging of a target moving in a straight line at constant
+speed.  From equation (\ref{ii eqn:str rxy(t)}), the distance at time $t$
+from the point  $(x,y)$ on the target to the radar is
+\begin{equation}
+r_{xy}(t)=\sqrt{(x+vt+r_0\cos\theta)^2+(y-r_0\sin\theta)^2}
+\end{equation}
+Make the substitutions
+\begin{eqnarray}
+x_0=-r_0\cos\theta\\
+y_0=r_0\sin\theta
+\end{eqnarray}
+so that
+\begin{equation}
+r_{xy}(t)=\sqrt{(x+vt-x_0)^2+(y-y_0)^2}
+\end{equation}
+Then the measurement of the target's reflectivity made 
+at time $t$ and at frequency $f$ is given by equation (\ref{ii eqn:s(k,t) I})
+\begin{eqnarray}
+s(k,t)
+&=&\int\!\!\int g(x,y) \frac{\ds e^{-jkr_{xy}(t)}}{\ds r_{xy}^2(t)}\,dx\,dy\nn\\
+&\approx&\frac{1}{r_0}\int\!\!\int g(x,y)
+\frac{\ds e^{-jkr_{xy}(t)}}{\ds r_{xy}(t)}\,dx\,dy
+\label{ii eqn:Soumekh s(k,t) a}
+\end{eqnarray}
+where the limits of integration include the whole of the target.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{$\omega-k$ ISAR Inversion}
+
+The spherical wave in the integrand of (\ref{ii eqn:Soumekh s(k,t) a})
+may be written using the decomposition in (\ref{ii eqn:pw decomp}).  
+This gives
+\begin{eqnarray}
+s(k,t)&\approx&-j\sqrt{\frac{k}{2\pi r_0^3}}\int\!\!\int g(x,y)
+\int_{-k}^k \frac{1}{\sqrt{k^2-k_x^2}}				\nn\\
+&&{}\times e^{-j((x_0-x-vt)k_x+(y_0-y)\sqrt{k^2-k_x^2})}\,dk_x\,dx\,dy
+\end{eqnarray}
+This approximation is only valid if $y_0-y\gg 0$ for all scatterers on the
+target.  This implies that $r_0$ must be significantly larger than the size 
+of the target and that $\theta$, the angle the target's path makes with the
+boresight axis, must not be close to $0^{\circ}$ or $180^{\circ}$. 
+Equivalently, the target must be far from the radar and have a velocity
+vector with a non-zero cross-range component.  Note that these conditions 
+are less restrictive than in range-Doppler ISAR which assume that the 
+spherical wavefront at the target is flat.
+
+Absorb the constants into $g(x,y)$ and write the ``$\approx$'' as 
+equality.\footnote{In the preface to \protect\cite{Sou94}, Soumekh states
+that his method is ``an approximation-free inversion''.  Yang and Soumekh,
+in \protect\cite{Yan93} describe it as a ``SAR inversion without any need
+for approximations.''  While these are slight exaggerations, it is true that
+ISAR inversions based on $\omega-k$ processing are substantially better 
+than range-Doppler processing.}  This shows that
+\begin{eqnarray}
+s(k,t)&=&\int_{-k}^k \frac{1}{\sqrt{k^2-k_x^2}}
+\,e^{-j(x_0k_x+y_0\sqrt{k^2-k_x^2})}	\nn\\
+&&{}\times G(-k_x,-\sqrt{k^2-k_x^2})\,e^{jvtk_x}\,dk_x
+\label{ii eqn:s(k,t)}
+\end{eqnarray}
+where $G(k_x,k_y)$ is the two-dimensional Fourier transform of $g(x,y)$
+\begin{equation}
+G(k_x,k_y)=\int\!\!\int g(x,y) \,e^{-j(k_xx+k_yy)}\,dx\,dy
+\end{equation}
+The $e^{jvtk_x}$ term in the integrand indicates that (\ref{ii eqn:s(k,t)})
+is an inverse Fourier transform.  Taking the Fourier transform of 
+(\ref{ii eqn:s(k,t)}) with respect to $t$ gives
+\begin{eqnarray}
+s(k,\omega)
+&=&\int s(k,t) e^{-j\omega t}\,dt		\nn\\
+&=&
+\frac{e^{-j(x_0\omega/v+y_0\sqrt{k^2-\omega^2/v^2})}}
+{\sqrt{k^2-\omega^2/v^2}} 
+\,G(-\omega/v,-\sqrt{k^2-\omega^2/v^2})
+\end{eqnarray}
+The $e^{-j(x_0\omega/v+y_0\sqrt{k^2-\omega^2/v^2})}$ term just shifts the
+target to the centre of the ISAR image.  Neglecting that,
+\begin{equation}\label{ii eqn:Soumekh inversion}
+G(-\omega/v,-\sqrt{k^2-\omega^2/v^2})=\sqrt{k^2-\omega^2/v^2}\,s(k,\omega)
+\end{equation}
+
+%============================================================================
+\begin{figure}\centering
+\caption[The points at which $G(k_x,k_y)$ is known for $\omega-k$ ISAR with
+a target moving in a straight line.]{The points at which $G(k_x,k_y)$ is
+known for $\omega-k$ ISAR with a target moving in a straight line at
+constant speed lie at the
+intersection of concentric circles (whose radii are the $k_n$ of the
+stepped-frequency waveform) and parallel straight lines.
+Compare this with the range-Doppler grids in figures
+\protect\ref{ii fig:RD rot grid} and \protect\ref{ii fig:RD str grid} 
+where the straight lines are radial.}
+\label{ii fig:WK grid}
+
+\psset{unit=0.8cm}
+\setlength{\unitlength}{0.8cm}
+\begin{pspicture}(-6.5,-6.5)(6.5,2.4)
+% Allow polar coordinates
+\SpecialCoor	
+% First the axes and their labels
+\psline[linecolor=black,linewidth=1.5pt]{->}(-6,0)(6,0)
+\psline[linecolor=black,linewidth=1.5pt]{->}(0,-6)(0,1.5)
+\uput[r](6,0){$k_x$}
+\uput[u](0,1.5){$k_y$}
+% First the parallel lines
+\multido{\nn=-1.05+0.30}{8}{%
+	\psline[linecolor=gray,linewidth=0.6pt]{-}(\nn,-3.65)(\nn,-5.75)
+}
+
+% Now the circles
+\psclip{\psline[linestyle=none](-1.3,-3.65)(1.3,-3.65)(1.3,-5.75)(-1.3,-5.75)}
+\multido{\nr=3.8+0.3}{7}{%
+	\psarc[linecolor=gray,linewidth=0.6pt]{-}{\nr}{210}{330}
+}
+\endpsclip
+% Finally all the dots.  The \nr0 is a hack so the \nr won't gobble up the
+% following space, giving 4.00 when \nr=4.0
+\SpecialCoor
+\multido{\nn=-1.05+0.30}{8}{%
+  \multido{\nr=3.8+0.3}{7}{%
+    \qdisk(!\nn0 \nr0 dup mul \nn0 dup mul sub sqrt neg){2pt}
+  }
+}
+\NormalCoor
+\end{pspicture}
+\end{figure}
+%============================================================================
+
+This gives the following algorithm for ISAR imaging using $\omega-k$
+processing:
+
+%============================================================================
+\begin{algorithm}[$\omega-k$ ISAR Inversion]
+\label{ii alg:w-k}\mbox{}\par
+
+To obtain the spatial radar reflectivity $g(x,y)$ of a target with constant
+velocity from uniformly spaced measurements of the target's frequency
+response $s(k,t)$ over a period of time:
+\begin{enumerate}
+\item Use the radar data or {\em a priori\/} information to estimate the 
+target's speed $v$.
+
+\item Take the Fourier transform (in the form of an FFT) of the $s(k,t)$ 
+with respect to $t$ to give $s(k,\omega)$.
+
+\item Multiply $s(k,\omega)$ by $\sqrt{k^2-\omega^2/v^2}$ to give $G(k_x,k_y)$
+sampled as shown in figure~\ref{ii fig:WK grid}.
+\begin{equation}
+G(-\omega/v,-\sqrt{k^2-\omega^2/v^2})=\sqrt{k^2-\omega^2/v^2}\,s(k,\omega)
+\end{equation}
+
+\item Resample $G(-\omega/v,-\sqrt{k^2-\omega^2/v^2})$ in the $k_y$
+direction to give $G(k_x,k_y)$ uniformly sampled on a rectangular grid.
+
+\item Take the two-dimensional inverse Fourier transform of the
+rectangularly-sampled $G(k_x,k_y)$ to give an estimate $\widehat{g}(x,y)$
+of the target's spatial reflectivity $g(x,y)$
+\begin{equation}
+\widehat{g}(x,y)={\cal F}^{-1}\left\{G(k_x,k_y)\right\}
+\end{equation}
+
+\item Display $\log\left|\widehat{g}(x,y)\right|$ as the target's ISAR image.
+\end{enumerate}
+\end{algorithm}
+%============================================================================
+
+Actually the image produced by this algorithm is $g(x-x_0,y-y_0)$ because
+the linearly increasing phase term in (\ref{ii eqn:Soumekh inversion}) has
+been neglected.  Shifting the image by $(x_0,y_0)$ will centre it.
+
+Modifications to the $\omega-k$ inversion have been proposed for cases when
+the target's frequency response is sampled unevenly or for SAR imaging where
+the target terrain is three-dimensional \cite{Fly92}.  Soumekh and Choi
+describe estimating and correcting noisy SAR data with multiplicative noise
+affecting phase only, or both phase and magnitude \cite{Sou92b}.  Soumekh
+also presents inversions using his method that are suitable for tomographic
+imaging and geophysical imaging \cite{Sou94}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Other Approaches to ISAR Imaging}
+
+This section is a very brief discussion of some other approaches to ISAR
+imaging and ISAR inversion algorithms.  These include comments that have
+appeared in the literature about eliminating polar reformatting, ISAR
+inversion using tomography, and achieving a higher resolution from less
+data with superresolution spectral estimation methods.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Polar Reformatting During Sampling}
+
+ISAR inversion algorithms use Fourier transforms to convert the target's
+frequency response $G(k_x,k_y)$ to an estimate of its spatial radar
+reflectivity $g(x,y)$.  Polar reformatting is needed because sampling
+$s(k,t)$ on a rectangular grid in $(k,t)$-space gives $G(k_x,k_y)$ at points
+that lie on a polar grid in $(k_x,k_y)$-space while FFTs need samples on a
+rectangular grid, not a polar grid.
+
+One way to avoid polar reformatting altogether has been suggested by Harris
+\cite{Har90a}.  If the target's motion is known {\em a priori\/}, it is in
+principle possible to sample  $s(k,t)$ non-uniformly in such a way that the
+equivalent samples of $G(k_x,k_y)$ lie on uniformly spaced rectangular grid
+so that an FFT can be applied directly to the measurements without the need
+for polar reformatting.
+
+A slightly different sampling scheme for SAR has been suggested by Lawton in
+\cite{Law88}.  This gives $G(k_x,k_y)$ on a grid in $(k_x,k_y)$-space that
+is evenly spaced in the $k_x$ direction and has a linearly increasing
+spacing in the $k_y$ direction, a bit like a chirp.  The inversion can be
+done without reformatting using the Bluestein chirp form of the FFT
+\cite{Blu70}.
+
+The success of methods such as these depends on how accurately the position
+and orientation of the target can be predicted at each time and frequency that
+$s(k,t)$ is sampled.  Any residual errors in the target's predicted location
+and orientation will still require polar resampling to correct.  No ISAR
+images of real targets using these methods have been published, so it is
+difficult to judge whether they are feasible or just theoretical
+curiosities.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Tomographic ISAR}
+
+Similarities in the geometry of ISAR imaging, where a target uniformly 
+rotates, and X-ray tomography, where a detector rotates around a patient,
+suggest that tomographic inversions may be applicable to radar imaging.
+This has been examined by Bernfeld \cite{Ber84}, Snyder {\em et al.}
+\cite{Sny86}, Munson {\em et al.\/} \cite{Mun83} and Mensa {\em et al.\/}
+\cite{Men83,Men91} among others.  
+
+One important difference between tomography and ISAR is that tomography
+requires projections of a full $180^o$ view of the target.  
+This is difficult for ISAR because the orientation-independence of a radar
+target's reflectivity function $g(x,y)$ is based on the assumption that the
+target's aspect angle changes by at most only a few degrees.
+
+Experiments on ISAR imaging have been conducted by Gerlach using tomographic
+methods for targets viewed over very wide aspect angles \cite{Ger89}. Using
+filtered backprojection to image a model target on a turntable, he found
+that individual scatterers on the target generally only persisted for aspect
+angle changes considerably less than $60^o$.  This degraded the point spread
+function of each scatterer, causing streaks in the ISAR image.  The
+orientation of each scatterer's streak depended on the range of aspect
+angles for which that scatterer was a strong reflector.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Superresolution Techniques}
+\label{ii sec:sr}
+
+ISAR imaging requires a two-dimensional fast Fourier transform to convert the measurements
+$G(k_x,k_y)$ of the target taken in the spatial frequency domain to the
+radar's reflectivity $g(x,y)$ in the spatial domain.  This is essentially a
+spectral estimation problem, and the resolution	of the final ISAR image is
+limited to the inherent resolution of the Fourier transform.
+
+Since modern spectral estimation methods can achieve a higher resolution
+than classical Fourier-based spectral estimation, they have been applied to
+ISAR imaging, where collectively they are known as superresolution
+algorithms.  Some examples of superresolution imaging are papers by
+Gupta \cite{Gup94} and Nuthalapati \cite{Nut92} using two-dimensional linear
+prediction, Odendaal {\em et al.\/} using the MUSIC algorithm \cite{Ode94},
+Farina {\em et al.\/} using autoregressive and minimum variance methods
+\cite{Far94}, Hua {\em et al.\/} using the matrix-pencil algorithm
+\cite{Hua93,Hua94}, and Haywood and Evans using system identification
+\cite{Hay92b,Hay92c}.
+
+The supposed advantage of superresolution estimators is that they can
+achieve a much higher resolution than conventional Fourier processing, or
+achieve the same resolution with much less data.  
+
+While the superresolution estimators mentioned above may achieve a higher
+resolution than Fourier processing with less data, they only work if the
+data fits their model, which is the superposition of a small number of
+two-dimensional sinusoids.  This assumes that the target is composed of a
+small number of ideal point scatterers (as in equation 
+(\ref{hrr eqn:pt sc pr(t)})), and that polar reformatting has been
+done exactly. 
+
+The superresolution approach was criticized by Rihaczek in 1981, who pointed out
+the problems caused by radar targets having many scattering centres which
+are subject to shadowing and masking, and which interfere with one another 
+\cite{Rih81a}.  In his reply to a comment by Jackson \cite{Jac81}, Rihaczek 
+said \cite{Rih81b} 
+\begin{quote}\singlespaced
+``If the practical radar task were to generate an image of an array of ideal
+point scatterers, I might have a different opinion. \ldots The fact is that
+the superresolution methods did not fail because of any lack of signal
+processing techniques; they failed because they were based on models of the
+target which were simply inadequate for real targets. \ldots What we really
+need is improved target models.''  
+\end{quote}
+
+This criticism was made in 1981, and the superresolution papers cited above
+date from 1992 to 1994.  They are still using the same simple point
+scatterer model that Rihaczek  called ``inadequate'', and the results of an
+extra eleven to thirteen years' research are perhaps best summed up by one
+sentence from the conclusion of \cite{Ode94}: ``At this stage, it is not
+possible to claim a certain degree of improvement in resolution using the
+MUSIC algorithm, as opposed to the Fourier transform.''  This also applies
+to other modern spectral estimators, so the current verdict on 
+superresolution ISAR must be that it is not yet demonstrably superior to
+ordinary Fourier processing for real targets under uncontrolled conditions.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix{Decomposition of a Spherical Wave into Plane Waves}
+\label{ii app:pw}
+
+This appendix contains a derivation of the eigendecomposition of a spherical
+wave into plane waves.  This result is well-known in theoretical physics, 
+but it has only recently been used among the signal processing community.  
+
+This forms the basis for SAR and ISAR inversions using wavenumber
+processing.  Soumekh's book \cite{Sou94} contains a derivation of this
+result, but it mixes up the physics and engineering conventions for
+diverging waves\footnote{Physicists use $e^{ikx}$ to represent a wave moving
+in the $+x$ direction whereas engineers use the conjugate, $e^{-jkx}$.  In
+equation (\protect\ref{ii eqn:2D gf}), the solution corresponding to the
+diverging wave would be $i\pi H_0^{(1)}(kr)$ to a physicist, but its 
+conjugate $-j\pi H^{(2)}_0(kr)$ to an engineer.  As well using $i$ rather
+than $j$ for $\sqrt{-1}$, physicists define Fourier transforms and inverse 
+transforms the oppposite way from engineers.} and neglects many constants
+and slowly-varying magnitude functions, making it hard to rederive.  To
+complicate matters, some of his earlier papers on which the book is based,
+such as \cite{Sou91} and \cite{Sou92a}, use slightly different derivations
+which are not easy to follow because of typographical errors and because 
+contour integrals giving integral representations of functions do not have
+their contours specified.
+
+The decomposition presented here is a rederivation of that in \cite{Sou94}
+with the approximations clearly stated and all constants and slowly-varying
+magnitude functions included.
+
+Consider a source at the origin emitting an electromagnetic wave, 
+$\psi(t,\vect{r})$.  This wave diverges from the origin according to the wave
+equation
+\begin{equation}
+\nabla^2\psi(t,\vect{r})-\frac{1}{c^2}\psi(t,\vect{r})=0
+\end{equation}
+where $c$ is the speed of light.  If the wave is harmonic with frequency
+$\omega$, $\psi(t,\vect{r})$ may be written
+\begin{equation}
+\psi(t,\vect{r})=e^{j\omega t}h(\vect{r})
+\end{equation}
+where $h(\vect{r})$ is the phasor representation of the wave's 
+spatial dependence.  Substituting this separable expression for the wave
+into the wave equation gives $h(\vect{r})$ as a solution of the
+homogeneous Hemholtz equation
+\begin{equation}
+\nabla^2h(\vect{r})+k^2 h(\vect{r})=0
+\end{equation}
+where $k=\omega/c$ is the wavenumber.  This may be solved for the
+case of a source at the origin using the Green's function $G(\vect{r})$
+\cite[Ch. 7]{Mor53a}, which is a solution of the inhomogeneous Hemholtz
+equation
+\begin{equation}
+\nabla^2G(\vect{r})+k^2G(\vect{r})=-4\pi\delta(\vect{r})
+\end{equation}
+The solutions of this corresponding to outward-moving waves are, in three
+dimensions, a spherical wave
+\begin{equation}
+G_3(\vect{r})=\frac{\ds e^{-jk\left|\vect{r}\right|}}{\left|\vect{r}\right|}
+\end{equation}
+and in two dimensions, a Hankel function with circular symmetry
+\begin{equation}\label{ii eqn:2D gf}
+G_2(\vect{r})=-j\pi H_0^{(2)}(k\left|\vect{r}\right|)
+\end{equation}
+where the Hankel function $H_{\nu}^{(2)}(z)$ is a solution to 
+\begin{equation}
+z^2\frac{d^2w}{dz^2}+z\frac{dw}{dz}+(z^2-\nu^2)w=0
+\end{equation}
+The two real linearly independent solutions of this are the Bessel functions
+of the first and second kind, $J_{\nu}(z)$ and $Y_{\nu}(z)$.  A different
+set of linearly independent solutions is given by the Hankel functions,
+$H_{\nu}(z)=H_{\nu}^{(1)}(z)$ and $H_{\nu}^{(2)}(z)$, which are related to
+$J_{\nu}(z)$ and $Y_{\nu}(z)$ by\footnote{This is analogous to the way
+$e^{jx}$ and $e^{-jx}$ are related to $\sin x$ and $\cos x$.} \cite{Abr65}
+\begin{eqnarray}
+H_{\nu}^{(1)}(z)&=&J_{\nu}(z)+jY_{\nu}(z)\\
+H_{\nu}^{(2)}(z)&=&J_{\nu}(z)-jY_{\nu}(z)
+\end{eqnarray}
+
+The two-dimensional and three-dimensional Green's functions have
+asymptotically equal phases but different magnitudes.  From equation (9.2.4)
+of \cite{Abr65} 
+\begin{equation}
+H_0^{(2)}(z)\sim j\sqrt{\frac{2}{\pi z}}\,e^{-jz}
+\qquad\hbox{as $\left|z\right|\to\infty$}
+\end{equation}
+Using this, the two- and three-dimensional Green's functions are
+asymptotically related by
+\begin{equation}\label{ii eqn:G2 and G3}
+G_3(\left|\vect{r}\right|)\sim \sqrt{\frac{k}{2\pi\left|\vect{r}\right|}}
+\,G_2(\left|\vect{r}\right|)
+\end{equation}
+as $k\left|\vect{r}\right|\to\infty$.  
+
+The rationale behind writing the spherical wave as an asymptotic Hankel
+function is that it is relatively straightforward to derive an integral
+representation for the Hankel function that is valid in a two-dimensional
+plane.  This integral representation can be used to describe the spherical
+waves reflected from a radar target because ISAR imaging considers targets
+to be two-dimensional, lying in a plane parallel to the radar's line-of-sight.
+
+The Fourier transform of the two-dimensional inhomogeneous Hemholtz equation
+is
+\begin{equation}\label{ii eqn:G(k)}
+-(k_x^2+k_y^2)G_2(\vect{k})+ k^2G_2(\vect{k})=-4\pi
+\end{equation}
+where $\vect{k}=(k_x,k_y)$ are the spatial frequencies that are the
+Fourier-domain counterparts of $\vect{r}=(x,y)$, and $G_2(\vect{r})$ is the
+inverse Fourier transform of $G(\vect{k})$
+\begin{equation}
+G_2(\vect{r})=\frac{1}{4\pi^2}\infint\infint G_2(\vect{k})\,
+e^{j(xk_x +yk_y)}\,dk_x\,dk_y
+\end{equation}
+Since (\ref{ii eqn:G(k)}) shows that 
+\begin{equation}
+G_2(\vect{k})=\frac{4\pi}{k_x^2+k_y^2-k^2}
+\end{equation}
+the two-dimensional Green's function has the following integral 
+representation (this is similar to (7.2.42) of \cite{Mor53a})
+\begin{equation}
+G_2(\left|\vect{r}\right|)
+=\frac{1}{\pi}\infint\infint \frac{1}{k_x^2+k_y^2-k^2}\,
+e^{j(xk_x+yk_y)}\,dk_x\,dk_y
+\end{equation}
+where $\vect{r}=(x,y)$.
+
+The double integral may be simplified by evaluating one of the integrals 
+explicitly using contour integration.  Then the remaining single integral
+gives the desired decomposition of a spherical wave into plane waves.
+
+The choice of which integral to evaluate depends on where in the $(x,y)$
+plane the spherical decomposition is to be used.  If the spherical wave is
+measured at a point where $\left|x\right|\gg 0$, the contour integration may
+be performed with respect to $k_x$.  If the spherical wave is measured at a
+point where $\left|y\right|\gg 0$, the contour integration may be performed
+with respect to $k_y$.  Since the ISAR imaging geometry in figure~\ref{ii
+fig:moving target} assumes that the radar is far from the target in the
+positive $y$ direction, the contour integral will be performed here with
+respect to $k_y$.
+
+The inner integral has poles at $k_y=\pm\sqrt{k^2-k_x^2}$.  Integrating over
+a contour including only the singularity at $k_y=+\sqrt{k^2-k_x^2}$ gives a
+wave that is converging when $y>0$ and diverging when $y<0$. Integrating
+over a contour including only the other singularity at
+$k_y=-\sqrt{k^2-k_x^2}$ gives a wave that is converging when $y<0$ and
+diverging when $y>0$.  Since the desired solution is wave that diverges when
+measured in the upper half-plane, only the pole at $k_y=-\sqrt{k^2-k_x^2}$
+should be included in the contour integration.  This contour is illustrated
+in figure~\ref{ii fig:contour}.  Using the residue theorem,
+\begin{eqnarray}
+\infint\frac{1}{k_y^2-(k^2-k_x^2)}\,e^{jyk_y}\,dk_y
+&=&2\pi j \left. \frac{\ds e^{jyk_y}}{k_y-\sqrt{k^2-k_x^2}}
+	\right|_{k_y=-\sqrt{k^2-k_x^2}}\nn\\
+&=&-j\frac{\ds \pi e^{-jy\sqrt{k^2-k_x^2}}}{\sqrt{k^2-k_x^2}}
+\label{ii eqn:contour int}
+\end{eqnarray}
+Substituting this for the inner integral of the Green's function's integral
+representation shows that
+\begin{equation}
+G_2(\left|\vect{r}\right|)
+=-j\infint \frac{1}{\sqrt{k^2-k_x^2}}\,e^{j(xk_x-y\sqrt{k^2-k_x^2})}\,dk_x
+\end{equation}
+From the relationship in (\ref{ii eqn:G2 and G3}), this is also an
+asymptotic integral representation for $G_3(\left|r\right|)$  
+\begin{equation}
+G_3(\left|\vect{r}\right|)\sim -j\sqrt{\frac{k}{2\pi\left|\vect{r}\right|}}
+\infint \frac{1}{\sqrt{k^2-k_x^2}}\,e^{j(xk_x-y\sqrt{k^2-k_x^2})}\,dk_x
+\end{equation}
+
+Since $\sqrt{k^2-k_x^2}$ is imaginary for $\left|k_x\right|>k$, it makes
+sense to split the integral representation for $G_3(\left|r\right|)$ into an
+integral for $\left|k_x\right|<k$ and an integral for $\left|k_x\right|>k$.
+
+Let $I_1(\left|\vect{r}\right|)$ be the integral for $\left|k_x\right|<k$
+and $I_2(\left|\vect{r}\right|)$ be the integral for $\left|k_x\right|>k$.
+Make the substitution $u=\sqrt{k_x^2-k^2}$ to show that
+\begin{eqnarray}
+\left|I_2(\left|\vect{r}\right|)\right|
+&=&\sqrt{\frac{2k}{\pi\left|\vect{r}\right|}} \left| \int_k^{\infty} 
+\frac{1}{\sqrt{k_x^2-k^2}}
+\,\cos(xk_x)\,e^{-y\sqrt{k_x^2-k^2}}\,dk_x\right|\nn\\
+&\leq&\sqrt{\frac{2}{\pi k\left|\vect{r}\right|}}\int_0^{\infty} 
+e^{-yu}\,du\nn\\
+&=&\frac{1}{y}\sqrt{\frac{2}{\pi k\left|\vect{r}\right|}}
+\end{eqnarray}
+ 
+This suggests that $\left|I_2(\left|\vect{r}\right|)\right|$ falls off
+faster than $1/y^{3/2}$ whereas $\left|G_3(\left|r\right|)\right|$ falls off 
+as $1/y$.  So for measurements made far from the origin in the $y$ direction,
+$I_2(\left|\vect{r}\right|)$ is negligible in comparison to 
+$I_1(\left|\vect{r}\right|)$.  Kak says that $I_2(\left|\vect{r}\right|)$ is
+an evanescent component which is usually of no signficance more than ten 
+wavelengths from the source \cite[p. 367]{Hay85b}.  Since radar targets are 
+often thousands of times further from the antenna than this, this justifies
+tightening the limits of integration from $(-\infty,\infty)$ to $(-k,k)$.
+
+Therefore the decomposition of a spherical wave into plane waves 
+useful for ISAR imaging is
+\begin{equation}
+\frac{\ds e^{-jk\left|\vect{r}\right|}}{\left|\vect{r}\right|}=
+G_3(\left|\vect{r}\right|)\sim -j\sqrt{\frac{k}{2\pi\left|\vect{r}\right|}}
+\int_{-k}^k \frac{1}{\sqrt{k^2-k_x^2}}\,e^{j(xk_x-y\sqrt{k^2-k_x^2})}\,dk_x
+\end{equation}
+which is valid if the radar's $y$ coordinate is much greater than the
+target's greatest $y$ coordinate.  This can be made slightly neater by
+changing the sign of $k_x$ giving the final form of the plane wave
+decomposition
+\begin{equation}
+\frac{\ds e^{-jk\left|\vect{r}\right|}}{\left|\vect{r}\right|}
+\sim -j\sqrt{\frac{k}{2\pi\left|\vect{r}\right|}}
+\int_{-k}^k \frac{1}{\sqrt{k^2-k_x^2}}\,e^{-j(xk_x+y\sqrt{k^2-k_x^2})}\,dk_x
+\end{equation}
+
+%============================================================================
+\begin{figure}\centering
+\caption[The contour in complex $k_y$-space corresponding to an outwardly 
+propagating wave.]{This indicates the contour in complex $k_y$-space the
+integral in equation (\protect\ref{ii eqn:contour int}) must take to give
+the solution in the half-plane $y>0$ corresponding to an outwardly
+propagating wave.}
+\label{ii fig:contour}
+
+\setlength{\unitlength}{0.6cm}
+\begin{pspicture}(-4,-3.5)(4,4)
+% First the axes and their labels
+\psline[linecolor=black,linewidth=1.5pt]{->}(-3.3,0)(3.3,0)
+\psline[linecolor=black,linewidth=1.5pt]{->}(0,-3.3)(0,3.3)
+\uput[r](3.3,0){$\real{k_y}$}
+\uput[u](0,3.3){$\imag{k_y}$}
+\uput[u](-1.2,0){$-\sqrt{k^2-k_x^2}$}
+\uput[d](1,0){$\sqrt{k^2-k_x^2}$}
+\qdisk(1,0){2pt}
+\qdisk(-1,0){2pt}
+% Now the contour with arrows from right to left
+\psline[linecolor=darkgray,linewidth=1pt]{->}(-3,0)(-2,0)
+\psline[linecolor=darkgray,linewidth=1pt]{-}(-2,0)(-1.3,0)
+\psline[linecolor=darkgray,linewidth=1pt]{-}(-0.7,0)(0.7,0)
+\psline[linecolor=darkgray,linewidth=1pt]{-}(1.3,0)(2,0)
+\psline[linecolor=darkgray,linewidth=1pt]{>-}(2,0)(3,0)
+\psarc[linecolor=darkgray,linewidth=1pt](1,0){0.3}{0}{180}
+\psarc[linecolor=darkgray,linewidth=1pt](-1,0){0.3}{180}{360}
+\end{pspicture}
+\end{figure}
+%============================================================================
+
+A slightly different derivation\footnote{The decomposition in
+\protect\cite{Sou91} is hard to follow because the slowly changing amplitude
+functions and constants are omitted throughout, factors of $\frac{1}{2}$ are
+written as $.5$ to give terms like $j.5\phi$, and all paths in the contour
+integrals have been left out.  Furthermore, in his 1992 paper
+\protect\cite{Sou92a}, this derivation is repeated with a typographical
+error which renders $jkr\cos\phi+j\frac{1}{2}\phi$ as
+$jkr\cdot\cos\phi+j\cdot 5\phi$, where the first ``$\cdot$'' is a
+multiplication sign and the second ``$\cdot$'' is the decimal point in $0.5$
+with the zero omitted.  
+
+To make matters worse, the source for equation (2) of \protect\cite{Sou92a}
+is quoted as equation (5.3.89) of the 1968 edition of Morse and Feshbach
+\protect\cite{Mor53a,Mor53b}.  However, there is no 1968 edition of Morse
+and Feshbach, only the original 1953 edition. Equation (5.3.89) in the 1953
+edition is an integral equation of the Mathieu function $Se_{2m}(z,q)$, and
+has no relevance for Hankel functions.  Perhaps the (5.3.89) should read
+(5.3.69), an equation which is relevant.  If so, the 1968 is a mistake and
+should be corrected in \protect\cite{Sou91} and \protect\cite{Sou92b} as
+well as \protect\cite{Sou92a}.  Alternatively, if the 1968 is correct, the
+references may mean Morse and Ingard's {\em Theoretical Acoustics}, instead
+of Morse and Feshbach, in which case, equation (5.3.89) may actually be
+relevant.}is presented in appendix A of Soumekh's 1991 paper \cite{Sou91}
+using an integral representation of the Hankel function of order 
+$\frac{1}{2}$ because of the exact relationship
+\begin{equation}
+\frac{\ds e^{jk\left|\vect{r}\right|}}{\left|\vect{r}\right|}
+=jk h_0(k\left|\vect{r}\right|)=
+j\sqrt{\frac{\pi k}{2\left|\vect{r}\right|}} 
+H_{\frac{1}{2}}(k\left|\vect{r}\right|)
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix{The Doppler-Shift Formulation of ISAR}
+\label{ii app:dop}
+
+Many early papers about ISAR describe scatterers being resolved in
+cross-range due to differences in the Doppler shifts of their reflections. 
+This description is intuitively appealing, but completely incorrect because
+it is the change in the scatterer's position that alters the round-trip
+distance and is manifested as a phase shift.  The radial velocity of each
+scatterer does cause a Doppler shift, but as discussed in section 
+\ref{hrr sec:doppler}, the Doppler shift is usually negligible.  
+
+This appendix has been included for completeness, not because it correctly
+describes ISAR.  With this disclaimer in mind, here is an historically 
+accurate but technically incorrect description of ISAR cross-range processing
+using the Doppler shift.  The treatment follows Wehner \cite{Weh87}, and is
+very similar to the 1969 paper by Brown \cite{Bro69} and the 1980 work of
+Chen and Andrews \cite{Che80a}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Cross-Range Processing}
+
+Consider a target a fixed distance $r_0$ from the radar rotating at constant
+angular speed $\omega$ at time $t=0$, as shown in figure~\ref{ii fig:rotating target} 
+on page \pageref{ii fig:rotating target}.  The scatterer at a distance $x$ in
+cross-range from the target's centre of rotation is moving directly towards
+the radar with instantaneous speed
+\begin{equation}
+v(x)=\omega x
+\end{equation}
+For a radar transmitting at a frequency $f_0$, the reflection has a Doppler
+frequency shift $f_D$ directly proportional to the scatterer's cross-range
+position
+\begin{equation}
+f_D(x)=\frac{2f_0}{c}v(x)=x\frac{2\omega f_0}{c}
+\end{equation}
+
+If two scatterers the same range from the radar are separated by $d$ in
+cross-range, their Doppler frequencies differ by
+\begin{equation}\label{ii eqn:dfd}
+\Delta f_D=d\frac{2\omega f_0}{c}
+\end{equation}
+The target's reflections are sampled for a total time $T$, called the
+coherent Doppler integration time, and the different Doppler frequencies are
+detected using a Fourier transform.  Close scatterers are resolvable if the
+difference in their Doppler shifts is greater than the resolution of the
+Fourier transform
+\begin{equation}
+\Delta f_D\geq\frac{1}{T}
+\end{equation}
+Combining this with (\ref{ii eqn:dfd}) and writing the cross-range
+resolution $\Delta r_c$ for $d$ shows that
+\begin{equation}
+\Delta r_c=\frac{c}{2f_0\omega T}
+\end{equation}
+which is the same as the approximate expression in equation 
+(\ref{ii eqn:drc rot}).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Resolution Restrictions}
+\label{ii sec:dop rr}
+
+The Doppler-shift analysis assumes that each scatterer can be found in the
+same range cell for the whole of the Doppler integration time.  For large
+targets or rapidly rotating targets, this may not be so.  If a scatterer
+spends only a fraction of the Doppler integration time in a range cell, the
+cross-range resolution of that scatterer in that range cell will be
+decreased accordingly.  
+
+Blurring in the final ISAR image depends on the number of range and
+cross-range cells that each scatterer moves through.  Suppose the target's
+size is $D_r$ in the range direction and $D_c$ in the cross-range direction.
+If no scatterer is allowed to move through more than one range cell, the
+total angle through which the target rotates, $\Delta\theta$, must satisfy
+\begin{equation}
+\frac{D_c}{2}\Delta\theta<\Delta r_r
+\end{equation}
+Using $\Delta\theta=\omega T$ and $\lambda=c/f_0$ shows that this is 
+equivalent to the condition
+\begin{equation}
+\Delta r_r\Delta r_c>\frac{\lambda D_c}{4}
+\end{equation}
+If no scatterer is allowed to move through more than one cross-range cell, 
+$\Delta\theta$ must satisfy
+\begin{equation}\label{ii eqn:prc I}
+\frac{D_r}{2}\Delta\theta<\Delta r_c
+\end{equation}
+which is equivalent to the condition
+\begin{equation}\label{ii eqn:prc II}
+\Delta r_c^2>\frac{\lambda D_r}{4}
+\end{equation}
+

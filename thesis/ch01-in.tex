@@ -1,0 +1,334 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%			INVERSE SYNTHETIC APERTURE RADAR
+%
+%				  PhD Thesis
+%
+%		Stephen Simmons		simmons@ee.mu.oz.au
+%
+%	    Department of Electrical and Electronic Engineering
+%	    University of Melbourne, Parkville, 3052, Australia
+%
+% Chapter 1:	Introduction
+%
+%		started first draft:
+%		finished first draft:
+%		submitted:		
+%
+%%%%%%%%%%%%%%%%%%%%% Copyright (C) 1994 Stephen Simmons %%%%%%%%%%%%%%%%%%
+
+
+\chapter{Introduction}
+\label{in chp}
+
+\bigletter Radar has been used for over fifty years to locate and track
+distant aircraft and ships, but it is only comparatively recently that it
+has been used for forming high resolution two-dimensional images.  Since
+the size of a radar system's antenna determines its angular resolution,
+radar imaging systems would ordinarily require a prohibitively large
+antenna to obtain a high enough angular resolution.  However, by combining
+measurements made by an antenna as it moves to different locations over a
+large synthetic aperture, digital signal processing creates a synthetic
+aperture much larger than physical size of the radar's antenna.  This
+synthetic aperture has a very high angular resolution and is used to form
+the radar image.
+
+The two forms of radar imaging are synthetic aperture radar (SAR) and
+inverse synthetic aperture radar (ISAR).  In SAR imaging, the radar is
+carried aboard a moving platform such as an aircraft or satellite.  The
+platform's motion creates the synthetic aperture which is used to form high
+resolution maps of the terrain below.  ISAR imaging recognises that the
+synthetic aperture may be created just as effectively if the target being
+imaged is moving and the radar is stationary.
+
+The success of radar imaging relies on the relative position and
+orientation of the radar antenna and the target being known precisely at
+all times.  Radar signal processing is coherent, so it is important that
+any errors in forming the synthetic aperture are less than a small fraction
+of a radar wavelength.  For microwave radar systems operating at X-band,
+the wavelength is about 3~cm, so this places very strict requirements on
+the stability of the synthetic aperture.
+
+The movement of the radar antenna and the target cannot be expected to
+produce a synthetic aperture that is this accurate.  To prevent the radar
+image becoming degraded, the relative motion between radar and target must
+be continuously measured and appropriate corrections made to the synthetic
+aperture.  Measuring the relative motion is called motion estimation and 
+correcting the radar measurements for distortions in the synthetic aperture
+is called motion compensation.
+
+With SAR imaging, the radar moves and the target is stationary.  Therefore
+an inertial nagivation unit carried with the radar can be used to measure
+the position of the radar antenna at all times.  This is not accurate to a
+small fraction of a wavelength, but it is good enough to correct for most
+of the radar's motion.  Some further autofocusing may be required for very
+high resolution SAR images to remove blurring caused by small residual
+motion errors. 
+
+In ISAR imaging, the target moves and the radar is stationary.  Because the
+target's motion is not known {\em a priori\/}, it must be obtained solely
+from the radar measurements that are processed to form the radar image. 
+This makes ISAR imaging, particularly the motion estimation and motion
+compensation parts, a much more difficult problem than SAR.  As a result,
+SAR systems have been operating for more than thirty years while robust
+ISAR systems are still at the research and development stage.  
+
+A number of methods of ISAR motion estimation and motion compensation have
+been developed.  These methods can generally be classed as either range
+profile alignment, where range profiles of the target over time are roughly
+aligned to correct for the target's large scale radial movement, or as
+phase compensation, where residual motion errors less than the size of a
+radar wavelength are corrected.  Range profile alignment is usually
+performed by cross-correlating range profiles of the target measured at
+different times.  Phase compensation algorithms, such as adaptive
+beamforming and the phase gradient autofocus, compare the phases of radar
+measurements made at different times to correct for slight motion errors.  
+
+Many variations on these basic methods of motion estimation have been
+developed.  All are based on intuitive notions of what constitutes the best
+approach to estimating the target's motion.  The result is many {\em ad
+hoc\/} methods of motion estimation.  Few make any concrete claims about
+the accuracy of their estimates or analyse the conditions under which they
+perform well or badly.
+
+In this thesis, statistical estimation theory is used to obtain the maximum
+likelihood solution of the ISAR motion estimation problem.  From this, the
+estimator's statistical performance is characterised and connections are made
+with methods of range profile alignment and phase compensation.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Outline of Thesis}
+
+This thesis considers the problem of estimating the radial motion of a
+moving target during ISAR imaging.  Statistical estimation theory is used
+to derive a new motion estimator that is the maximum likelihood solution of
+the motion estimation problem.  Efficient algorithms are developed for
+evaluating the estimator and its statistical performance is analysed in
+detail.  Similarities between the maximum likelihood solution and other
+{\em ad hoc\/} methods of motion estimation are considered.  The thesis
+concludes with a detailed analysis of some of the assumptions implicitly or
+explicitly made during ISAR imaging.  This places several new constraints
+on the motion of the target and the resolution of the ISAR image.
+
+Chapter \ref{mp chp} is an introduction to the principles of statistical
+estimation theory, and in particular, to maximum likelihood estimation. The
+various forms of the maximum likelihood estimator for scalar and vector
+parameters are derived, along with the \CR bounds on any estimator's
+variance.  The chapter concludes with a discussion of applying estimation
+theory when the parameters being estimated are complex numbers.
+
+Chapters \ref{hrr chp} to \ref{mc chp} serve as an introduction to high
+resolution radar and radar imaging and as a detailed description of some
+motion estimation algorithms that are curently used in ISAR imaging.
+
+Chapter \ref{hrr chp} begins with an overview of radar imaging using SAR
+and ISAR and a qualitative description of the requirements for achieving a
+high resolution two-dimensional radar image of a moving target.  Once the 
+general model for radar reflections from a distributed target has been
+derived, the requirements for a high range resolution and a high
+cross-range resolution are analysed to obtain some conditions on the
+radar's waveforms and the the target's motion.  This demonstrates the need
+for a wideband waveform such as a chirp or a stepped-frequency waveform;
+both chirp and stepped-frequency waveforms are considered, but the
+remainder of the thesis assumes that a stepped-frequency radar is being
+used.
+
+Chapter \ref{ii chp} defines the basic model used for ISAR imaging and
+obtains ISAR imaging algorithms using range-Doppler processing and
+wavenumber ($\omega-k$) processing.  The traditional view of ISAR as a
+Doppler phenomenon is criticised, and this old-fashioned description of
+ISAR has been included for completeness in appendix \ref{ii app:dop} at the
+end of the chapter.
+
+Chapter \ref{mc chp} emphasises the importance of motion estimation and
+motion compensation in ISAR imaging.  Methods of correcting deviations in
+the target's radial position and orientation are derived, and these motion
+compensation algorithms are used to suggest how the target's radial
+position and orientation may be estimated.  A number of radial motion
+estimation algorithms are discussed.  These methods include range
+profile alignment using cross-correlation and image feedback control, and
+phase compensation using adaptive beamforming and the phase gradient
+autofocus.
+
+The next three chapters, chapters \ref{ml chp} to \ref{sp chp}, are a
+detailed examination of a new method of radial motion estimation for ISAR
+based on the principles of maximum likelihood estimation.  Expressions for
+the maximum likelihood estimator are derived, algorithms for evaluating the
+estimator efficiently are developed and the estimator's statistical
+performance is carefully analysed.
+
+Chapter \ref{ml chp} sets up a model for estimating the radial distance
+$\dr$ moved by a target in the time between two frequency responses being
+measured.  The maximum likelihood estimator of $\dr$ is derived in two
+different ways based on this model.  The first assumes that the radial
+distance moved by the target is the only unknown parameter, treating the
+problem as one of estimating a scalar parameter.  The second form of the
+maximum likelihood estimator recognises that the measurement noise variance
+and the target's frequency response are also unknown, and should be
+included with $\dr$ to give a vector of unknown parameters.  These two
+estimators of $\dr$ have the same mathematical form, namely a cost function
+$J(\r)$ whose global minimum gives the maximum likelihood estimate of
+$\dr$.  The chapter also obtains expressions for the maximum likelihood
+estimators of the noise variance and of the target's frequency response.
+
+Chapter \ref{ee chp} considers possible methods of finding the global
+minimum of the cost function $J(\r)$.  This is not a simple task because
+$J(\r)$ has a slowly varying envelope, giving a coarse estimate of $\dr$,
+and a high frequency modulation, which allows a very accurate estimate of
+the fractional part of the number of half-wavelengths the target has moved. 
+Reflecting these characteristics of $J(\r)$ at the two different scales,
+algorithms are developed which first find the approximate location of the
+minimum of $J(\r)$, and then refine this estimate until $\dr$ has been
+estimated to within a fraction of a radar wavelength.  The algorithms for
+finding the approximate location of the global minimum of $J(\r)$ are based
+on the fast Fourier transform and the chirp-Z transform.  Two algorithms
+for finding the fraction of half a wavelength the target has moved have
+been developed. The first is an approximation that estimates the parameters
+of a sinusoid fitted to the high frequency modulation.  The second is an
+iterative scheme that uses a contraction mapping converging to the local
+minima of $J(\r)$.  The accuracies of each of these algorithms in finding
+the location of the maximum likelihood estimator have been specified and 
+guaranteed by rigorous proofs of convergence.
+
+Chapter \ref{sp chp} is a detailed examination of the maximum likelihood
+estimators' statistical properties.  These include showing that the maximum
+likelihood estimator of $\dr$ is unbiased and obtaining bounds on the 
+estimator's variance for both the scalar and vector forms of the maximum
+likelihood estimator.  Some suggestions are made towards obtaining
+non-asymptotic expressions for the estimator's probability
+density function, but complete non-asymptotic results could not be
+obtained.
+
+Chapter \ref{do chp} is a comparison between some of the conventional
+methods of ISAR radial motion estimation from chapter \ref{mc chp} and the
+maximum likelihood solution from chapters \ref{ml chp} to \ref{sp chp}.
+The maximum likelihood estimator is rewritten as the cross-correlation of
+the target's complex range profiles.  Phase gradient autofocus, adaptive
+beamforming and conventional range profile alignment using
+cross-correlation are shown to be closely related to modified forms 
+of the maximum likelihood solution, a result which gives a sound
+theoretical basis to these largely {\em ad hoc\/} methods of radial motion
+estimation.  The differences between these methods and the maximum 
+likelihood estimator suggest that they sacrifice accuracy for a decreased
+sensitivity to phase noise caused by the target's rotation.
+
+
+Chapter \ref{rmc chp}, the penultimate chapter in the thesis, is a detailed
+examination of four of the approximations and assumptions that are
+frequently made in ISAR imaging.  These four are the plane-wave
+approximation in range-Doppler ISAR processing, the conditions under which
+polar reformatting may be omitted, the assumption of negligible rotation
+during radial motion estimation, and the assumption that motion
+compensation need only correct the target's radial motion to the nearest
+multiple of a range bin and then within half a wavelength.  All four
+approximations are analysed in the same way, using a technique that can be
+used to analyse any approximation in ISAR imaging.  This leads to four sets
+of constraints on the ISAR image's resolution and the target's motion.  The
+set of constraints arising from neglecting polar reformatting is shown to
+be indentical to the constraints obtained by restricting the motion of
+scatterers on the target through range and cross-range resolution cells, a
+situation which appears to have nothing in common with polar reformatting. 
+The analysis of a target's rotation during radial motion estimation shows
+that the target should rotate sufficiently slowly that it fills no more
+than one-quarter of the ISAR image in the cross-range direction.  The
+analysis of the final assumption shows that provided phase compensation is
+perfect, the range profile alignment can misestimate the target's radial
+position by one-quarter of a range bin before the quality of the resulting
+ISAR image is adversely affected.
+
+The last chapter of the thesis, chapter \ref{co chp}, contains the 
+conclusions of this research into ISAR motion estimation and
+suggests some avenues for future research.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Original Contributions}
+
+This thesis contains the following major contributions to the field of ISAR
+imaging:
+\begin{itemize}
+\item The whole of chapter \ref{ml chp}, including the maximum likelihood
+formulation of the ISAR motion estimation problem, the two forms of the
+maximum likelihood estimator of the target's radial movement and the maximum
+likelihood estimator of the noise variance.
+
+\item The whole of chapter \ref{ee chp}, including all algorithms for the
+global and local minimization of the cost function $J(\r)$.  Algorithm
+\ref{ee alg:min using DFT} is superficially similar to motion estimation by
+cross-correlating range profiles, but it is actually quite different because
+it does not take the magnitude before correlating.  Algorithm \ref{ee
+alg:min using CZT} is the first time the chirp-Z transform has been used in
+ISAR motion estimation.  The two algorithms for the local minimization of
+the cost function are also new.  These algorithms are all proved to behave as
+claimed.  Such rigorous proofs are rare in the ISAR literature.
+
+\item The whole of chapter \ref{sp chp}, especially the results concerning
+the unbiased nature of the maximum likelihood estimator of $\dr$, and the
+\CR bounds.  The work on non-asymptotic results has prompted several general
+questions in the field of extreme value theory.  These are stated in section
+\ref{co sec:et}, and concern the probability density function of the location of the
+maximum of a known bandlimited function in bandlimited noise.
+
+\item The whole of chapter \ref{do chp}, especially the formulation of the
+maximum likelihood estimator in terms of the cross-correlation of the
+complex range profiles and the connections between the maximum likelihood
+estimator and conventional methods of range profile alignment and phase
+compensation.
+
+\item Chapter \ref{rmc chp} is the first time that a single approach to
+analysing approximations in ISAR has been used to test so many assumptions.
+The constraints for neglecting polar reformatting are derived completely
+differently from the usual analysis of motion through resolution cells,
+leading to identical constraints.  Section \ref{rmc sec:me} is the first
+time the effect of the target's rotation on radial motion estimation has
+been considered.  The constraint that the target should occupy no more than
+one-quarter of the cross-range window is new, as is the definition and
+measurement of rotation-induced noise.  Section \ref{rmc sec:ma} is the
+first analysis of the accuracy required for motion compensation, and it
+justifies the use of range profile alignment followed by phase compensation.
+
+\item The critical review of ISAR imaging in chapters \ref{hrr chp} to
+\ref{mc chp} is also an important but less major contribution.
+\end{itemize}
+
+\noindent A number of papers resulting from this research are in preparation:
+\begin{itemize}
+\item S. E. Simmons and R. J. Evans, ``Maximum Likelihood Motion Estimation
+for ISAR Imaging.'' (to be submitted to {\em IEEE Transactions on
+Information Theory})
+\item S. E. Simmons and R. J. Evans, ``Resolution and Motion Constraints in
+ISAR.'' (to be submitted to {\em IEEE Transactions on
+Signal Processing})
+\item S. E. Simmons and R. J. Evans, ``ISAR Motion Estimators and the
+Maximum Likelihood Solution.'' (to be submitted to {\em IEEE Transactions on
+Aerospace and Electronic Systems})
+\end{itemize}
+
+\noindent Three conference papers on this and earlier research have been presented:
+\begin{itemize}
+\item S. E. Simmons and R. J. Evans, ``Maximum Likelihood Autofocusing of
+Radar Images'', to appear in {\em Proc. Radar '95\/}, Washington D.C., 
+8--11 May 1995.
+\item S. E. Simmons and R. J. Evans, ``A New Approach to Motion Estimation
+for ISAR Imaging'', {\em Proc. ICASSP '94\/}, Adelaide, 19--22 April 1994,
+pp. V-201--V-204.
+\item S. E. Simmons, D. J. Heilbronn and D. Nandagopal,	``Kalman Range 
+Tracking for ISAR Motion Compensation'', {\em Proc. Radarcon '90\/},
+Adelaide, 18--20 April 1990, pp. 689--694.
+\end{itemize}
+The ICASSP paper uses the same motion estimator as the maximum likelihood
+estimator derived here, except that at the time it was not recognised as
+such.  The methods of evaluating the motion estimator in that paper are far
+less efficient than the methods presented in chapter \ref{ee chp} of this
+thesis.  The Radarcon paper was an early attempt to derive a frequency
+domain motion estimator that is not affected by $2\pi$ ambiguities.
+
+The material in chapter \ref{mp chp} is very similar to the following 
+course notes on maximum likelihood estimation:
+\begin{itemize}
+\item S. E. Simmons, {\em Maximum Likelihood Estimation\/} in ``Course Notes
+on Estimation Theory'' prepared for the CSSIP Estimation Theory Course, 
+Department of Electrical Engineering, University of Melbourne, 14--16
+February 1994.
+\end{itemize}
+

@@ -1,0 +1,92 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%			INVERSE SYNTHETIC APERTURE RADAR
+%
+%				  PhD Thesis
+%
+%		Stephen Simmons		simmons@ee.mu.oz.au
+%
+%	    Department of Electrical and Electronic Engineering
+%	    University of Melbourne, Parkville, 3052, Australia
+%
+% Preface (material before the table of contents)
+%
+%		started first draft:	Fri 6 Jan 1995
+%		finished first draft:	Fri 6 Jan 1995
+%		submitted:		Mon 9 Jan 1995
+%
+%%%%%%%%%%%%%%%%%%%%% Copyright (C) 1995 Stephen Simmons %%%%%%%%%%%%%%%%%%
+
+\preface{Abstract}
+
+Inverse synthetic aperture radar (ISAR) forms high resolution radar images
+of a moving target by using the target's changing aspect angle to create a
+synthetic aperture.  Estimates of changes in the target's position accurate
+to a tenth of a wavelength are essential for sharply focussed ISAR images.
+
+This thesis investigates the use of estimation theory to find optimal
+estimators of a target's radial motion during stepped-frequency ISAR
+imaging and to analyse their performance.  The aim of this is two-fold: to
+apply a rigorously mathematical approach to a problem that has
+traditionally been solved using more intuitive methods, and to develop a
+unifying framework in whose terms the intuitive methods can be
+reinterpreted and reappraised.
+
+The maximum likelihood estimator of the radial distance moved by the target
+is derived as the location of the global minimum of a cost function. The
+cost function has a slowly varying envelope modulated by a high frequency
+carrier.  The envelope shows the approximate distance the target has moved
+and the high frequency modulation allows the distance to be determined
+within a small fraction of a wavelength.  
+
+Four efficient algorithms for minimizing the cost function are derived. Two
+are approximate global algorithms based on the fast Fourier transform and
+the chirp-Z transform.  The other two are more precise local minimization
+algorithms.  The second of these is an iterative contraction mapping with
+the rate of convergence equal to the stepped-frequency waveform's relative
+bandwidth.  
+
+The statistical properties of the maximum likelihood motion estimator are
+examined and the estimator is shown to be unbiased.
+
+To illustrate connections between conventional methods of range profile
+alignment and phase compensation, the maximum likelihood motion estimator is shown
+to be equivalent to the location of the maximum of the cross-correlation of
+the target's complex range profiles.  Cross-correlating the magnitudes of
+the range profiles, as in conventional motion estimation, is shown to be
+less accurate but less susceptible to phase errors caused by the target
+rotating.  
+
+Phase alignment techniques of adaptive beamforming and the phase gradient
+autofocus are also compared to the maximum likelihood estimator.  It is
+found that the phase gradient part of phase gradient autofocus can be
+implemented using slightly sub-optimal versions of the algorithm developed
+for the local minimization of the estimator's cost function.
+
+Finally, some common assumptions of ISAR imaging are analysed, including
+the conditions under which polar reformatting may be neglected, the
+assumption that the target's rotation may be neglected during motion
+estimation, and the assumption that range profile alignment need only be
+accurate to one range bin.  These assumptions are found to impose some new
+sets of constraints on the target's motion and the ISAR image's resolution.
+
+This work illustrates how a mathematical approach using estimation theory
+can be used to obtain useful ISAR motion estimators and provide valuable
+insights into related motion estimators whose derivations otherwise could
+not be justified so easily.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\preface{Declaration}
+
+This thesis contains fewer than 100,000 words.
+
+
+\vspace{4cm}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\preface{Acknowledgements}
+
+I would like to thank my supervisors, Professor Rob Evans, Dr Zhi-Qiang Liu
+and Professor Terry Caelli, for their advice and encouragement, the Defence
+Science and Technology Organisation for its support, and especially Dr David
+Heilbronn, who introduced me to ISAR.

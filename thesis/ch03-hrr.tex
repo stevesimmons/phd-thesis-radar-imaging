@@ -1,0 +1,1092 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%			INVERSE SYNTHETIC APERTURE RADAR
+%
+%				  PhD Thesis
+%
+%		Stephen Simmons		simmons@ee.mu.oz.au
+%
+%	    Department of Electrical and Electronic Engineering
+%	    University of Melbourne, Parkville, 3052, Australia
+%
+% Chapter 3:	High Resolution Radar
+%
+%		started first draft:	13 Dec 1994
+%		finished first draft:	17 Dec 1994
+%		submitted:		
+%
+%%%%%%%%%%%%%%%%%%%%% Copyright (C) 1994 Stephen Simmons %%%%%%%%%%%%%%%%%%
+
+\chapter{High Resolution Radar}
+\label{hrr chp}
+
+\bigletter This chapter is an introduction to high resolution radar in
+general and radar imaging using inverse synthetic aperture radar in
+particular.  The constraints on radar imaging using synthetic apertures are
+examined by considering the implications of scaling up an optical imaging
+system operating in the visible spectrum to operate at radar wavelengths
+while maintaining the same angular resolution.  This suggests that a
+stationary radar may be used to obtain a high resolution radar image of a
+moving target if the target's motion forms a suitable synthetic aperture.
+
+After discussing the validity of representing distributed targets as
+non-interacting point scatterers, the radar waveforms and target motions
+necessary for high resolution images are derived.  This justifies the simple
+model that will be used for radar imaging for the remainder of the thesis.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{An Overview of SAR and ISAR}
+
+
+When a radar transmitter points its antenna in the direction of a 
+target\footnote{Because most radar engineers have a military background, the
+word ``target'' means any object of interest.}, the transmitter's power is
+distributed according to the antenna's radiation pattern.  Most power is
+directed in the approximate direction the antenna is pointing (this
+direction is called the antenna's boresight axis, or its line-of-sight), and
+the angular width of this main beam determines the radar's angular
+resolution.
+
+The radiation pattern of an antenna is wavelength-dependent and is given 
+by the Fourier transform of its aperture \cite{Bra86}.  For a one-dimensional
+aperture of length $D$, the relative power radiated at an angle $\theta$ to 
+the aperture's normal is
+\begin{equation}
+P(\theta)=\left|\sinc\left(\frac{D}{\lambda}\sin\theta\right)\right|^2
+\end{equation}
+For a circular antenna with diameter $D$, the relative power radiated at an 
+angle $\theta$ to the boresight axis is
+\begin{equation}
+P(\theta)=\left|\jinc\left(\frac{D}{\lambda}\sin\theta\right)\right|^2
+\end{equation}
+where $\jinc(x)=J_1(\pi x)/\pi x$ is the Bessel function-equivalent of 
+$\sinc(x)=\sin(\pi x)/x$.  
+
+Radiation patterns like these are characterized by a strong central lobe and
+weaker sidelobes.  The angular width $\Delta\theta$ of the mainlobe is determined by the 
+angular separation of the points at which the transmitted power density is half the 
+power density on the boresight axis.  This can be written as \cite[eq. (6.11)]{Sko90}
+\begin{equation}\label{hrr eqn:ant bw}
+\Delta\theta=K\frac{\lambda}{D}
+\end{equation}
+where the beamwidth factor $K$ is a constant, usually close to unity, which
+depends on the antenna's shape and the uniformity of its illumination.
+
+Taking $K=1$, the illumination from an antenna with a diameter $D$ spreads to
+a width of $R\lambda/D$ a distance $R$ from the radar.  A 60~cm antenna
+operated at X-band, where the wavelength is $\lambda=3$~cm, has a main 
+lobe that is 500~m across at a distance of 10~km.  This suggests that such a
+radar would have a cross-range resolution of about 500~m.
+
+However, with more sophisticated processing, it is possible to resolve
+radar scatterers on targets with a resolution better than 1~m.
+Scatterers at different distances from the radar are resolved by measuring
+differences in the times at which echoes from them are received.  Scatterers
+with identical ranges but separated in the cross-range direction may be
+resolved if there is some relative motion between the radar and the target 
+which changes these scatterers' ranges at different rates.
+
+This necessity for some relative motion between the radar and the target to
+change the target's aspect angle leads to synthetic aperture radar (SAR) and 
+inverse synthetic aperture radar (ISAR), the two basic forms of high 
+resolution radar imaging.
+
+In SAR imaging, the radar is carried aboard a moving platform, usually an
+aircraft or a satellite and the target is the surface of the Earth beneath or
+to the side of the platform.  SAR is widely used for remote sensing because
+it is able to produce ground maps with a width of 100~km and a resolution 
+of 10~m from hundreds of kilometres away.
+
+ISAR imaging uses a stationary radar to form an image of a moving target,
+usually an aircraft or a ship.  The target's changing aspect angle may be
+a result of it moving in a straight line or turning during manoeuvres.  If 
+ocean waves cause a ship to pitch or roll, this can also form a synthetic 
+aperture for radar imaging.  ISAR is used for target identification, so a
+resolution of 1~m or better is often needed.
+
+The principles behind SAR and ISAR are identical, but their implementations
+are slightly different because of differences in the target's and the
+radar's motions, the target's range and the desired resolution.  Since the
+relative motion between radar and target is crucial to the imaging process,
+their relative positions must be known to within a fraction of a radar
+wavelength.  Motion estimation is used to estimate any unwanted components 
+of the relative motion.  The effects of any unwanted movement are corrected
+using motion compensation before the radar image is formed.
+
+Motion estimation is more difficult for ISAR imaging than for SAR because
+the target's motion is not known {\em a priori\/}.  With SAR imaging, 
+the radar is the one that moves so an inertial navigation unit or
+global positioning system (GPS) can provide estimates of its position at all 
+times.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Deriving ISAR from Optical Imaging}
+\label{hrr sec:qual}
+
+
+Tutorials about ISAR tend to begin ``Consider a target that is slowly rotating
+at a distance $R$ from the radar \ldots''.  This does little to answer
+the question of why ISAR imaging is done like that, except for the circular
+reply ``because it works''.\footnote{Polya emphasizes the need to appreciate
+the {\em why\/} as well as the {\em how\/}.  As a student, he asked ``Yes,
+the solution seems to work, it appears to be correct; but how is it possible
+to invent such a solution?''\protect\cite[p. vi]{Pol57}.  This section aims
+to illustrate how ISAR is part of a natural progression from ordinary
+optical imaging.}  It is instructive to look at the requirements of radar
+imaging a little more directly, and see how these affect the design of a
+radar imaging system.  This qualitative derivation of ISAR begins with the
+human eye, an optical imaging system with which we all have direct
+experience.  By considering the implications of scaling up such an optical
+system to operate at radar wavelengths, ISAR is placed in its proper context
+among imaging systems.
+
+Consider a typical ISAR scenario where an X-band radar operating at 10~GHz
+(a wavelength of 3~cm) forms an image of an aircraft that is 10~km away. To
+be useful for target identification, the image needs a spatial resolution of
+about 1~m.  Consequently, the radar imaging system must be capable of
+resolving individual radar scatterers on the target with an angular
+separation of $\Delta\theta=\frac{1\ \rm m}{10\ \rm km}=10^{-4}$~radians.
+
+An angular resolution of $10^{-4}$~radians is comparable to the 
+diffraction-limited resolving power of the human eye.  The eye's aperture, 
+determined by the size of the pupil, has a diameter which varies between 2~mm 
+and 8~mm.  The diffraction-limited angular resolution of any optical system 
+is given by Rayleigh's criterion \cite{Goo68}
+\begin{equation}
+\Delta\theta=\frac{\lambda}{D}
+\end{equation}
+where $\lambda$ is the wavelength of the light and $D$ the diameter of the 
+aperture.  This is the same form as the beamwidth of an antenna in equation 
+(\ref{hrr eqn:ant bw}).  Taking the pupil's diameter as 5~mm and the 
+wavelength as 500~nm, that of blue-green light, the eye's angular resolution 
+is $\Delta\theta=\frac{500\ \rm nm}{5\ \rm mm}= 10^{-4}$~radians.
+
+From a signal processing perspective, imaging occurs in two fundamental
+steps, sampling and processing.  Light is reflected from the target and 
+strikes the imaging system, where it is sampled over the aperture.  These 
+samples are processed to form the image.  In an optical imaging system, such 
+as the eye, the lens is both the sampler and the signal
+processor.  Under the Fraunhofer approximation, the light striking the lens
+is the spatial frequency domain representation of the target's
+reflectivity.  The lens acts as a Fourier transformer, which focuses an 
+image of the target onto the image plane (onto the retina in the case of
+the eye).
+
+In principle, a radar imaging system could operate in the same way as this
+signal processing view of an optical system.  A radar transmitter could
+illuminate the target with X-band radiation, some of which would be
+scattered back towards a receiver which samples the reflected wavefront. The
+eye's 5~mm aperture at 500~nm is equivalent to an aperture some 300~m in
+diameter at the X-band wavelength of 3~cm.  To achieve the
+diffraction-limited resolution of $\Delta\theta=10^{-4}$ radians, the
+backscattered signal must be sampled over the whole aperture with sensor
+elements spaced no more than $\lambda/2$ apart \cite{Ste83b}.  Approximately
+$4(\Delta\theta)^{-2}=4\times 10^8$ sensors are needed, which is clearly 
+impractical.
+
+If the spacing between sensors is increased above the $\lambda/2$
+minimum, the total number of sensors may be greatly reduced.  The
+disadvantage of such a thinned array is that it cannot distinguish signals
+whose angles of incidence differ by 
+\begin{equation}
+\Delta\phi=\arcsin\left(n\frac{\lambda}{d}\right)
+\end{equation}
+for some integer $n$ where $d$ is the distance between elements in the
+array.  This is the same effect that causes grating lobes on a diffraction
+grating.
+
+An example of a thinned array is Raytheon's Cobra Dane radar. This is an
+L-band phased array radar with a 28.5~m diameter steerable antenna.  The
+antenna's diameter is $120\lambda$ at a wavelength of 24~cm, giving a
+theoretical angular resolution of $0.5^o$.  An unthinned array this size
+would require more than 45,000 elements.  The Cobra Dane array is thinned, and has
+only 15,360 elements \cite{Sko90}.
+
+Experiments on highly-thinned arrays have been performed by Steinberg.  His
+radio camera is a radar imaging system that achieves a high angular
+resolution with a very small number of receiving elements \cite{Ste81,Ste83}.
+The closely spaced sidelobes that normally accompany a thinned array are
+reduced in amplitude by selecting the positions of the receiving elements at
+random. Extensive discussions of the properties of random arrays may be
+found in Steinberg's books, \cite{Ste76} and \cite{Ste83b}, and the papers
+\cite{Att89}, \cite{Ste81} and \cite{Tah76}.
+
+An alternative to using many receivers in a large array is to have a smaller
+number of receivers that move over the whole of the array's aperture.  Over
+a period of time, the received signal is sampled over the entire aperture. 
+By correcting for any change in the target's position or orientation during
+the sampling period, the data is equivalent to that collected at one instant
+by a much larger number of receivers.  Now the reduction in the number of
+receivers comes at the expense of a much longer data acquisition time.
+
+The distance between samples can be made larger than $\lambda/2$ provided
+each receiver has an antenna whose beamwidth given by (\ref{hrr eqn:ant bw})
+is smaller than the spacing between the thinned array's lobes.  This
+requires the distance between samples over the aperture to be smaller than
+the receiving antennas' diameters.\footnote{This is similar to the problem
+of a tracking radar deciding whether a detection is due to a weak target
+in the mainlobe or a strong target in a sidelobe.  A secondary receiver,
+called a guard horn, with a very wide mainlobe, is used.  The ambiguity is
+resolved by comparing the strengths of the detected target given 
+by the main antenna and the guard horn \protect\cite{Sti83}.}
+
+Radio astronomy using very-long-baseline interferometry (VLBI) is a very
+good example of this time-sharing approach to imaging \cite{Coh73}.  A small
+number, usually between two and thirty, of widely separated radio telescopes
+are linked electronically to simulate an aperture whose size is equal to
+their separation.  Over a period lasting up to twelve hours, the Earth's
+rotation moves the radio telescopes so that samples can be acquired over
+most of the aperture, thus reducing the level of the sidelobes in the
+synthesized antenna's radiation pattern.  An impressive application of VLBI
+is the baseline of 8,000~km obtained by arraying radars in California,
+Massachusetts and the Crimea.  Earth-rotation aperture synthesis \cite{Fom73}
+gives an angular resolution better than $10^{-8}$ radians at a wavelength 
+of 10~cm.
+
+Because the angle of arrival of a plane wave is established from differences
+in the wave's phase at different receivers, it takes at least two receivers
+for VLBI.  A single receiver can be used only when the incoming radar
+signals maintain coherence over the whole time interval required to sample
+the aperture. Then the single receiver's measurement at the first position
+in the aperture can be used as a phase reference for measurements made at
+different positions within the aperture.  Astronomical radar sources,
+however, do not maintain coherence over the length of time that
+Earth-rotation synthesis requires, so a single receiver cannot be used in 
+interferometric radio astronomy.
+
+A fundamental difference between the imaging of interstellar objects and
+targets such as aircraft and ships is that the interstellar objects are
+radar sources, while aircraft and ships are radar reflectors.  Targets that
+are passive reflectors need a radar transmitter to illuminate them.  If the
+radar transmitter is coherent, radar imaging can be achieved with only a
+single receiver sampling within a larger aperture.  In fact, if the
+transmitter's oscillator is connected directly to the receiver, this may
+serve as the phase reference for each measurement.  Then the transmitter
+need be coherent over the time taken for a measurement at a single position
+within the aperture, not for the whole of the imaging period.  
+
+So far, this overview of the design principles behind radar imaging has
+indicated how a high resolution may be obtained in the two spatial
+dimensions perpendicular to the radar's line-of-sight.  The initial design
+requiring a very large number of receiving elements spread over a large
+two-dimensional aperture has been simplified to a single transmitter and
+receiver moving over the large two-dimensional aperture.  Decreasing the
+number of receiving elements has been offset by an increase in the time
+taken to acquire the measurements for the radar image.  
+
+However the design at this stage is still not practical for imaging moving 
+targets such as ships and aircraft.  It takes too long to move the radar and
+make the measurement at each position within the two-dimensional aperture.  
+Moving the radar is the most time consuming part of this, so to make the
+imaging feasible much of the radar's movement within the aperture has 
+to be eliminated.
+
+Two dimensions of measurements are needed to form a two-dimensional image,
+but there is no reason why both have to be spatial dimensions.  Close
+coupling between the radar transmitter and receiver---they often share the
+antenna---means that time delay can be used as one of the measurement
+dimensions.  If the transmitter sends out a short pulse, the signal measured
+at the receiver is the superposition of the pulse's reflections from the
+target's scatterers.  Each reflection is delayed by
+$2r_i/c$, the time it takes the pulse, propagating at the speed of light $c$,
+to travel the distance $r_i$ from the transmitter to the $i^{\rm th}$
+scatterer, and return to the receiver.  
+
+Therefore, the time delay from scatterers at different ranges can be used 
+as one of the measurement dimensions.  The aperture
+now need be large only in one spatial dimension, and the number of
+positions within the aperture's one spatial dimension where measurements 
+are made is the
+square-root of the number needed with the two-dimensional aperture.
+The image of the target lies in the plane containing the time-delay
+measurements and the one-dimensional aperture.  This plane is parallel to
+the radar's line-of-sight whereas before the image plane was normal to the
+radar's line-of-sight.  This gives one important difference in the images from
+a time-delay/linear synthetic aperture and a two-dimensional aperture such 
+as an optical system or Steinberg's radio camera: the time-delay/linear
+synthetic aperture's image is a plan view of the target, even though the
+target is viewed from a shallow angle.
+
+A very important example of radar imaging using a time-delay/linear synthetic 
+aperture is synthetic aperture radar, or SAR, used for mapping
+large areas of the Earth's surface.  The radar is carried on a moving
+platform, such as an aircraft or a satellite, and the platform's motion
+creates the synthetic aperture.  The Seasat-A synthetic aperture radar 
+orbited at an altitude of 780~km and produced ground maps with a width of
+100~km and a resolution of 25~m \cite[ch. 22]{Sko90}.
+
+An important point to note about SAR imaging is that the synthetic aperture
+is needed so that measurements can be made with the radar and the target at
+different relative positions and orientations.  This requirement can be met
+just as well if the radar is stationary and the target moves along the
+synthetic aperture.  These are just the conditions for ISAR.
+
+So, starting at a familiar optical imaging system, the trade-offs
+necessary for high resolution radar imaging have been discussed and 
+the conditions for ISAR imaging have been derived qualitatively.  Next, the
+process of radar scattering will be analysed to obtain a mathematical model
+for radar reflections.  This allows the constraints ISAR places on the radar 
+system and the target's motion to be calculated in a more quantitative way.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Radar Scattering Mechanisms}
+
+
+When a target such as an aircraft is illuminated by a radar transmitter, the
+reflected electromagnetic wave is a combination of reradiated fields due to
+a number of complex electromagnetic phenomena.  If the target's conductivity
+and permittivity are known perfectly, Maxwell's equations may be evaluated to
+give an exact description of the reflected wave. For real targets---all but
+a few simple geometric shapes---Maxwell's equations are too complex for an
+exact solution.  Simplified methods such as the method of moments,
+geometrical optics, physical optics or the geometrical theory of diffraction
+may be used to estimate the target's reflections.
+
+However in radar imaging, only a portion of the reflected wave is known and
+the target's structure must be estimated.  This is too complicated, and the
+measurements too incomplete, to solve even for the simplified methods
+mentioned above.  
+
+Radar imaging is made tractable by assuming an even simpler electromagnetic
+model: a target composed of point scatterers.  After analysing reflections
+from an isolated point scatterer, this model is generalized to a description
+of a target in terms of its two-dimensional reflectivity function $g(x,y)$.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Isolated Point Scatterers}
+
+
+The strength of the radar reflection from a point scatterer is determined by
+$\sigma$, its radar cross-section or RCS.  This is a measure of the
+scatterer's effective cross-sectional area, with units of ${\rm m}^2$.
+Suppose this point scatterer is located a distance $r$ from a radar that is
+transmitting a sinusoidal signal $p_t(t)$ with a frequency $\omega/2\pi$
+\begin{equation}\label{hrr eqn:pt(t)}
+p_t(t)=A\cos\omega t
+\end{equation}
+The incident wave striking the scatterer, $p_i(t)$, is $p_t(t)$ delayed by 
+$r/c$, where $c$ is the speed of light
+\begin{equation}
+p_i(t)=\frac{A}{\sqrt{4\pi r^2}}\cos\left(\omega\left[t-\frac{r}{c}\right]
+\right)
+\end{equation}
+The amplitude is attenuated by $4\pi r^2$ because the transmitter's fixed 
+power is being distributed over a spherical wavefront with surface area 
+$4\pi r^2$.
+
+When $p_i(t)$ is reflected from the scatterer, the backscattered waveform
+has a power density of $\sigma$ times the incident power density.  There may 
+also be a phase shift $\phi$ due to a discontinuity between the conductivity 
+and permittivity of the scatterer and free space.  Therefore the 
+backscattered wave is
+\begin{equation}
+p_b(t)=\frac{A\sqrt{\sigma}}{\sqrt{4\pi r^2}}
+\cos\left(\omega\left[t-\frac{r}{c}\right]+\phi\right)
+\end{equation}
+By the time this reflection reaches the radar antenna, there has been an
+additional time delay of $r/c$ and another attenuation of $\sqrt{4\pi r^2}$
+because the point scatterer radiates in all directions.  The received
+waveform is
+\begin{equation}
+p_r(t)=\frac{A\sqrt{\sigma}}{4\pi r^2}
+\cos\left(\omega\left[t-\frac{2r}{c}\right]+\phi\right)
+\end{equation}
+which can be written as
+\begin{equation}
+p_r(t)=\real{\frac{g}{r^2}\,e^{j\omega\left[t-\frac{2r}{c}\right]}}
+\end{equation}
+where the scatterer's radar reflectivity 
+\begin{equation}
+g=\frac{A}{4\pi}\sqrt{\sigma}\,e^{j\phi}
+\end{equation}
+incorporates the scatterer's RCS and phase shift, and for notational
+simplicity, the transmitter's amplitude and the factor of $4\pi$.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Reflections From a Distributed Target}
+
+
+This model of an isolated point scatterer will now be extended to the radar
+reflectivity of a distributed target. Define $g(x,y)\,dx\,dy$ to be
+the overall reflectivity of the differential region located at $(x,y)$ on 
+the target with extent $(dx,dy)$.  All coordinates are measured in a
+Cartesian coordinate system that has its origin at the target's centre and is
+fixed to the target.  The received signal due to this differential area is
+\begin{equation}
+dp_r(t)=\real{\frac{g(x,y)}{r_{xy}^2}\,
+e^{j\omega\left[t-\frac{2r_{xy}}{c}\right]}\,dx\,dy}
+\end{equation}
+where $r_{xy}$ is the distance from the radar to $(x,y)$.  By combining the
+received contributions from all parts of the target, the total received
+signal becomes
+\begin{equation}\label{hrr eqn:pr(t)}
+p_r(t)=\real{\int\!\!\int\frac{g(x,y)}{r_{xy}^2}\,
+e^{j\omega\left[t-\frac{2r_{xy}}{c}\right]}\,dx\,dy}
+\end{equation}
+where the integration is taken over the region occupied by the target.
+
+A number of assumptions are implicit in this model and its application to
+radar imaging \cite[ch. 9]{Rih69}:
+\begin{enumerate}
+\item The target is uniformly illuminated by the radar transmitter.
+\item $g(x,y)$ is independent of the target's orientation.
+\item $g(x,y)$ is independent of the radar's frequency $\omega$.
+\item The only scatterering mechanism is direct reflection; there are no
+multiple reflections, creeping waves or diffraction phenomena.
+\end{enumerate}
+
+In general, all of these assumptions are invalid.  Since radar targets are
+three-dimensional, part of the target may be obscured by other parts between
+it and the radar.  Shadowing like this is orientation-dependent, which
+immediately invalidates the second assumption.  Furthermore, even direct
+reflections are orientation-dependent. Reflections from flat surfaces are
+specular so a strong reflection is only apparent when the surface is normal
+to the radar's line-of-sight.\footnote{This was the rationale behind the
+faceted design of the F-117A Stealth Fighter.  The aircraft's skin is formed
+from flat surfaces oriented in small number of different directions. 
+Therefore an F-117A is nearly invisible unless viewed from one of 
+these directions \cite{Goo92}.}
+
+The third assumption is invalid because the reflections are only
+frequency-independent when the features on the target responsible for the
+scattering are large compared to the wavelength.  This can be seen in
+figure~3-1 of \cite{Bla86}, where the RCS of a conducting sphere is very
+oscillatory when the sphere's radius is smaller than about five wavelengths.
+
+The final assumption is also invalid because radar wavelengths are long
+enough to diffract around features on typical man-made targets.  Waves may
+diffract around one side of the target, emerge on the other side and
+travel back to the radar.  They may also interfere constructively or
+destructively behind the target with
+waves diffracting around the other side.  The incident radar wave also
+induces currents on the target's surface which cause creeping waves and
+other effects.  The result of some of these indirect propagation modes on an
+ISAR image is clearly shown in figure~4.39 of \cite{Men91}.
+
+Even though these four assumptions are generally not valid, they can be
+quite accurate under restricted circumstances.  If the target is viewed over
+a narrow range of viewing angles, $g(x,y)$ may be considered independent of
+orientation.  This also justifies the first assumption because scatterers
+that start in shadow are likely to remain shadowed if the target's
+orientation changes only slightly.  The frequency independence of $g(x,y)$
+is appropriate if the target is illuminated with waves whose wavelength
+varies little.  In other words, a narrow relative bandwidth---the ratio of
+bandwidth to centre frequency---should be used.  
+
+The final assumption is harder to justify, because multiple reflections and
+diffraction phenomena do occur.  It is difficult to distinguish reflections
+due to these phenomena from ordinary reflections so they get treated like
+direct reflections and appear as artifacts such as phantom scatterers at
+locations where there is no structural justification for them.  In figure~6
+of \cite{Zyw94}, multiple reflections inside the engine intakes of a Mirage 
+aircraft are manifested in an ISAR image as extra scatterers located at
+regularly increasing intervals in range from their true location.  Therefore
+the final assumption is replaced with an assumption that the target's
+estimated reflectivity combines the effects of direct reflections located at
+their correct positions and the effects of indirect reflections offset from
+their correct positions by amount attributable to the propagation phenomenon
+interacting with a particular part of the target's structure.
+
+
+In conclusion, it is assumed for the purposes of radar imaging that the 
+target's reflection can be modelled as
+\begin{equation}\label{hrr eqn:2D pr(t)}
+p_r(t)=\real{\int\!\!\int\frac{g(x,y)}{r_{xy}^2}\,
+e^{j\omega\left[t-\frac{2r_{xy}}{c}\right]}\,dx\,dy}
+\end{equation}
+where the spatial radar reflectivity function $g(x,y)$ is independent of the
+target's orientation and the radar frequency, at least over small changes in
+aspect angle and for frequencies within a small relative bandwidth.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{The Dynamic Range of Radar and Optical Images}
+
+
+People viewing ISAR images for the first time often are disappointed by the
+poor image quality compared to a photograph.  Partly this is because radar
+images of targets are usually taken from further away than photographs.  But
+partly it is because they do not appreciate the different information
+content caused by a five order-of-magnitude change in wavelength.
+
+Reflections in the visible spectrum from most objects are diffuse because
+the surface roughness is larger than the wavelength of visible light.
+Because even dark surfaces are diffuse scatterers, optical images have a
+relatively low dynamic range.  Radar wavelengths are large in comparison to
+the surface roughness, especially for man-made targets.  Therefore most
+radar reflections are specular, and radar images have such a high dynamic
+range that only the strongest specular scatterers are detectable above 
+noise and background clutter.
+
+Taking this reasoning to the extreme suggests an even simpler model.  This
+model, used in the superresolution approaches to ISAR imaging discussed in 
+section \ref{ii sec:sr}, leads to a model of a radar target as a small
+collection of ideal point scatterers.  The target's reflection using this 
+model is
+\begin{equation}\label{hrr eqn:pt sc pr(t)}
+p_r(t)=\real{\sum_{k=1}^K \frac{g_k}{r_k^2}\,
+e^{j\omega\left[t-\frac{2r_k}{c}\right]}}
+\end{equation}
+where there are $K$ discrete scatterers and the $k^{\rm th}$ scatterer has
+reflectivity $g_k$ and is located $r_k$ from the radar.
+
+
+%\tracingall %% REMOVE
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Achieving a High Range Resolution}
+
+
+Section~\ref{hrr sec:qual} established, at a qualitative level, that by
+sampling the time-delay response of a moving target over a period of time, a
+high resolution estimate of the target's radar reflectivity could be
+obtained.  In this section and the next, quantitative aspects of
+achieving a high resolution image in range and cross-range are examined.  
+This indicates the constraints that ISAR imaging imposes on the radar
+waveform and the target's motion.
+
+Consider the situation illustrated in figure~\ref{hrr fig:r res}, where 
+the distance between two radar scatterers, $A$ and $B$, and the radar are
+$r_A=r_0-d/2$ and $r_B=r_0+d/2$ respectively.  
+
+%============================================================================
+\begin{figure}
+\centering
+\caption{Geometry of a radar and two scatterers, $A$ and $B$, used to
+calculate the range resolution of a radar with bandwidth $\beta$.}
+\label{hrr fig:r res}
+
+\psset{unit=0.8cm}
+\begin{pspicture}(-0.5,-2.5)(12,3)
+% Dotted lines to indicate the axes
+\psline[linecolor=lightgray,linewidth=1pt]{-}(0,0)(12,0)
+\psline[linecolor=lightgray,linewidth=1pt]{-}(8,-2)(8,2)
+% The two scatterers and their labels
+\pscircle[linecolor=black,fillcolor=gray,fillstyle=solid](6,0){0.3}
+\uput[u](6,0.3){$A$}
+\pscircle[linecolor=black,fillcolor=darkgray,fillstyle=solid](10,0){0.3}
+\uput[u](10,0.3){$B$}
+% Finally the arrows and their labels
+\pcline[linecolor=black,linewidth=1pt]{<->}(0,-1.5)(8,-1.5)
+\naput{$r_0$} %% CHANGED FROM \lput*{:U}{$r_0$}
+\pcline[linecolor=black,linewidth=1pt]{<->}(6,1.5)(8,1.5)
+\naput{$\ds\frac{d}{2}$} %% CHANGED FROM \lput*{:U}{$\ds\frac{d}{2}$}
+\pcline[linecolor=black,linewidth=1pt]{<->}(8,1.5)(10,1.5)
+\naput{$\ds\frac{d}{2}$} %% CHANGED FROM \lput*{:U}{$\ds\frac{d}{2}$}
+% Now something for the radar at the left
+\psarc*[fillcolor=darkgray](0,0){0.625}{128}{232}
+\psellipse[fillstyle=solid,fillcolor=gray](-0.375,0)(0.15,0.5)
+\psline{cc-cc}(-0.375,-0.475)(0,0)
+\psline{cc-cc}(-0.5,0.25)(0,0)
+\psline{cc-cc}(-0.25,0.25)(0,0)
+\end{pspicture}
+
+\end{figure}
+%============================================================================ 
+
+If the radar transmits a short pulse $p_t(t)$, the received signal $p_r(t)$ is 
+the superposition of the reflections from the two scatterers
+\begin{equation}
+p_r(t)=g_A\,p(t-\tau_A)+g_B\,p(t-\tau_B)
+\end{equation}
+where $\tau_A=2r_A/c$ and $\tau_B=2r_B/c$ are the times it takes the pulse
+to reach each of the scatterers and return to the radar.  $g_A$ and $g_B$
+are the scatterers' reflectivities scaled to account for the $1/r^2$
+amplitude attenuation with range.  
+
+The two pulses may be separated, hence the two scatterers distinguished, if
+the trailing edge of the pulse reflected from $A$ arrives before the leading
+edge of the pulse reflected from $B$.  For a pulse $p_t(t)$ with duration
+$\Delta\tau$, this implies that
+\begin{equation}
+\tau_A+\Delta\tau<\tau_B
+\end{equation}
+which is equivalent to saying that 
+\begin{equation}
+\Delta\tau<\frac{2d}{c}
+\end{equation}
+or that scatterers separated by $d$ in range may only be resolved if
+\begin{equation}
+d>\frac{c\Delta\tau}{2}
+\end{equation}
+
+Since the bandwidth $\beta$ of a rectangular pulse is approximately equal to
+the reciprocal of its duration $\Delta\tau$, the range resolution 
+$\Delta r_r$ of such a pulsed radar is 
+\begin{equation}\label{hrr eqn:pulsed res}
+\Delta r_r=\frac{c\Delta\tau}{2}=\frac{c}{2\beta}
+\end{equation}
+
+ISAR's high range resolution requires very, very short pulses; a range 
+resolution of $\Delta r_r=1$~m means a pulse width of $\Delta\tau=6$~ns.  As
+the pulse width decreases, the peak transmitted power must increase so that
+the signal-to-noise ratio is not adversely affected.  At pulse widths small
+enough for ISAR imaging, the peak powers are very high.  In addition,
+magnetrons that are specially designed for very short pulses still have
+$\Delta\tau>50$~ns, so the best range resolution is $\Delta r_r=6$~m, which
+is not sufficient for most ISAR applications \cite[p. 104]{Weh87}.
+
+The solution is to transmit a waveform with a slowly changing instantaneous
+frequency that covers the required bandwidth over a long period of time. If
+the waveform's centre frequency is large compared with $\beta$, the relative
+bandwidth is small, which justifies assuming that the target's reflectivity 
+is independent of frequency.  As an example, a total bandwidth of 150~MHz
+corresponds to a range resolution of 1~m.  With a centre frequency of 10~GHz,
+the relative bandwidth is $\frac{150\ {\rm MHz}}{10\ {\rm GHz}}=1.5$\%. 
+This is small enough for the target's reflectivity to be considered uniform,
+and it is also small enough for an X-band antenna to radiate efficiently
+over the whole frequency range. 
+
+Two such wideband waveforms, chirps and stepped-frequency waveforms, will
+now be examined.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Chirp Waveforms}
+
+A waveform such as $e^{j2\pi(f_ct+\frac{1}{2}Kt^2)}$ for 
+$t\in[-T/2,T/2]$ is called a chirp \cite{Kla60} because the instantaneous 
+frequency
+\begin{equation}
+\frac{d}{dt}\left[f_ct+{\textstyle\frac{1}{2}}Kt^2\right]=f_c+Kt
+\end{equation}
+increases linearly from $f_c-KT/2$ to $f_c+KT/2$.  This is illustrated in
+figure~\ref{hrr fig:wideband waveforms}(a).  
+
+Consider what happens when a one-dimensional target is illuminated with the 
+chirp
+\begin{equation}\label{hrr eqn:chirp pt(t)}
+p_t(t)=\real{e^{j\left(\omega t+\alpha t^2\right)}}
+\end{equation}
+Here, following \cite{Mun83}, $\omega=2\pi f_c$ and $\alpha=\pi K$ 
+to reduce the number of symbols.
+
+%============================================================================
+\begin{figure}\centering
+\caption[Chirp and stepped-frequency waveforms.]{This shows two wideband 
+waveforms commonly used to obtain a high range resolution.  (a) is a chirp 
+waveform and (b) is a stepped-frequency waveform.  In both cases, the range
+resolution is $c/2\beta$ where $\beta$ is the waveform's bandwidth.}
+\label{hrr fig:wideband waveforms}
+
+% Chirp picture
+\psset{unit=0.6cm}
+\begin{pspicture}(-2,-1.25)(14,10)
+% First the axes and their labels
+\psaxes[linecolor=black,linewidth=1.5pt,ticks=none,labels=none]{<->}(0,0)(12,8)
+\uput[r](12,0){$t$}
+\uput[u](0,8){$f$}
+% Draw in the chirp
+\psline[linecolor=gray,linewidth=1.5pt]{-}(0,5)(2,7)(2,1)(10,7)(10,1)(12,3)
+% The dotted line at the centre of the chirp
+\psline[linecolor=black,linewidth=1pt,linestyle=dashed,dash=4pt 4pt]{-}(0,4)(6,4)(6,0)
+% And the labels with ticks
+\uput[l](0,7){$f_c+K\frac{T}{2}$}
+\psline[linecolor=black,linewidth=1pt]{-}(0,7)(0.15,7)
+\uput[l](0,4){$f_c$}
+\psline[linecolor=black,linewidth=1pt]{-}(0,4)(0.15,4)
+\uput[l](0,1){$f_c-K\frac{T}{2}$}
+\psline[linecolor=black,linewidth=1pt]{-}(0,1)(0.15,1)
+\uput[d](2,0){$-\frac{T}{2}$}
+\psline[linecolor=black,linewidth=1pt]{-}(2,0)(2,0.15)
+\uput[d](6,0){$0$}
+\psline[linecolor=black,linewidth=1pt]{-}(6,0)(6,0.15)
+\uput[d](10,0){$\frac{T}{2}$}
+\psline[linecolor=black,linewidth=1pt]{-}(10,0)(10,0.15)
+\end{pspicture}
+
+(a)\,\,A chirp waveform with duration $T$ and total bandwidth $\beta=KT$.
+
+
+% Stepped-frequency picture
+\psset{unit=0.6cm}
+\begin{pspicture}(-2,-1.25)(14,10)
+% First the axes and their labels
+\psaxes[linecolor=black,linewidth=1.5pt,ticks=none,labels=none]{<->}(0,0)(12,8)
+\uput[r](12,0){$t$}
+\uput[u](0,8){$f$}
+% Draw in the stepped-frequency
+\psline[linecolor=gray,linewidth=1.5pt]{-}(0,6)(1,6)(1,7)(2,7)(2,1)(3,1)(3,2)(4,2)(4,3)(5,3)
+\psline[linecolor=gray,linewidth=1.5pt]{-}(12,2)(11,2)(11,1)(10,1)(10,7)(9,7)(9,6)(8,6)
+% The dotted line filling in the missing steps
+\psline[linecolor=gray,linewidth=1.5pt,linestyle=dashed,dash=4pt 4pt]{-}(5,3)(8,6)
+% And the labels with ticks
+\uput[l](0,7){$f_0+(N-1)\Delta f$}
+\psline[linecolor=black,linewidth=1pt]{-}(0,7)(0.15,7)
+\uput[l](0,1){$f_0$}
+\psline[linecolor=black,linewidth=1pt]{-}(0,1)(0.15,1)
+\uput[d](2,0){$0$}
+\psline[linecolor=black,linewidth=1pt]{-}(2,0)(2,0.15)
+\uput[d](10,0){$NT$}
+\psline[linecolor=black,linewidth=1pt]{-}(10,0)(10,0.15)
+% Finally, an arrow to indicate \Delta f 
+\psline[linecolor=black,linewidth=1pt]{<->}(5,2)(5,1)
+\uput[r](5,1.5){$\Delta f$}
+\end{pspicture}
+
+(b)\,\,A stepped-frequency waveform with total bandwidth $\beta=N\Delta f$.
+\end{figure}
+%============================================================================ 
+
+
+Repeating the derivation of (\ref{hrr eqn:pr(t)}), but with a one-dimensional 
+target $g(r)$ instead of $g(x,y)$ and (\ref{hrr eqn:chirp pt(t)}) as $p_t(t)$ 
+rather than (\ref{hrr eqn:pt(t)}), shows that
+\begin{equation}\label{hrr eqn:chirp pr(t)}
+p_r(t)=\real{\int\frac{g(r)}{r^2}\,
+e^{j\left(\omega (t-2r/c)+\alpha(t-2r/c)^2\right)}\,dr}
+\end{equation}
+
+As shown in \cite{Mun89}, the target's reflectivity $g(r)$ may be recovered 
+by mixing $p_r(t)$ either with $2e^{j\omega t}$ or with the chirp
+itself.  The second method, known as deramp-FFT, is illustrated here.
+
+The received signal $p_r(t)$ is mixed with $e^{j\left(\omega (t-t_0)+
+\alpha(t-t_0)^2\right)}$, which is the complex form of the original chirp, 
+in a quadrature modulator.  The delay $t_0$ is equal to $2r_0/c$ where $r_0$
+is the target's range.  The output of the quadrature modulator is passed
+through a low-pass filter (LPF) to give in-phase and quadrature components
+$s_I(t)$ and $s_Q(t)$
+\begin{eqnarray}
+s_I(t)
+&=&{\rm LPF}\left\{p_r(t)\cdot 
+	2\cos\left(\omega (t-t_0)+\alpha(t-t_0)^2\right)\right\} \nn\\
+&=&\real{\int\frac{g(r)}{r^2}\,e^{j\left[\omega\left(t_0-2\frac{r}{c}\right)
+	-\alpha t_0^2+\alpha\left(2\frac{r}{c}\right)^2\right]}\,
+	e^{j2\alpha\left(t_0-\frac{2r}{c}\right)}\,dr} \\
+s_Q(t)
+&=&{\rm LPF}\left\{p_r(t)\cdot 
+	2\sin\left(\omega (t-t_0)+\alpha(t-t_0)^2\right)\right\} \nn\\
+&=&\imag{\int\frac{g(r)}{r^2}\,e^{j\left[\omega\left(t_0-2\frac{r}{c}\right)
+	-\alpha t_0^2+\alpha\left(2\frac{r}{c}\right)^2\right]}\,
+	e^{j2\alpha\left(t_0-\frac{2r}{c}\right)t}\,dr} 
+\end{eqnarray}
+This shows that the in-phase and quadrature components form the real and
+imaginary parts of $s(t)$ where
+\begin{eqnarray}
+s(t)
+&=&s_I(t)+js_Q(t)\nn\\
+&=&\int\frac{g(r)}{r^2}\,e^{j\left[\omega\left(t_0-2\frac{r}{c}\right)
+	-\alpha t_0^2+\alpha\left(\frac{2r}{c}\right)^2\right]}\,
+	e^{j2\alpha\left(t_0-\frac{2r}{c}\right)t}\,dr
+\end{eqnarray}
+which has the form of an inverse Fourier transform
+\begin{equation}
+s(t)
+=\int\left[\frac{g(r(f))}{r^2(f)}\,e^{j\phi(r(f))}\,\frac{dr}{df}\right]\,
+e^{j2\pi ft}\,df
+\end{equation}
+where
+\begin{equation}\label{hrr eqn:f and r}
+f=\frac{\alpha}{\pi}\left(t_0-\frac{2r}{c}\right)
+\end{equation}
+and 
+\begin{equation}
+\phi(r)=\omega\left(t_0-2\frac{r}{c}\right)
+-\alpha t_0^2+\alpha\left(\frac{2r}{c}\right)^2
+\end{equation}
+
+The duration of the chirp is $T$, so $s(t)$ is sampled over an interval of
+length $T$.  The Fourier transform's frequency resolution is $\Delta f=1/T$. 
+Using (\ref{hrr eqn:f and r}) and writing $\alpha=\pi K$, the range 
+resolution $\Delta r_r$ satisfies
+\begin{equation}
+\frac{1}{T}=\Delta f=K\frac{2\Delta r_r}{c}
+\end{equation}
+which is
+\begin{equation}
+\Delta r_r=\frac{c}{2KT}
+\end{equation}
+Now $KT$ is the spread of instantaneous frequencies swept out by the chirp
+during $[-T/2,T/2]$.  Associating this with the bandwidth $\beta$ of the
+chirp waveform, the range resolution can be expressed as
+\begin{equation}\label{hrr eqn:chirp res}
+\Delta r_r=\frac{c}{2\beta}
+\end{equation}
+which is the same as the expression obtained in (\ref{hrr eqn:pulsed res}).
+
+Note that the chirp's duration is $T$, which is $KT^2$ longer than
+the equivalent single pulse.  Therefore, for identical signal-to-noise
+ratios, the chirp's average power is $KT^2$ times lower than a single 
+pulse's peak power.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Stepped-Frequency Waveforms}
+
+Another type of wideband waveform is a stepped-frequency waveform
+\cite{Weh87}.  As shown in figure~\ref{hrr fig:wideband waveforms}(b), this
+consists of $N$ discrete frequencies $f_n$, where
+\begin{equation}
+f_n=f_0+n\Delta f\qquad\mbox{for $n=0,1,\ldots,N-1$}
+\end{equation}
+and each frequency is transmitted for the same duration. 
+
+When frequency $f_n$ is transmitted, the transmitted waveform is
+\begin{equation}
+p_{n,t}(t)=\cos(2\pi f_n t)=\real{e^{j2\pi f_n t}}
+\end{equation}
+Following the same reasoning as equations (\ref{hrr eqn:pt(t)}) to
+(\ref{hrr eqn:pr(t)}), the received waveform is
+\begin{equation}
+p_{n,r}(t)=\real{\int\frac{g(r)}{r^2}\,e^{j2\pi f_n(t-2r/c)}\,dr}
+\end{equation}
+This is passed through a quadrature modulator and low-pass filtered to give
+in-phase and quadrature components that are independent of time once
+reflections from the whole target have been received
+\begin{eqnarray}
+s_I(f_n)
+&=&{\rm LPF}\left\{p_{n,r}(t)\cdot 
+	2\cos\left(2\pi f_nt\right)\right\} \nn\\
+&=&\real{\int\frac{g(r)}{r^2}\,e^{-j2\pi f_n\cdot 2\frac{r}{c}}\,dr} 
+\end{eqnarray}
+and 
+\begin{eqnarray}
+s_Q(f_n)
+&=&{\rm LPF}\left\{p_{n,r}(t)\cdot 
+	2\sin\left(2\pi f_nt\right)\right\} \nn\\
+&=&\imag{\int\frac{g(r)}{r^2}\,e^{-j2\pi f_n\cdot 2\frac{r}{c}}\,dr} 
+\end{eqnarray}
+When these are added together in quadrature, 
+\begin{eqnarray}
+s(f_n)
+&=&s_I(f_n)+js_Q(f_n)\nn\\
+&=&\int\frac{g(r)}{r^2}\,e^{-j2\pi f_n\cdot \frac{2r}{c}}\,dr
+\label{hrr eqn:sf s(fn)}
+\end{eqnarray}
+which is the Fourier transform of the target's reflectivity, sampled
+at frequency $f_n$.
+
+Therefore, if the target's frequency responses $\{s(f_n)\}$ are measured for
+the $N$ evenly spaced frequencies in the stepped-frequency waveform, an
+inverse discrete Fourier transform (DFT) may be used to estimate the
+target's one-dimensional reflectivity $g(r)$.  
+
+The temporal resolution $\Delta t$ of an inverse DFT where the $N$ frequency
+samples are spaced by $\Delta f$ is $1/N\Delta f$.  The range resolution
+corresponding to this time resolution is $\Delta r_r=c\Delta t/2$,
+which is
+\begin{equation}
+\Delta r_r=\frac{c}{2N\Delta f}
+\end{equation}
+Since $N\Delta f$ is the total frequency covered by the stepped-frequency
+waveform, its bandwidth may be written $\beta=N\Delta f$ and the
+range resolution for a stepped-frequency waveform becomes
+\begin{equation}\label{hrr eqn:sf res}
+\Delta r_r=\frac{c}{2\beta}
+\end{equation}
+This is the same as the equivalent expressions for a single pulse and a 
+chirp given in (\ref{hrr eqn:pulsed res}) and (\ref{hrr eqn:chirp res}).
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Achieving a High Cross-Range Resolution}
+
+
+The second dimension for radar imaging is the cross-range dimension.  Since 
+the radar is only capable of distinguishing scatterers by differences in
+range, the target must move during the imaging interval in such a way that
+the range of each of the scatterers changes by a different amount.  This
+happens when the target's aspect angle changes over time, which is the
+situation illustrated in figure~\ref{hrr fig:cr res}.  Here a target
+composed of two radar scatterers, $A$ and $B$, separated by $d$ in
+cross-range, are rotating at angular speed $\omega$ at a distance $r_0$ from
+the radar.  With $\theta(t)=\omega t$ being the angle that $A$ and $B$ make
+with the cross-range, and assuming that $r_0\gg d$, the ranges of the
+scatterers are
+\begin{eqnarray}
+r_A(t)
+&=&\sqrt{(r_0-{\textstyle\frac{d}{2}}\sin\omega t)^2
+	+({\textstyle\frac{d}{2}}\cos\omega t)^2}		\nn\\
+&\approx&r_0-{\textstyle\frac{d}{2}}\sin\omega t		\\
+r_B(t)
+&=&\sqrt{(r_0+{\textstyle\frac{d}{2}}\sin\omega t)^2
+	+({\textstyle\frac{d}{2}}\cos\omega t)^2}		\nn\\
+&\approx&r_0+{\textstyle\frac{d}{2}}\sin\omega t		
+\end{eqnarray}
+
+%============================================================================
+\begin{figure}\centering
+\caption{Geometry of a radar and two scatterers, $A$ and $B$, used to
+calculate the cross-range resolution of a radar.}
+\label{hrr fig:cr res}
+
+\psset{unit=0.8cm}
+\begin{pspicture}(-0.5,-2.5)(12,3)
+% Dotted lines to indicate the axes
+\psline[linecolor=lightgray,linewidth=1pt]{-}(0,0)(12,0)
+\psline[linecolor=lightgray,linewidth=1pt]{-}(8,-2)(8,0.5)
+\rput{-60}(8,0){
+	\psline[linecolor=lightgray,linewidth=1pt]{-}(-2,0)(2,0)
+	% The two scatterers and their labels
+	\pscircle[linecolor=black,fillcolor=gray,fillstyle=solid](-2,0){0.3}
+	\uput[u](-2,0.3){$A$}
+	\pscircle[linecolor=black,fillcolor=darkgray,fillstyle=solid](2,0){0.3}
+	\uput[u](2,0.3){$B$}
+	% Finally the arrows and their labels
+	\pcline[linecolor=black,linewidth=1pt]{<->}(-2,1.5)(2,1.5)
+	\lput*{:U}{$d$}
+}
+% An arrow and a label to indicate the total rotation
+\psarc[linecolor=black,linewidth=1pt]{->}(8,0){1}{270}{300}
+\uput[l](8.2,-0.7){$\theta(t)=\omega t$}
+% Now something for the radar at the left
+\pcline[linecolor=black,linewidth=1pt]{<->}(0,-1.5)(8,-1.5)
+\lput*{:U}{$r_0$}
+% Now something for the radar at the left
+\psarc*[fillcolor=darkgray](0,0){0.625}{128}{232}
+\psellipse[fillstyle=solid,fillcolor=gray](-0.375,0)(0.15,0.5)
+\psline{cc-cc}(-0.375,-0.475)(0,0)
+\psline{cc-cc}(-0.5,0.25)(0,0)
+\psline{cc-cc}(-0.25,0.25)(0,0)
+\end{pspicture}
+\end{figure}
+%============================================================================ 
+
+If the target is rotating sufficiently slowly, $\sin\omega t\approx\omega t$
+during the period $t\in[-T/2,T/2]$.  When illuminated by a radar at a
+frequency $f$, the difference in phase between the two scatterers'
+reflections is
+\begin{equation}
+\Delta\theta(t)=2\pi f\frac{2d\sin\omega t}{c}\approx \fpc fd\omega t
+\end{equation}
+which has an instantaneous frequency of
+\begin{equation}
+\frac{1}{2\pi}\,\frac{d}{dt}\left[\fpc fd\omega t\right]=\frac{2fd\omega}{c}
+\end{equation}
+Since the rotating target's phase is observing for a total time $T$, a
+Fourier transform can determine the rate at which the phase changes with an
+accuracy of $\Delta f=1/T$.  Setting this to the phase's instantaneous
+frequency shows that
+\begin{equation}
+\frac{1}{T}=\frac{2fd\omega}{c}
+\end{equation}
+Rearranging to make $d$ the subject then replacing it with the cross-range 
+resolution $\Delta r_c$ gives
+\begin{equation}
+\Delta r_c=\frac{c}{2f\omega T}=\frac{c}{2f\Delta\theta}
+\end{equation}
+where $\Delta\theta$ is the target's total rotation during $[-T/2,T/2]$.
+Therefore, the cross-range resolution for the radar image is inversely
+proportional to the total change in the target's aspect angle during the
+imaging period.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Doppler Shifts}
+\label{hrr sec:doppler}
+
+When a target rotates, the scatterers on one side of the target move towards
+the radar and those on the other side move away.  With the target
+illuminated by a radar transmitting a single frequency, the phase of the
+radar reflection from each scatterer is shifted linearly in time due to that
+scatterer's changing range.  This appears as a shift in the frequency of
+the reflected wave.  
+
+It is a common misconception in the ISAR literature%
+%%%%%
+\footnote{See, for example, the criticisms of Harris \protect\cite{Har90a}
+and Munson \protect\cite{Mun89}.  Many papers, for example 
+\protect\cite{Aus84} and \protect\cite{Wal80}, and even Wehner's book
+\protect\cite{Weh87}, use the Doppler shift as an intuitive explanation of
+cross-range processing.  Even if they later analyse ISAR properly, this
+perpetuates the myth that ISAR is a result of the Doppler effect.  While
+some intuition is useful, false intuition hampers a proper understanding of
+ISAR.  Even when range-Doppler processing is properly described without the
+Doppler effect, the appearance of the word ``Doppler'' when there is no 
+Doppler effect causes more confusion.}
+%%%%%
+that cross-range processing separates targets in cross-range because their
+reflections have Doppler shifts due to each scatterer's velocity towards or
+away from the radar.  However, the apparent frequency shifts are due to each
+scatterers' changing position, not their velocities.  Soumekh \cite{Sou94}
+calls this a spatial Doppler phenomenon, to emphasize that it is not 
+velocity-related.  He also calls the Doppler effect a temporal Doppler
+phenomenon to make the distinction absolutely clear.
+
+Nevertheless, the scatterers are moving with radial components, so their
+temporal Doppler shifts should be considered.  This is studied by Wehner in
+\cite{Weh87} for ISAR and by Munson in \cite{Mun83} for SAR.  In the case of
+ISAR, each scatterer's radial velocity has two components, a radial velocity
+due to the translational movement of the target as a whole, and a radial
+velocity due to its rotation.  The former causes a slight shift of the whole
+target in the range direction, hence it can be ignored.  The latter
+component causes phase shifts which degrade the ISAR image.  From equation
+(30) of \cite{Mun83}, the Doppler effect can be neglected as long as $v_R$,
+the radial component of any scatterer's velocity due solely to the target's 
+rotation, satisfies
+\begin{equation}
+v_R<\frac{\lambda c}{8r_0}
+\end{equation}
+
+For a target 10~km from the radar imaged at X-band, this is a radial
+velocity of over 100~ms${}^{-1}$ just from the target's rotation.
+Therefore, the temporal Doppler effect may be neglected for many ISAR
+targets.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Imaging Two-Dimensional Moving Targets}
+
+The quantitative and qualitative analyses of ISAR in this chapter indicate
+that ISAR imaging requires a target whose motion causes a small change in its
+aspect angle over a period during which its radar reflection is repeatedly
+sampled by a wideband signal with a narrow relative bandwidth.
+
+Either a stepped-frequency or a chirp waveform could be used.  For
+simplicity, the remainder of this thesis will assume that a
+stepped-frequency waveform is used to sample the target's reflectivity at
+$N$ discrete frequencies
+\begin{equation}
+f_n=f_0+n\Delta f\qquad\mbox{for $n=0,1,\ldots,N-1$}
+\end{equation}
+
+Since the target is moving, its reflectivity $g(x,y)$ must be measured
+in a coordinate system that moves with the target.  The distance between the
+point $(x,y)$ on the target and the radar is now a function of time
+$r_{xy}(t)$.  Equation (\ref{hrr eqn:2D pr(t)}) for the signal received from
+a stationary two-dimensional target illuminated by a radar at frequency
+$f_n$ becomes
+\begin{equation}
+p_r(f_n,t)=\real{\int\!\!\int\frac{g(x,y)}{r_{xy}^2(t)}\,
+e^{j2\pi f_n\left[t-\frac{2r_{xy}(t)}{c}\right]}\,dx\,dy}
+\end{equation}
+for a moving target.
+
+Because quadrature demodulation and low-pass filtering assume a carrier
+of frequency $f_n$, phase shifts caused by changes in $r_{xy}(t)$ are
+too low a frequency to be affected and the 
+$e^{-j2\pi f_n\frac{2r_{xy}(t)}{c}}$ term passes through the demodulator
+unchanged.  Using the same steps as (\ref{hrr eqn:sf s(fn)}) with
+$r_{xy}(t)$ considered a constant, the frequency response of a moving
+target at time $t$ and at frequency $f$ is
+\begin{equation}\label{hrr eqn:s(f,t)}
+s(f,t)=\int\!\!\int\frac{g(x,y)}{r_{xy}^2(t)}\,
+e^{-j\fpc f r_{xy}(t)}\,dx\,dy
+\end{equation}
+where the region of integration includes the whole of the target.  Actually,
+the region is determined by the location of the target within the target's 
+mainlobe, the width of the mainlobe and the times at which the receiver's 
+output is sampled, but these should be set to cover the entire target.
+
+One final assumption about the target's frequency response will be made for
+convenience, although the effects of it can easily be compensated for.  The
+notation $s(f,t)$ for the target's frequency response at frequency $f$ and
+at time $t$ should really be written $s(f(t),t)$ to emphasize that $f(t)$ is
+actually a single-valued function determining which frequency in the
+stepped-frequency waveform is transmitted at which time.  By suppressing the
+``$(t)$'' in $f(t)$, it is implicitly stated that frequency response may be
+measured at any number of frequencies in one single instant of time.  This is
+not too unrealistic if the duration of each step in the stepped-frequency
+waveform is very short so that the stepped-frequency waveform repeats with a
+frequency that is high enough to capture the changes in the target's
+reflections with time.  This requires a fast digital frequency synthesiser 
+to generate the stepped-frequency waveform.
+
+Now, all that ISAR requires is suitable algorithms to estimate $g(x,y)$ from
+measurements of $s(f,t)$ taken over a set of discrete frequencies $\{f_n\}$ 
+at each of a set of discrete times $\{t_m\}$.  A number of ISAR inversion 
+algorithms suitable for different target motions are the subject of the next 
+chapter.  
+

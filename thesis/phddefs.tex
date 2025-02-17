@@ -1,0 +1,101 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%			INVERSE SYNTHETIC APERTURE RADAR
+%
+%				  PhD Thesis
+%
+%		Stephen Simmons		simmons@ee.mu.oz.au
+%
+%	    Department of Electrical and Electronic Engineering
+%	    University of Melbourne, Parkville, 3052, Australia
+%
+% PHDDEFS.TEX		Global definitions for thesis
+%
+%%%%%%%%%%%%%%%%%%%%% Copyright (C) 1994 Stephen Simmons %%%%%%%%%%%%%%%%%%
+
+
+\def\C{{\cal C}}		% Complex plane
+\def\R{{\cal R}}		% Real line
+
+\def\r{{r}}			% Variable used to find \dr
+\def\ro{{r_0}}			% Local minimum 
+\def\dro{\epsilon_r}		% Error in position of local minimum 
+\def\dr{{\Delta r}}		% Unknown radial displacement
+\def\rML{\widehat{r}_{ml}}	% ML estimator of \dr
+\def\rMLV{\sigma^2_{r_{ml}}}	% Variance of ML estimator of \dr
+\def\rMAP{\widehat{r}_{map}}	% MAP estimator of \dr
+\def\rWH{\widehat{r}}		% General estimator of \dr
+\def\px#1#2{{}p_{#1}\left(#2\right)} % pdf of x #1
+\def\noise{{w}} 		% Single letter to indicate noise
+\def\na#1{{\noise_{1,#1}}}	% Noise process 1
+\def\nb#1{{\noise_{2,#1}}}	% Noise process 2
+\def\nv{{\sigma^2_{\noise}}}	% Noise variance
+\def\np#1{{\sigma^{#1}_{\noise}}}   % Noise s.d. to arbitrary power
+\def\npML#1{{\widehat{\sigma}^{#1}_{\noise,ml}}}   % MLE of noise s.d. to arbitrary power
+\def\md{\vect{x}}		    % Set of measured data
+\def\up{\theta}			    % Unknown parameters
+\def\upML{\widehat{\theta}_{ml}}    % ML estimate of unknown parameter
+\def\upMAP{\widehat{\theta}_{map}}  % MAP estimate of unknown parameter
+\def\upWH{\widehat{\theta}}  	    % Estimate of unknown parameter
+\def\uvp{\vect{\theta}}		    % Vector of unknown parameters
+\def\ui#1{\theta_{#1}}		    % Unknown parameter #1
+\def\uiWH#1{\widehat{\theta}_{#1}}  % Estimate of unknown parameter #1
+\def\uvpML{\widehat{\uvp}_{ml}}  % ML estimate of vector of unknown parameters
+\def\uvpWH{\widehat{\uvp}}  % Estimate of vector of unknown parameters
+\def\uiML#1{\widehat{\theta}_{#1,ml}}  % ML estimate of unknown parameter #1
+\def\sML#1{\widehat{s}_{#1,ml}}     % ML estimate of s_{#1}
+\def\nvML{\widehat{\sigma}^2_{\noise,ml}} % ML estimate of noise variance
+
+
+\def\infmat#1{\vect{I}(#1)}	% Fisher information matrix I(.)
+\def\invinfmat#1{\vect{I}^{-1}(#1)}	% Inverse of Fisher information matrix I(.)
+\def\covmat#1{\vect{C}(#1)}	% Covariance matrix C(.)
+\def\vect#1{{\bf #1}}			% Vector
+\def\real#1{\Re\left\{#1\right\}}	% Real part
+\def\imag#1{\Im\left\{#1\right\}}	% Imaginary part
+\def\conj#1{\overline{#1}}		% Complex conjuagete
+\def\infint{{\int_{-\infty}^{\infty}}}
+
+\def\lcm#1{{\mathop{\rm LCM}\nolimits\left\{#1\right\}}} % LCM
+\def\Var#1{{\mathop{\rm Var}\nolimits\left\{#1\right\}}} % Variance
+\def\Cov#1{{\mathop{\rm Cov}\nolimits\left\{#1\right\}}} % Covariance 
+\def\erfc#1{{\mathop{\rm erfc}\nolimits\left(#1\right)}} % Compl. error function
+\def\E#1{{\mathop{\rm E}\nolimits\left\{#1\right\}}}	 % Expectation
+\def\sinc{{\mathop{\rm sinc}\nolimits}}	% Sinc	
+\def\jinc{{\mathop{\rm jinc}\nolimits}}	% Jinc (Bessel fn equivalent of sinc)
+\def\sgn{{\mathop{\rm sgn}\nolimits}}	% Signum function
+\def\pr#1{p\left(#1\right)}		% Probability density function
+\def\prs#1#2{p_{#1}\left(#2\right)}	% PDF with a subscript
+%\def\e#1{{\exp\left({#1}\right)}}	% Exponential
+\def\e#1{{e^{#1}}}			% Exponential
+\def\fpc{{\frac{4\pi}{c}}}		% 4Pi/c
+\def\fav{{\overline{f}}}		% f with a line above
+\def\df{{\Delta f}}			% df
+\def\kav{{\overline{k}}}		% k with a line above
+\def\dk{{\Delta k}}			% dk
+\def\conv{{\star}}			% Convolution operator
+\def\pdf{p.d.f.{}}			% Use \pdf as \pdf\ in text.
+
+\def\nn{{\nonumber}}	  	% Prevent numbered line in eqnarray
+\def\del{{\partial}}	  	% Partial derivative 'd'
+\def\ds{\displaystyle}		% Force limits above and below
+
+
+\def\CR{{Cram\'{e}r-Rao\ }}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% These definitions are needed to make the \uvp and \uvpML come out bold.
+% in both normal sizes and in subscripts.  If this causes problems
+% (for example, if \boldmath is used), comment out this section and the 
+% \uvp will be the wrong size in subscripts.
+%	These hacks are inelegant.  Presumable LaTex2e has a better way
+% of doing this.
+
+\RequirePackage{bm}
+\RequirePackage{bm}
+
+\def\uvp{\bm{\theta}}
+\def\UVP{\bm{\Theta}}
+\def\vect#1{\bm{#1}}
+\def\bayeserror{\bm{\epsilon}}
+

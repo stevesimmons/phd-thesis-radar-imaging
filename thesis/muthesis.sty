@@ -1,0 +1,334 @@
+% Style file for Stephen's thesis
+% This complies with the regulations governing University of Melbourne theses
+%
+% Copyright 1994 Stephen Simmons 
+% 23 Tourello Avenue, Hawthorn East, Victoria, 3123. 
+% phone: (03) 882-2115	  email: simmons@ee.mu.oz.au
+%
+% The main file should begin with \documentstyle[muthesis,12pt]{book}
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{muthesis}[2025/02/17 Updated thesis style for LaTeX2e]
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Define appropriate dimensions for use with A4 paper
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\oddsidemargin=4cm
+\evensidemargin=3cm
+\advance\oddsidemargin by -1in		% Make adjustments for 1in offset
+\advance\evensidemargin by -1in		% Make adjustments for 1in offset
+\textwidth=14cm
+\marginparwidth=2.2cm
+\marginparsep=0.3cm
+\topmargin=3cm\advance\topmargin by -1in
+\headheight=12pt\advance\headheight by 3.5pt
+\headsep=0.275in
+\topskip=12pt\advance \topskip by 3.5pt
+\textheight=42\baselineskip\advance\textheight by \topskip
+
+% Font selection (replacing old font commands)
+\RequirePackage{times} % Use Times New Roman-like font
+
+%%%%%%% Line spacing options
+%%%%%%\RequirePackage{setspace}
+%%%%%%\newcommand{\singlespaced}{\singlespacing}
+%%%%%%\newcommand{\doublespaced}{\doublespacing}
+%%%%%%
+
+\def\singlespaced{} % Single spacing is the default now
+\def\doublespaced{} % Single spacing is the default now
+
+%%%%%%%\def\singlespaced{\def\baselinestretch{1}\@normalsize}
+%%%%%%%\def\doublespaced{\def\baselinestretch{1.3}\@normalsize}
+%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%% Handle double-spacing, with a hack to make footnotes and float captions
+%%%%%%% single-spaced.  These two macros have been copied from the SUTHESIS.STY
+%%%%%%% document style for Stanford University theses.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%\doublespaced				% Almost double-spaced
+%%%%%%
+%%%%%%% Redefine the macro used for floats (including figures and tables)
+%%%%%%% so that single spacing is used.
+%%%%%%% (Note \def\figure{\@float{figure}set single spacing} doesn't work
+%%%%%%% because figure has an optional argument)
+%%%%%%\def\@xfloat#1[#2]{\ifhmode \@bsphack\@floatpenalty -\@Mii\else
+%%%%%%   \@floatpenalty-\@Miii\fi\def\@captype{#1}\ifinner
+%%%%%%      \@parmoderr\@floatpenalty\z@
+%%%%%%    \else\@next\@currbox\@freelist{\@tempcnta\csname ftype@#1\endcsname
+%%%%%%       \multiply\@tempcnta\@xxxii\advance\@tempcnta\sixt@@n
+%%%%%%       \@tfor \@tempa :=#2\do
+%%%%%%                        {\if\@tempa h\advance\@tempcnta \@ne\fi
+%%%%%%                         \if\@tempa t\advance\@tempcnta \tw@\fi
+%%%%%%                         \if\@tempa b\advance\@tempcnta 4\relax\fi
+%%%%%%                         \if\@tempa p\advance\@tempcnta 8\relax\fi
+%%%%%%         }\global\count\@currbox\@tempcnta}\@fltovf\fi
+%%%%%%    \global\setbox\@currbox\vbox\bgroup 
+%%%%%%    \singlespaced
+%%%%%%    \boxmaxdepth\z@
+%%%%%%    \hsize\columnwidth \@parboxrestore}
+%%%%%%
+%%%%%%% Redefine the macro used for footnotes to use single spacing
+%%%%%%\long\def\@footnotetext#1{\insert\footins{\singlespaced\footnotesize
+%%%%%%    \interlinepenalty\interfootnotelinepenalty 
+%%%%%%    \splittopskip\footnotesep
+%%%%%%    \splitmaxdepth \dp\strutbox \floatingpenalty \@MM
+%%%%%%    \hsize\columnwidth \@parboxrestore
+%%%%%%   \edef\@currentlabel{\csname p@footnote\endcsname\@thefnmark}\@makefntext
+%%%%%%    {\rule{\z@}{\footnotesep}\ignorespaces
+%%%%%%      #1\strut}}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Fix up spacing in eqnarray environments
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% I think the extra spacing around the = in eqnarray and eqnarray*
+% environments looks ugly.  This corrects it!
+\let\mut@eqnarray=\eqnarray
+\let\mut@endeqnarray=\endeqnarray
+\def\eqnarray{\begingroup\arraycolsep=0.278ex\mut@eqnarray}
+\def\endeqnarray{\mut@endeqnarray\endgroup}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Define theorems, lemmas and conjectures, all numbered within chapters
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\newtheorem{algorithm}[theorem]{Algorithm}
+\newtheorem{problem}[theorem]{Problem}
+
+\def\floatpagefraction{0.66}
+
+% The proof environment can be used to prove a theorem etc.
+\def\finishproof{\hspace*{\fill}\rule{2mm}{2mm}}
+\newenvironment{proof}{\medskip\noindent{\em Proof:\/}\rm}{\finishproof}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Allow a draft mode 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\draft{
+  % Make labels appear in the left-hand margin
+  % This requires a small \tt font (normally available only in 10pt)
+  \font\smalltt=cmtt10 at 6pt
+    \def\strutdepth{\dp\strutbox}
+    \def\marginallabel##1{\strut\vadjust{\kern-\strutdepth
+    	\vtop to \strutdepth{\baselineskip\strutdepth\vss\llap{##1}\null}}}
+    \let\mut@label=\label
+    \def\label##1{\marginallabel{\smalltt\noexpand{##1}\quad}\mut@label{##1}}
+  % Mark overfull boxes
+    \overfullrule 5pt
+  % In draft mode, print "Draft:" and the date in the header of each chapter
+  \gdef\mu@chapterhead{Draft: \today}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Page styles
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Normal heading
+\def\ps@thesis{
+  \let\@mkboth=\markboth
+  \def\@oddfoot{}\def\@evenfoot{}%       No feet.
+  \def\@evenhead{\vbox{\hbox to \hsize {\bf\thepage\hfil$\smash{\hbox{\leftmark}}$\hbox{}}\kern3.5pt\hbox to \hsize{\hrulefill}}}% Left heading.
+  \def\@oddhead{\vbox{\hbox to \hsize {\bf\hbox{}$\smash{\hbox{\rightmark}}$\hfil\thepage}\kern3.5pt\hbox to \hsize{\hrulefill}}}% Right heading.
+  \def\chaptermark##1{\markboth{\ifnum\c@secnumdepth >\m@ne \@chapapp\ \thechapter. \ \fi ##1}{}}%
+  \def\sectionmark##1{\markright{\ifnum\c@secnumdepth >\z@\thesection. \ \fi ##1}}
+  \def\appendixmark##1{\markright{\ifnum\c@secnumdepth >\z@\theappendix. \ \fi ##1}}
+}
+
+% Heading for first page of each chapter
+\def\ps@chapter{
+  \def\@evenhead{\vbox{\hbox to \hsize {\bf\thepage\hfil$\smash{\hbox{\mu@chapterhead }}$}\kern3.5pt\hbox to \hsize{\hrulefill}}}% Left heading.
+   \def\@oddhead{\vbox{\hbox to \hsize {\bf\hbox{}$\smash{\hbox{\mu@chapterhead }}$\hfil\thepage}\kern3.5pt\hbox to \hsize{\hrulefill}}}% Right heading.
+}
+
+% Putting nothing in created errors.
+\def\mu@chapterhead{}
+
+% Heading with just a line; no page number
+\def\ps@lineonly{
+  \def\@evenhead{\vbox{\hbox to \hsize {\bf\thepage\hfil}\kern3.5pt\hbox to \hsize{\hrulefill}}}% Left heading.
+%  \def\@evenhead{\vbox{\hbox to \hsize {\phantom{\thepage}}\kern3.5pt\hbox to \hsize{\hrulefill}}}% Left heading.
+  \def\@oddhead{\vbox{\hbox to \hsize {\hfil\bf\thepage}\kern3.5pt\hbox to \hsize{\hrulefill}}}% Right heading.
+%  \def\@oddhead{\vbox{\hbox to \hsize {\phantom{\thepage}}\kern3.5pt\hbox to \hsize{\hrulefill}}}% Right heading.
+}
+
+% This redefines the \chapter in BK12.STY to keep the headings
+\def\chapter{\cleardoublepage      % Starts new page on the RHS
+  \thispagestyle{chapter}%   % Page style of chapter page is no longer 'plain'
+  \global\@topnum\z@      % Prevents figures from going at top of page.
+  \@afterindentfalse      % Suppresses indent in first paragraph.
+  \secdef\@chapter\@schapter % Change to \@afterindenttrue to have indent.
+}
+
+% Make chapter headings single spaced
+\def\@makechapterhead#1{%
+  \vspace*{50\p@}%
+  { \singlespaced		     		% This bit is new
+    \parindent \z@ \raggedright
+    \ifnum \c@secnumdepth >\m@ne
+      \huge\bf \@chapapp{} \thechapter
+      \par
+      \vskip 20\p@ \fi
+    \Huge \bf
+    #1\par
+    \nobreak
+    \vskip 60\p@				% Gap changed from 40 to 60 pt
+  }}
+
+\def\@makeschapterhead#1{%
+  \vspace*{50\p@}%
+  { \singlespaced				% This bit is new too.
+    \parindent \z@ \raggedright
+    \Huge \bf
+    #1\par
+    \nobreak
+    \vskip 40\p@
+  }}
+
+% This is the default pagestyle
+\pagestyle{thesis}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Define an appendix that operates like a section.
+% Section 1 in ch.2 is section 2.1.  Appendix 1 in ch.2 is appendix 1A.
+% Each appendix is on a new page with a heading midway between that of a 
+% section and a chapter.
+\let\mu@section=\section
+\def\section{\def\thesection{\thechapter.\arabic{section}}\mu@section}
+\newcounter{appendix}[chapter]
+\def\theappendix{\thechapter\Alph{appendix}}
+\def\appendix{\stepcounter{section}\def\thesection{\theappendix}
+\@startsection {appendix}{1}{\z@}{-3.5ex plus-1ex minus
+    -.2ex}{2.3ex plus.2ex}{\reset@font\Large\bf  }}
+\def\l@appendix{\@dottedtocline{1}{1.5em}{2.3em}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Handle the preamble.
+% This has the following sections, to which the following fields apply:
+%	\titlepage
+%		\title{}		Full title of the thesis
+%		\author{full name} or \author[short name]{full name}
+%		\qualifications{} 	Author's qualifications
+%		\department{}		
+%		\university{}
+%		\submissiondate[]{}	\today if blank.  The optional argument
+%					is the year for the copyright notice
+%		\fulfilment{}		Text like "Submitted in fulfilment..."
+%		\acidfree		Prints two title pages, one with 
+%					"Produced on acid-free paper" at the bottom
+%	\copyrightnotice
+%	\preface{Abstract}
+%	\preface{Declaration}
+%	\preface{Acknowledgements}
+%	\tableofcontents
+%	\listoffigures
+%	\listoftables
+%	\endpreface			Sets pagenumbering back to arabic
+% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\author{\@ifnextchar[{\mu@twoauthor}{\mu@oneauthor}}
+\def\mu@twoauthor[#1]#2{\gdef\@author{#2}\gdef\@shortauthor{#1}}
+\def\mu@oneauthor#1{\gdef\@author{#1}\gdef\@shortauthor{#1}}
+\def\qualifications#1{\gdef\@qualifications{#1}}
+\def\department#1{\gdef\@dept{#1}}
+\def\university#1{\gdef\@uni{#1}}
+\def\submissiondate{\@ifnextchar[{\mu@datewithyear}{\mu@datewithoutyear}}
+\def\mu@datewithyear[#1]#2{\gdef\@copyrightyear{#1}\gdef\@subdate{#2}}
+\def\mu@datewithoutyear#1{\gdef\@subdate{#1}}
+\def\fulfilment#1{\gdef\@fulfil{#1}}
+% This prints out one ordinary titlepage, then a second one with
+% the acid-free notice.
+\def\acidfree{\let\mu@titlepage=\titlepage\gdef\titlepage{\mu@titlepage
+  \gdef\@acidfree{Produced on acid-free paper}\mu@titlepage}
+}
+\def\@title{}
+\def\@author{}
+\def\@shortauthor{}
+\def\@qualifications{}
+\def\@dept{Department of Electrical and Electronic Engineering,}
+\def\@uni{University of Melbourne,\\Parkville 3052, Australia.}
+\def\@subdate{\today}
+\def\@copyrightyear{\uppercase\expandafter{\romannumeral\year}}
+\def\@fulfil{Submitted in total fulfilment\\of the requirements of the\\
+degree of Doctor of Philosophy}
+\def\@acidfree{\vphantom{There is nothing here!}}
+
+% This is the definition of the titlepage
+\def\titlepage{%
+  \thispagestyle{empty}%
+  \setcounter{page}{0}
+  \vspace*{1in}
+  \begin{center}
+    \singlespaced
+    \Huge\bf\@title\par
+    \vfill\vfill
+    \Large\bf\@author\par
+    \large\@qualifications\par
+    \vfill\vfill
+    \large\@subdate\par
+    \vfill\vfill
+    \normalsize{\em\@fulfil}\par
+    \vfill\vfill
+    \normalsize\@dept\par
+    \normalsize\@uni\par
+    \vfill
+    \normalsize\em\@acidfree
+  \end{center}
+  \clearpage
+}
+
+% Typeset a copyright notice.  If an optional argument is supplied with
+% the submission date, that is used for the year (without any further
+% formatting).  Otherwise \@copyrightyear is the current year in uppercase
+% Roman numerals.  
+\def\copyrightnotice{
+  \setcounter{page}{0}
+  \thispagestyle{empty}
+  \mbox{}\vfill
+  \begin{center}
+    \copyright\ \@copyrightyear\hspace{0.8cm}\@shortauthor
+  \end{center}
+  \vfill\clearpage
+}
+
+% At the start of the preface, change the page numbering to lower case Roman.
+% Also define \preface and \endpreface to ensure that \startpreface is used.
+\def\startpreface{\pagenumbering{roman}
+  % For sections in the preface, such as acknowledgements and the abstract,
+  % number the pages with Roman numerals and include in the table of contents.
+  \def\preface##1{%
+    \thispagestyle{lineonly}
+    \chapter*{##1}
+    \thispagestyle{lineonly}
+    \pagestyle{lineonly}
+    \addcontentsline{toc}{chapter}{##1}
+  }
+  % At the end of the preface, change the page numbering back to Arabic
+  \def\endpreface{\clearpage\pagestyle{thesis}\pagenumbering{arabic}}
+}
+  
+% Make the first letter of a chapter BIG.  This has been adapted from the
+% \PARstart macro in the IEEE Transactions style file IEEETRAN.STY.
+\def\bigletter#1{
+  \begingroup
+    \def\par{\endgraf\endgroup\lineskiplimit=0pt}
+    \setbox2=\hbox{\uppercase{#1} }\newdimen\tmpht \tmpht \ht2
+    \advance\tmpht by \baselineskip\font\hhuge=cmr10 at \tmpht
+    \setbox1=\hbox{{\hhuge #1}}
+    \count7=\tmpht \count8=\ht1\divide\count8 by 1000 \divide\count7 by\count8
+    \tmpht=.001\tmpht\multiply\tmpht by \count7\font\hhuge=cmr10 at \tmpht
+    \setbox1=\hbox{{\hhuge #1}} \noindent \hangindent1.01\wd1
+    \hangafter=-2 {\hskip-\hangindent \lower1\ht1\hbox{\raise1.0\ht2\copy1}%
+    \kern-0\wd1}\lineskiplimit=-1000pt}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Wish-list:
+%	Subfigure.sty
+%	Header for chapter*
+% 	Commands to form glossary
+%	Multicite.sty
+%	Subequation.sty
+
+

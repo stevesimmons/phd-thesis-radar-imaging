@@ -1,0 +1,106 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%       MOTION ESTIMATION FOR INVERSE SYNTHETIC APERTURE RADAR IMAGING
+%
+%				  PhD Thesis
+%
+%		Stephen Simmons		simmons@ee.mu.oz.au
+%
+%	    Department of Electrical and Electronic Engineering
+%	    University of Melbourne, Parkville, 3052, Australia
+%
+%
+%			   AN AGONY IN THREE FITS
+%			   ----------------------
+% 	Wrote LaTeX style:	15-18 Sep 1994
+% 	Fit the First:		30 Sep-9 Oct 1994
+%	Fit the Second:		6 Nov-10 Nov 1994
+%	Fit the Third:		13 Dec 1994-6 Jan 1995
+%	Completed:		Fri 6 Jan 1995
+%	Submitted:		Mon 9 Jan 1995
+%
+%%%%%%%%%%%%%%%%%%%%% Copyright (C) 1995 Stephen Simmons %%%%%%%%%%%%%%%%%%
+%
+% LEN  DFC  PRL  FILE      	TITLE
+%--------------------------------------------------------------------------------
+%   8  xx     5  CH01-IN	Introduction
+%  11  xx     8  CH02-MP	Mathematical Preliminaries
+%  23  xx    10  CH03-HRR   	High Resolution Radar
+%  27  xx     0  CH04-II	ISAR Imaging
+%  22  xx    20  CH05-MC	Motion Compensation and Motion Estimation
+%  15  xx    17  CH06-ML	Maximum Likelihood Motion Estimation
+%  23  xx    20  CH07-EE	Efficient Evaluation of the ML Motion Estimator
+%  31  xx    20  CH08-SP	Statistical Properties
+%  11  xx    20  CH09-DO	Deriving Other Motion Estimators
+%  33  xx     9  CH10-MRC   	Motion and Resolution Constraints
+%   7  xx     3  CH11-CO	Conclusion
+% -------------
+% 211  BB0  132	
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{phddefs}
+
+\RequirePackage{pdfmanagement-testphase}
+\DeclareDocumentMetadata{}
+
+% Vector CM fonts
+
+% Uncomment these lines if running ordinary latex.  Leave them commented if
+% a TeX .FMT file has been created using MUTHESIS.TEX.
+%\documentstyle[muthesis,12pt,epsf]{book}
+\documentclass[12pt]{book}
+\usepackage{muthesis}
+\usepackage{epsf}
+
+\usepackage{fontspec}
+\setmainfont{CMU Serif}
+\setsansfont{CMU Sans Serif}
+\setmonofont{CMU Typewriter Text}
+
+\usepackage{graphicx}
+\usepackage{pstricks, pst-plot}
+\usepackage{pst-node}
+\special{pdf:direct /AllowTransparency true}
+%\input{pstricks.bug}
+
+%\draft
+
+\begin{document} %% New
+
+\title{Motion Estimation for Inverse Synthetic Aperture Radar Imaging}
+\author[S. E. Simmons]{Stephen Edward Simmons}
+\qualifications{B.Sc. (1992)\\ B.E. (Elec) (1992)\\University of Melbourne}
+\submissiondate{January 1995}
+
+\acidfree
+
+%% REmoved \begin{document}
+\titlepage
+\copyrightnotice
+\startpreface
+\input{ch00-pre}	
+\singlespaced
+\tableofcontents
+\listoffigures
+\doublespaced
+%\listoftables
+\endpreface
+
+%\PSTricksOff
+%\setcounter{chapter}{7}
+\input{ch01-in}	
+\input{ch02-mp}        
+\input{ch03-hrr}	
+\input{ch04-ii}      	
+\input{ch05-mc}	
+\input{ch06-ml}	
+\input{ch07-ee}	
+\input{ch08-sp}	
+\input{ch09-do}	
+\input{ch10-rmc}	
+\input{ch11-co}	
+
+\singlespaced
+\bibliographystyle{acm}
+\bibliography{papers}
+\end{document}
+
